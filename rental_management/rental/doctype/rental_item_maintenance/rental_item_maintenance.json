@@ -1,0 +1,246 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2025-12-12 18:19:40.014901",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "scan_section",
+  "scan_barcode",
+  "column_break_hjpv",
+  "unit_serial_number",
+  "column_break_jarr",
+  "column_break_oczs",
+  "details_section",
+  "serial_number",
+  "column_break_ivvt",
+  "unit_name",
+  "column_break_traq",
+  "column_break_bpsd",
+  "section_break_tvuj",
+  "unit_condition",
+  "column_break_cmor",
+  "column_break_jkzy",
+  "final_condition",
+  "column_break_wgli",
+  "section_break_ilsr",
+  "issue_description",
+  "attach_image_mnzn",
+  "column_break_avde",
+  "maintenance_result",
+  "section_break_npgp",
+  "submited_by",
+  "naming_series",
+  "amended_from",
+  "column_break_prka",
+  "column_break_atrk",
+  "maintained_by",
+  "column_break_bmew"
+ ],
+ "fields": [
+  {
+   "fieldname": "scan_section",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "scan_barcode",
+   "fieldtype": "Data",
+   "label": "Scan Serial Number",
+   "options": "Barcode"
+  },
+  {
+   "fieldname": "column_break_hjpv",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Type Serial Number (Optional)",
+   "fieldname": "unit_serial_number",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Document ID",
+   "options": "Rental Item Unit"
+  },
+  {
+   "fieldname": "column_break_jarr",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_oczs",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "details_section",
+   "fieldtype": "Section Break",
+   "label": "Unit Details"
+  },
+  {
+   "fetch_from": "unit_serial_number.unit_serial_number",
+   "fieldname": "serial_number",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Serial Number ",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "column_break_ivvt",
+   "fieldtype": "Column Break"
+  },
+  {
+   "bold": 1,
+   "fetch_from": "unit_serial_number.unit_name",
+   "fieldname": "unit_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_traq",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_bpsd",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_tvuj",
+   "fieldtype": "Section Break",
+   "label": "Condition Details"
+  },
+  {
+   "fieldname": "unit_condition",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Reported Condition",
+   "options": "Damaged\nNeed Cleaning"
+  },
+  {
+   "fieldname": "column_break_cmor",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_jkzy",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "final_condition",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Final Condition ",
+   "options": "OK\nScrapped"
+  },
+  {
+   "fieldname": "column_break_wgli",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_ilsr",
+   "fieldtype": "Section Break"
+  },
+  {
+   "default": "-",
+   "fieldname": "issue_description",
+   "fieldtype": "Text",
+   "label": "Issue Description"
+  },
+  {
+   "fieldname": "attach_image_mnzn",
+   "fieldtype": "Attach Image",
+   "hidden": 1
+  },
+  {
+   "fieldname": "column_break_avde",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "maintenance_result",
+   "fieldtype": "Long Text",
+   "label": "Maintenance Result"
+  },
+  {
+   "fieldname": "section_break_npgp",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "submited_by",
+   "fieldtype": "Data",
+   "label": "Submited by"
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Series",
+   "options": "RIM-.YYYY.-"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Rental Item Maintenance",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "column_break_prka",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_atrk",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "maintained_by",
+   "fieldtype": "Data",
+   "label": "Maintained by"
+  },
+  {
+   "fieldname": "column_break_bmew",
+   "fieldtype": "Column Break"
+  }
+ ],
+ "grid_page_length": 50,
+ "image_field": "attach_image_mnzn",
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-02-03 15:23:48.300984",
+ "modified_by": "Administrator",
+ "module": "Rental",
+ "name": "Rental Item Maintenance",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "girum@eternal-media.com",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "search_fields": "serial_number",
+ "show_preview_popup": 1,
+ "show_title_field_in_link": 1,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "serial_number"
+}

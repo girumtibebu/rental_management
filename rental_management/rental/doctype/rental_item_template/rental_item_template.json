@@ -1,0 +1,289 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2025-12-10 14:30:39.489812",
+ "default_view": "Image",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "item_model",
+  "item_model_long",
+  "column_break_rmfl",
+  "item_category",
+  "item_type",
+  "column_break_jxrp",
+  "item_brand",
+  "column_break_zxno",
+  "details_section",
+  "item_name",
+  "column_break_rbns",
+  "rental_item_type_box",
+  "column_break_eowx",
+  "suffix",
+  "column_break_isot",
+  "section_break_xjdg",
+  "status",
+  "section_break_bqts",
+  "uom",
+  "column_break_alzo",
+  "size",
+  "column_break_ftss",
+  "total_quantity",
+  "column_break_ygri",
+  "available_quantity",
+  "sku_series_section",
+  "sku_naming_series",
+  "column_break_ypgh",
+  "sku_character_count",
+  "description_section",
+  "text_editor_hdml",
+  "naming_series",
+  "image",
+  "dashboard_tab",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "description": "The model short name",
+   "fieldname": "item_model",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Model Code",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "description": "The model full name",
+   "fieldname": "item_model_long",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Model",
+   "unique": 1
+  },
+  {
+   "fieldname": "column_break_rmfl",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "The category this item belongs to (e.g., SoundSystem etc.)",
+   "fieldname": "item_category",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Category",
+   "options": "Rent Item Category",
+   "reqd": 1
+  },
+  {
+   "description": "Specific type within the category( e.g., Mixer..etc.)",
+   "fieldname": "item_type",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Type",
+   "options": "Rent Item Type",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_jxrp",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Select the brand of the item.",
+   "fieldname": "item_brand",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Brand",
+   "options": "Rent Item Brand",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_zxno",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "details_section",
+   "fieldtype": "Section Break",
+   "label": "Details"
+  },
+  {
+   "bold": 1,
+   "fieldname": "item_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_rbns",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Classify the rental item type; Unit or Box.",
+   "fieldname": "rental_item_type_box",
+   "fieldtype": "Select",
+   "label": "Item Type",
+   "options": "Unit\nBox\nBulk"
+  },
+  {
+   "fieldname": "column_break_eowx",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "3",
+   "description": "Number of digits for SKU",
+   "fieldname": "suffix",
+   "fieldtype": "Select",
+   "label": "Suffix",
+   "options": "1\n2\n3\n4"
+  },
+  {
+   "fieldname": "column_break_isot",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_xjdg",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Draft\nCompleted",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_bqts",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "uom",
+   "fieldtype": "Link",
+   "label": "UOM",
+   "options": "UOM"
+  },
+  {
+   "fieldname": "column_break_alzo",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "size",
+   "fieldtype": "Data",
+   "label": "Size"
+  },
+  {
+   "fieldname": "column_break_ftss",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "total_quantity",
+   "fieldtype": "Data",
+   "label": "Total Quantity"
+  },
+  {
+   "fieldname": "column_break_ygri",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "available_quantity",
+   "fieldtype": "Data",
+   "label": "Available Quantity"
+  },
+  {
+   "fieldname": "sku_series_section",
+   "fieldtype": "Section Break",
+   "label": "SKU Series s"
+  },
+  {
+   "description": "If The Item Type is Unit The SKU character count should not exceed 15 characters.\n\nIf The Item Type is Box The SKU character count should not exceed 8 characters.\n",
+   "fieldname": "sku_naming_series",
+   "fieldtype": "Data",
+   "label": "SKU Naming Series",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_ypgh",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "sku_character_count",
+   "fieldtype": "Int",
+   "label": "SKU Character Count",
+   "read_only": 1
+  },
+  {
+   "fieldname": "description_section",
+   "fieldtype": "Section Break",
+   "label": "Description"
+  },
+  {
+   "fieldname": "text_editor_hdml",
+   "fieldtype": "Text Editor"
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Series",
+   "options": "RNT-.YYYY.-"
+  },
+  {
+   "fieldname": "image",
+   "fieldtype": "Attach Image",
+   "hidden": 1,
+   "label": "Image"
+  },
+  {
+   "fieldname": "dashboard_tab",
+   "fieldtype": "Tab Break",
+   "label": "Dashboard"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Rental Item Template",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "image_field": "image",
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-02-03 15:23:49.647414",
+ "modified_by": "Administrator",
+ "module": "Rental",
+ "name": "Rental Item Template",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "girum@eternal-media.com",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "select": 1,
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "item_name"
+}

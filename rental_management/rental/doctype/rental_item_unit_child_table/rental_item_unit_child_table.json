@@ -1,0 +1,103 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-12-11 18:33:26.152894",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "unit_doc_id",
+  "unit_serial_number",
+  "unit_name",
+  "unit_condition",
+  "unit_location",
+  "prev_location",
+  "movement_status",
+  "prev_movement_status",
+  "unit_note"
+ ],
+ "fields": [
+  {
+   "columns": 2,
+   "fieldname": "unit_doc_id",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Document ID",
+   "options": "Rental Item Unit"
+  },
+  {
+   "columns": 2,
+   "fieldname": "unit_serial_number",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Serial Number",
+   "options": "Rental Item Unit",
+   "read_only": 1
+  },
+  {
+   "bold": 1,
+   "columns": 4,
+   "fieldname": "unit_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Unit Name",
+   "read_only": 1
+  },
+  {
+   "columns": 2,
+   "fieldname": "unit_condition",
+   "fieldtype": "Data",
+   "label": "Condition",
+   "read_only": 1
+  },
+  {
+   "fieldname": "unit_location",
+   "fieldtype": "Data",
+   "label": "Location",
+   "read_only": 1
+  },
+  {
+   "fieldname": "prev_location",
+   "fieldtype": "Data",
+   "label": "Previous Location",
+   "read_only": 1
+  },
+  {
+   "fieldname": "movement_status",
+   "fieldtype": "Data",
+   "label": "Movement Status",
+   "read_only": 1
+  },
+  {
+   "fieldname": "prev_movement_status",
+   "fieldtype": "Data",
+   "label": "Previous Movement Status",
+   "read_only": 1
+  },
+  {
+   "columns": 6,
+   "fieldname": "unit_note",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Note"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-02-03 15:23:48.515638",
+ "modified_by": "Administrator",
+ "module": "Rental",
+ "name": "Rental Item Unit Child Table",
+ "owner": "girum@eternal-media.com",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

@@ -1,0 +1,263 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2025-12-11 18:26:19.865038",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "transaction_type",
+  "column_break_wmio",
+  "posting_date",
+  "column_break_mamo",
+  "column_break_oahn",
+  "section_break_uirj",
+  "from_location",
+  "column_break_vdxc",
+  "to_location",
+  "column_break_btue",
+  "column_break_hktv",
+  "section_break_assi",
+  "scan_barcode",
+  "rental_item_unit_child_table",
+  "bulk_items_section",
+  "table_udfz",
+  "consumable_items_section",
+  "table_nrbj",
+  "section_break_vzkp",
+  "scan_barcode_2",
+  "table_qnvp",
+  "note_section",
+  "text_editor_fdyh",
+  "section_break_lshd",
+  "issued_to",
+  "column_break_iwam",
+  "recieved_by",
+  "column_break_fezw",
+  "approved_by",
+  "column_break_eqxj",
+  "section_break_mghl",
+  "requires_approval",
+  "naming_series",
+  "tab_2_tab",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "transaction_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Transaction Type",
+   "options": "CHECK_OUT\nCHECK_IN\nMAINTENANCE_OUT\nMAINTENANCE_IN\nLOST\nPURCHASE\nDISPOSE"
+  },
+  {
+   "fieldname": "column_break_wmio",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "posting_date",
+   "fieldtype": "Date",
+   "label": "Posting Date"
+  },
+  {
+   "fieldname": "column_break_mamo",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_oahn",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_uirj",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "from_location",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "From Location"
+  },
+  {
+   "fieldname": "column_break_vdxc",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "to_location",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "To Location"
+  },
+  {
+   "fieldname": "column_break_btue",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_hktv",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_assi",
+   "fieldtype": "Section Break",
+   "label": "Unit Items"
+  },
+  {
+   "columns": 2,
+   "fieldname": "scan_barcode",
+   "fieldtype": "Data",
+   "label": "Scan Barcode/QR Code",
+   "options": "Barcode"
+  },
+  {
+   "fieldname": "rental_item_unit_child_table",
+   "fieldtype": "Table",
+   "label": "Use this table for Unit Items",
+   "options": "Rental Item Unit Child Table"
+  },
+  {
+   "fieldname": "bulk_items_section",
+   "fieldtype": "Section Break",
+   "label": "Bulk Items"
+  },
+  {
+   "fieldname": "table_udfz",
+   "fieldtype": "Table",
+   "label": "Use this table for Bulk Items",
+   "options": "Rent Bulk Item Child Table"
+  },
+  {
+   "fieldname": "consumable_items_section",
+   "fieldtype": "Section Break",
+   "label": "Consumable Items"
+  },
+  {
+   "fieldname": "table_nrbj",
+   "fieldtype": "Table",
+   "options": "Product Bundle Item"
+  },
+  {
+   "fieldname": "section_break_vzkp",
+   "fieldtype": "Section Break"
+  },
+  {
+   "columns": 2,
+   "fieldname": "scan_barcode_2",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Scan Barcode/QR Code Copy",
+   "options": "Barcode"
+  },
+  {
+   "fieldname": "table_qnvp",
+   "fieldtype": "Table",
+   "hidden": 1,
+   "options": "Rent Bulk Item Child Table_2"
+  },
+  {
+   "fieldname": "note_section",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "text_editor_fdyh",
+   "fieldtype": "Text Editor",
+   "label": "Note"
+  },
+  {
+   "fieldname": "section_break_lshd",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "issued_to",
+   "fieldtype": "Data",
+   "label": "Issued To"
+  },
+  {
+   "fieldname": "column_break_iwam",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "recieved_by",
+   "fieldtype": "Data",
+   "label": "Recieved By"
+  },
+  {
+   "fieldname": "column_break_fezw",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "approved_by",
+   "fieldtype": "Data",
+   "label": "Approved By"
+  },
+  {
+   "fieldname": "column_break_eqxj",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_mghl",
+   "fieldtype": "Section Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "requires_approval",
+   "fieldtype": "Check",
+   "label": "Requires Approval"
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Series",
+   "options": "RM-.YYYY.-"
+  },
+  {
+   "fieldname": "tab_2_tab",
+   "fieldtype": "Tab Break",
+   "label": "Tab 2"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Rental Movement",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-02-03 15:23:48.678354",
+ "modified_by": "Administrator",
+ "module": "Rental",
+ "name": "Rental Movement",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "girum@eternal-media.com",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "queue_in_background": 1,
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "track_seen": 1,
+ "track_views": 1
+}

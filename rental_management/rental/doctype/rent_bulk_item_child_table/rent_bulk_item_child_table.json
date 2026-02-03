@@ -1,0 +1,88 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-01-05 09:20:13.558770",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "item_template",
+  "item_name",
+  "data_dgaq",
+  "uom",
+  "amount",
+  "note"
+ ],
+ "fields": [
+  {
+   "columns": 2,
+   "fieldname": "item_template",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Doc Id",
+   "options": "Rental Item Template"
+  },
+  {
+   "columns": 4,
+   "fetch_from": "item_template.item_name",
+   "fieldname": "item_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Name",
+   "read_only": 1
+  },
+  {
+   "columns": 1,
+   "fetch_from": "item_template.total_quantity",
+   "fieldname": "data_dgaq",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Total Quantity",
+   "read_only": 1
+  },
+  {
+   "columns": 1,
+   "fetch_from": "item_template.uom",
+   "fieldname": "uom",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "UOM",
+   "read_only": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "amount",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Quantity"
+  },
+  {
+   "columns": 5,
+   "fieldname": "note",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Note"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-02-03 15:23:46.740405",
+ "modified_by": "Administrator",
+ "module": "Rental",
+ "name": "Rent Bulk Item Child Table",
+ "owner": "girum@eternal-media.com",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

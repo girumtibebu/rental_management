@@ -1,0 +1,386 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "autoname": "naming_series:",
+ "creation": "2025-12-11 16:10:22.484032",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "unit_details_section",
+  "unit_serial_number",
+  "column_break_suag",
+  "column_break_kkxs",
+  "column_break_azig",
+  "section_break_nxfu",
+  "item_template",
+  "column_break_idzy",
+  "unit_name",
+  "column_break_trqi",
+  "unit_model",
+  "column_break_hljl",
+  "unit_brand",
+  "status_section",
+  "movement_status",
+  "column_break_pztd",
+  "unit_location",
+  "column_break_fmnu",
+  "unit_condition",
+  "column_break_pzey",
+  "maintenance_status",
+  "unit_type_section",
+  "unit_type",
+  "column_break_ofsv",
+  "parent_box",
+  "column_break_iujw",
+  "column_break_bewc",
+  "section_break_jsnd",
+  "scan_serial",
+  "section_break_jndo",
+  "item_unit_list",
+  "shelf_location_section",
+  "location_code",
+  "column_break_hbjg",
+  "zone",
+  "column_break_ozgr",
+  "section",
+  "column_break_bfca",
+  "level",
+  "column_break_mzwk",
+  "position",
+  "description_section",
+  "text_editor_phqg",
+  "image",
+  "naming_series",
+  "disabled",
+  "tab_2_tab",
+  "text_zwsi",
+  "maintenance_history_tab"
+ ],
+ "fields": [
+  {
+   "fieldname": "unit_details_section",
+   "fieldtype": "Section Break",
+   "label": "Unit Details"
+  },
+  {
+   "bold": 1,
+   "fieldname": "unit_serial_number",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Serial Number",
+   "read_only": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "column_break_suag",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_kkxs",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_azig",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_nxfu",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "item_template",
+   "fieldtype": "Link",
+   "label": "Unit Template",
+   "options": "Rental Item Template",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_idzy",
+   "fieldtype": "Column Break"
+  },
+  {
+   "columns": 2,
+   "fetch_from": "item_template.item_name",
+   "fieldname": "unit_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Unit Name"
+  },
+  {
+   "fieldname": "column_break_trqi",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "item_template.item_model",
+   "fieldname": "unit_model",
+   "fieldtype": "Data",
+   "label": "Unit Model"
+  },
+  {
+   "fieldname": "column_break_hljl",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "item_template.item_brand",
+   "fieldname": "unit_brand",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Unit Brand"
+  },
+  {
+   "fieldname": "status_section",
+   "fieldtype": "Section Break",
+   "label": "Status"
+  },
+  {
+   "default": "Warehouse",
+   "fieldname": "movement_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Movement Status",
+   "options": "At Event\nWarehouse\nIn Maintenance\nMissing",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_pztd",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "None",
+   "fieldname": "unit_location",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Current Location",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_fmnu",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "OK",
+   "fieldname": "unit_condition",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Current Condition",
+   "options": "Damaged\nNeed Cleaning\nOK\nPartially Ok\nScrapped",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_pzey",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "maintenance_status",
+   "fieldtype": "Data",
+   "label": "Maintenance Status",
+   "read_only": 1
+  },
+  {
+   "fieldname": "unit_type_section",
+   "fieldtype": "Section Break",
+   "label": "Unit Type"
+  },
+  {
+   "fetch_from": "item_template.rental_item_type_box",
+   "fieldname": "unit_type",
+   "fieldtype": "Data",
+   "label": "Type",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_ofsv",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:doc.unit_type=='Unit'",
+   "fieldname": "parent_box",
+   "fieldtype": "Data",
+   "label": "Parent Box",
+   "options": "Rental Item Unit",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_iujw",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_bewc",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_jsnd",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "scan_serial",
+   "fieldtype": "Data",
+   "label": "Scan Serial"
+  },
+  {
+   "depends_on": "eval:doc.unit_type=='Box'\r\n",
+   "fieldname": "section_break_jndo",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "item_unit_list",
+   "fieldtype": "Table",
+   "label": "Unit List",
+   "options": "Box Item Unit Child Table"
+  },
+  {
+   "fieldname": "shelf_location_section",
+   "fieldtype": "Section Break",
+   "label": "Shelf Location",
+   "read_only": 1
+  },
+  {
+   "columns": 2,
+   "default": "-",
+   "description": "Select Zone, Aisle, Section, Level, and Bin based on warehouse map.",
+   "fieldname": "location_code",
+   "fieldtype": "Data",
+   "label": "Location Code",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_hbjg",
+   "fieldtype": "Column Break"
+  },
+  {
+   "columns": 1,
+   "fieldname": "zone",
+   "fieldtype": "Link",
+   "label": "Zone",
+   "options": "Zone"
+  },
+  {
+   "fieldname": "column_break_ozgr",
+   "fieldtype": "Column Break"
+  },
+  {
+   "columns": 1,
+   "fieldname": "section",
+   "fieldtype": "Link",
+   "label": "Section",
+   "options": "Section"
+  },
+  {
+   "fieldname": "column_break_bfca",
+   "fieldtype": "Column Break"
+  },
+  {
+   "columns": 1,
+   "fieldname": "level",
+   "fieldtype": "Link",
+   "label": "Level",
+   "options": "Level"
+  },
+  {
+   "fieldname": "column_break_mzwk",
+   "fieldtype": "Column Break"
+  },
+  {
+   "columns": 1,
+   "fieldname": "position",
+   "fieldtype": "Link",
+   "label": "Bin",
+   "options": "Position"
+  },
+  {
+   "fieldname": "description_section",
+   "fieldtype": "Section Break",
+   "label": "Unit Description"
+  },
+  {
+   "fieldname": "text_editor_phqg",
+   "fieldtype": "Text Editor"
+  },
+  {
+   "fieldname": "image",
+   "fieldtype": "Attach Image",
+   "hidden": 1,
+   "label": "Image"
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Series",
+   "options": "RIU-.YYYY.-"
+  },
+  {
+   "default": "0",
+   "fieldname": "disabled",
+   "fieldtype": "Check",
+   "label": "Disabled"
+  },
+  {
+   "fieldname": "tab_2_tab",
+   "fieldtype": "Tab Break",
+   "label": "Dashboard"
+  },
+  {
+   "fieldname": "text_zwsi",
+   "fieldtype": "Text"
+  },
+  {
+   "fieldname": "maintenance_history_tab",
+   "fieldtype": "Tab Break",
+   "label": "Maintenance History"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [
+  {
+   "group": "Movement History",
+   "link_doctype": "Rental Movement",
+   "link_fieldname": "unit_serial_number"
+  },
+  {
+   "group": "Maintanance History",
+   "link_doctype": "Rental Item Maintenance",
+   "link_fieldname": "unit_serial_number"
+  }
+ ],
+ "modified": "2026-02-03 15:23:48.943573",
+ "modified_by": "Administrator",
+ "module": "Rental",
+ "name": "Rental Item Unit",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "girum@eternal-media.com",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "search_fields": "unit_name",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [
+  {
+   "color": "Blue",
+   "title": "Enabled"
+  }
+ ],
+ "title_field": "unit_serial_number",
+ "track_changes": 1,
+ "track_seen": 1,
+ "track_views": 1
+}
