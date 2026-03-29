@@ -19,8 +19,9 @@
   "column_break_traq",
   "column_break_bpsd",
   "section_break_tvuj",
-  "unit_condition",
+  "workflow_state",
   "column_break_cmor",
+  "unit_condition",
   "column_break_jkzy",
   "final_condition",
   "column_break_wgli",
@@ -111,6 +112,14 @@
    "fieldname": "section_break_tvuj",
    "fieldtype": "Section Break",
    "label": "Condition Details"
+  },
+  {
+   "fieldname": "workflow_state",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Workflow State",
+   "read_only": 1
   },
   {
    "fieldname": "unit_condition",

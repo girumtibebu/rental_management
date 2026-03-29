@@ -1,0 +1,67 @@
+{
+    "creation": "2026-03-29 00:00:00.000000",
+    "docstatus": 0,
+    "doctype": "Workspace",
+    "icon": "box",
+    "is_standard": 1,
+    "label": "Rental",
+    "links": [
+        {
+            "label": "Home",
+            "link_to": "Rental Home",
+            "link_type": "Workspace",
+            "type": "Link",
+            "icon": "home"
+        },
+        {
+            "label": "Rental Movement",
+            "link_to": "Rental Movement",
+            "link_type": "DocType",
+            "type": "Link",
+            "icon": "corner-down-right"
+        },
+        {
+            "label": "Maintenance",
+            "link_to": "Rental Item Maintenance",
+            "link_type": "DocType",
+            "type": "Link",
+            "icon": "settings"
+        },
+        {
+            "label": "Rental Item Unit",
+            "link_to": "Rental Item Unit",
+            "link_type": "DocType",
+            "type": "Link",
+            "icon": "package"
+        },
+        {
+            "label": "Item Template",
+            "link_to": "Rental Item Template",
+            "link_type": "DocType",
+            "type": "Link",
+            "icon": "box"
+        },
+        {
+            "label": "Dashboard",
+            "link_to": "Rental Item Unit",
+            "link_type": "DocType",
+            "type": "Link",
+            "icon": "grid"
+        },
+        {
+            "label": "Log",
+            "link_to": "Rental Unit Log",
+            "link_type": "DocType",
+            "type": "Link",
+            "icon": "list"
+        }
+    ],
+    "modified": "2026-03-29 00:00:00.000000",
+    "modified_by": "Administrator",
+    "module": "Rental",
+    "name": "Rental",
+    "owner": "Administrator",
+    "public": 1,
+    "title": "Rental Management",
+    "shortcuts": []
+}

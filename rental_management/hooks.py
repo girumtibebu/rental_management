@@ -8,7 +8,7 @@ app_license = "mit"
 # Apps
 # ------------------
 
-# required_apps = []
+required_apps = ["erpnext"]
 
 # Each item in the list will be shown as an app in the apps page
 # add_to_apps_screen = [
@@ -251,9 +251,8 @@ app_license = "mit"
 # ignore_translatable_strings_from = []
 
 fixtures = [
-    {"dt": "Client Script", "filters": [["module", "=", "Rental"]]},
-    {"dt": "Server Script", "filters": [["module", "=", "Rental"]]},
     {"dt": "Print Format", "filters": [["module", "=", "Rental"]]},
     {"dt": "Custom Field", "filters": [["module", "=", "Rental"]]},
-    {"dt": "Property Setter", "filters": [["module", "=", "Rental"]]}
+    {"dt": "Property Setter", "filters": [["module", "=", "Rental"]]},
+    {"dt": "Workflow", "filters": [["document_type", "in", ["Rental Item Maintenance"]]]}
 ]
