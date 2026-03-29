@@ -1,0 +1,78 @@
+[
+ {
+  "allow_action_confirmation": 0,
+  "doctype": "Workflow",
+  "document_type": "Rental Item Maintenance",
+  "is_active": 1,
+  "name": "Maintenance Workflow(Updated)",
+  "override_status": 0,
+  "send_email_alert": 0,
+  "states": [
+   {
+    "allow_edit": "All",
+    "avoid_status_override": 0,
+    "doc_status": "0",
+    "doctype": "Workflow Document State",
+    "evaluate_as_expression": 0,
+    "is_optional_state": 0,
+    "parent": "Maintenance Workflow(Updated)",
+    "parentfield": "states",
+    "parenttype": "Workflow",
+    "send_email": 1,
+    "state": "Attention Required"
+   },
+   {
+    "allow_edit": "All",
+    "avoid_status_override": 0,
+    "doc_status": "0",
+    "doctype": "Workflow Document State",
+    "evaluate_as_expression": 0,
+    "is_optional_state": 0,
+    "parent": "Maintenance Workflow(Updated)",
+    "parentfield": "states",
+    "parenttype": "Workflow",
+    "send_email": 1,
+    "state": "In Repair"
+   },
+   {
+    "allow_edit": "All",
+    "avoid_status_override": 0,
+    "doc_status": "1",
+    "doctype": "Workflow Document State",
+    "evaluate_as_expression": 0,
+    "is_optional_state": 0,
+    "parent": "Maintenance Workflow(Updated)",
+    "parentfield": "states",
+    "parenttype": "Workflow",
+    "send_email": 1,
+    "state": "Complete"
+   }
+  ],
+  "transitions": [
+   {
+    "action": "Send To Maintenance",
+    "allow_self_approval": 1,
+    "allowed": "All",
+    "doctype": "Workflow Transition",
+    "next_state": "In Repair",
+    "parent": "Maintenance Workflow(Updated)",
+    "parentfield": "transitions",
+    "parenttype": "Workflow",
+    "state": "Attention Required"
+   },
+   {
+    "action": "Complete",
+    "allow_self_approval": 1,
+    "allowed": "All",
+    "doctype": "Workflow Transition",
+    "next_state": "Complete",
+    "parent": "Maintenance Workflow(Updated)",
+    "parentfield": "transitions",
+    "parenttype": "Workflow",
+    "state": "In Repair"
+   }
+  ],
+  "workflow_name": "Maintenance Workflow(Updated)",
+  "workflow_state_field": "workflow_state"
+ }
+]
