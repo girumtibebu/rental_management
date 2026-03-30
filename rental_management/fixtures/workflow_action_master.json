@@ -1,10 +1,12 @@
 [
   {
     "doctype": "Workflow Action Master",
-    "workflow_action_name": "Send To Maintenance"
+    "workflow_action_name": "Send To Maintenance",
+    "name": "Send To Maintenance"
   },
   {
     "doctype": "Workflow Action Master",
-    "workflow_action_name": "Complete"
+    "workflow_action_name": "Complete",
+    "name": "Complete"
   }
 ]
