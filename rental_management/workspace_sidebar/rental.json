@@ -1,0 +1,102 @@
+{
+ "app": "rental_management",
+ "creation": "2026-03-30 08:55:23.028346",
+ "docstatus": 0,
+ "doctype": "Workspace Sidebar",
+ "header_icon": "box",
+ "idx": 0,
+ "items": [
+  {
+   "child": 0,
+   "collapsible": 1,
+   "icon": "home",
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "Home",
+   "link_to": "Rental",
+   "link_type": "Workspace",
+   "show_arrow": 0,
+   "type": "Link"
+  },
+  {
+   "child": 0,
+   "collapsible": 1,
+   "icon": "webhook",
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "Rental Movement",
+   "link_to": "Rental Movement",
+   "link_type": "DocType",
+   "show_arrow": 0,
+   "type": "Link"
+  },
+  {
+   "child": 0,
+   "collapsible": 1,
+   "icon": "pc-case",
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "Rental Item Unit",
+   "link_to": "Rental Item Unit",
+   "link_type": "DocType",
+   "show_arrow": 0,
+   "type": "Link"
+  },
+  {
+   "child": 0,
+   "collapsible": 1,
+   "icon": "layout-template",
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "Rental Item Template",
+   "link_to": "Rental Item Template",
+   "link_type": "DocType",
+   "show_arrow": 0,
+   "type": "Link"
+  },
+  {
+   "child": 0,
+   "collapsible": 1,
+   "icon": "settings",
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "Maintenance",
+   "link_to": "Rental Item Maintenance",
+   "link_type": "DocType",
+   "show_arrow": 0,
+   "type": "Link"
+  },
+  {
+   "child": 0,
+   "collapsible": 1,
+   "icon": "dashboard",
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "Dashboard",
+   "link_to": "Rental Dashboard",
+   "link_type": "Dashboard",
+   "show_arrow": 0,
+   "type": "Link"
+  },
+  {
+   "child": 0,
+   "collapsible": 1,
+   "icon": "logs",
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "Log",
+   "link_to": "Rental Unit Log",
+   "link_type": "DocType",
+   "show_arrow": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2026-03-30 06:51:08.627773",
+ "modified_by": "admin@example.com",
+ "module": "Rental",
+ "module_onboarding": "Rental Onboarding",
+ "name": "Rental",
+ "owner": "Administrator",
+ "standard": 1,
+ "title": "Rental"
+}
