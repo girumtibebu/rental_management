@@ -1,0 +1,23 @@
+{
+ "allow_roles": [
+  {
+   "role": "Administrator"
+  }
+ ],
+ "creation": "2026-03-30 06:51:03.424454",
+ "docstatus": 0,
+ "doctype": "Module Onboarding",
+ "idx": 0,
+ "is_complete": 0,
+ "modified": "2026-03-30 06:51:03.424454",
+ "modified_by": "admin@example.com",
+ "module": "Rental",
+ "name": "Rental Onboarding",
+ "owner": "admin@example.com",
+ "steps": [
+  {
+   "step": "Create Item"
+  }
+ ],
+ "title": "Rental Onboarding"
+}

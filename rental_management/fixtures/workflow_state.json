@@ -1,0 +1,17 @@
+[
+  {
+    "doctype": "Workflow State",
+    "workflow_state_name": "Attention Required",
+    "style": "Danger"
+  },
+  {
+    "doctype": "Workflow State",
+    "workflow_state_name": "In Repair",
+    "style": "Warning"
+  },
+  {
+    "doctype": "Workflow State",
+    "workflow_state_name": "Complete",
+    "style": "Success"
+  }
+]

@@ -254,5 +254,7 @@ fixtures = [
     {"dt": "Print Format", "filters": [["module", "=", "Rental"]]},
     {"dt": "Custom Field", "filters": [["module", "=", "Rental"]]},
     {"dt": "Property Setter", "filters": [["module", "=", "Rental"]]},
-    {"dt": "Workflow", "filters": [["document_type", "in", ["Rental Item Maintenance"]]]}
+    {"dt": "Workflow", "filters": [["document_type", "in", ["Rental Item Maintenance"]]]},
+    {"dt": "Workflow State", "filters": [["name", "in", ["Attention Required", "In Repair", "Complete"]]]},
+    {"dt": "Workflow Action Master", "filters": [["name", "in", ["Send To Maintenance", "Complete"]]]}
 ]

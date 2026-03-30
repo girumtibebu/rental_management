@@ -7,13 +7,7 @@
     "label": "Rental",
     "links": [
         {
-            "label": "Home",
-            "link_to": "Rental Home",
-            "link_type": "Workspace",
-            "type": "Link",
-            "icon": "home"
-        },
-        {
+
             "label": "Rental Movement",
             "link_to": "Rental Movement",
             "link_type": "DocType",
@@ -62,6 +56,6 @@
     "name": "Rental",
     "owner": "Administrator",
     "public": 1,
-    "title": "Rental Management",
+    "title": "Rental",
     "shortcuts": []
 }

@@ -1,0 +1,10 @@
+[
+  {
+    "doctype": "Workflow Action Master",
+    "workflow_action_name": "Send To Maintenance"
+  },
+  {
+    "doctype": "Workflow Action Master",
+    "workflow_action_name": "Complete"
+  }
+]
