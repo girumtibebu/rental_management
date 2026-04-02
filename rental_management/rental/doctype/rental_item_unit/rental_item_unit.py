@@ -20,7 +20,7 @@ class RentalItemUnit(Document):
 
     def sync_box_units_on_save(self):
         # Logic from "Rental Item Unit - Update parent box"
-        current_units = [row.serial_number for row in self.get("item_unit_list") if row.serial_number]
+        current_units = [row.get("document_id") for row in self.get("item_unit_list") if row.get("document_id")]
         
         for current_serial in current_units:
             unit_info = frappe.db.get_value("Rental Item Unit", current_serial, ["unit_serial_number", "parent_box"], as_dict=True)
@@ -34,7 +34,7 @@ class RentalItemUnit(Document):
                 if actual_parent and actual_parent != self.name:
                     try:
                         old_box = frappe.get_doc("Rental Item Unit", actual_parent)
-                        old_box.set("item_unit_list", [row for row in old_box.get("item_unit_list") if row.serial_number != current_serial])
+                        old_box.set("item_unit_list", [row for row in old_box.get("item_unit_list") if row.get("document_id") != current_serial])
                         old_box.save(ignore_permissions=True)
                     except frappe.DoesNotExistError:
                         pass
@@ -45,7 +45,7 @@ class RentalItemUnit(Document):
         if not self.is_new():
             old_doc = self.get_doc_before_save()
             if old_doc:
-                old_units = set([r.serial_number for r in old_doc.get("item_unit_list") if r.serial_number])
+                old_units = set([r.get("document_id") for r in old_doc.get("item_unit_list") if r.get("document_id")])
                 removed_units = old_units - set(current_units)
                 for u in removed_units:
                     if frappe.db.get_value("Rental Item Unit", u, "parent_box") == self.name:
