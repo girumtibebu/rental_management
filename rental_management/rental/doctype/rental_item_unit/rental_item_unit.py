@@ -2,6 +2,39 @@ import frappe
 from frappe.model.document import Document
 from frappe import _
 
+
+def sync_box_condition_to_children(box_name, box_condition):
+    if not box_name or not box_condition:
+        return
+
+    child_rows = frappe.get_all(
+        "Box Item Unit Child Table",
+        filters={
+            "parent": box_name,
+            "parenttype": "Rental Item Unit",
+            "parentfield": "item_unit_list",
+        },
+        fields=["name", "document_id"],
+    )
+
+    for row in child_rows:
+        frappe.db.set_value(
+            "Box Item Unit Child Table",
+            row.name,
+            "unit_condition",
+            box_condition,
+            update_modified=False,
+        )
+        child_name = row.get("document_id")
+        if child_name:
+            frappe.db.set_value(
+                "Rental Item Unit",
+                child_name,
+                "unit_condition",
+                box_condition,
+                update_modified=False,
+            )
+
 class RentalItemUnit(Document):
     def before_save(self):
         # Server Script: Rental item unit - update parent
@@ -17,6 +50,8 @@ class RentalItemUnit(Document):
     def on_update(self):
         # Server Script: Math for Total Count
         self.update_template_quantities()
+        if self.unit_type == "Box" and self.unit_condition:
+            sync_box_condition_to_children(self.name, self.unit_condition)
 
     def sync_box_units_on_save(self):
         # Logic from "Rental Item Unit - Update parent box"
@@ -60,15 +95,8 @@ class RentalItemUnit(Document):
             if item.unit_condition != self.unit_condition:
                 item.unit_condition = self.unit_condition
 
-            child_name = item.get("document_id")
-            if child_name:
-                frappe.db.set_value(
-                    "Rental Item Unit",
-                    child_name,
-                    "unit_condition",
-                    self.unit_condition,
-                    update_modified=False,
-                )
+        if self.name:
+            sync_box_condition_to_children(self.name, self.unit_condition)
 
     def update_template_quantities(self):
         # Logic from "Math for Total Count"

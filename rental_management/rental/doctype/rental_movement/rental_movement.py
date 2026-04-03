@@ -1,6 +1,7 @@
 import frappe
 from frappe.model.document import Document
 from frappe.utils import now
+from rental_management.rental.doctype.rental_item_unit.rental_item_unit import sync_box_condition_to_children
 
 
 class RentalMovement(Document):
@@ -141,6 +142,9 @@ class RentalMovement(Document):
                 "movement_status": new_status,
                 "unit_condition": new_unit_condition
             })
+
+            if master.unit_type == "Box" and new_unit_condition:
+                sync_box_condition_to_children(master.name, new_unit_condition)
 
             frappe.db.set_value("Rental Item Unit Child Table", row.name, {
                 "unit_location": new_location,

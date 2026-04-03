@@ -1,8 +1,13 @@
 import frappe
 from frappe.model.document import Document
 from frappe import _
+from rental_management.rental.doctype.rental_item_unit.rental_item_unit import sync_box_condition_to_children
 
 class RentalItemMaintenance(Document):
+    def _sync_children_if_box(self, unit_doc, condition):
+        if unit_doc and unit_doc.unit_type == "Box" and condition:
+            sync_box_condition_to_children(unit_doc.name, condition)
+
     def _resolve_final_condition(self):
         # If maintenance is completed and no final condition is provided,
         # default to OK to keep unit condition in sync with completion.
@@ -20,8 +25,10 @@ class RentalItemMaintenance(Document):
                 mapped_condition = final_to_unit_map.get(self.final_condition)
                 if mapped_condition:
                     unit.db_set("unit_condition", mapped_condition, update_modified=True)
+                    self._sync_children_if_box(unit, mapped_condition)
             elif self.unit_condition:
                 unit.db_set("unit_condition", self.unit_condition, update_modified=True)
+                self._sync_children_if_box(unit, self.unit_condition)
 
     def before_save(self):
         # Server Script: Rental Item Maintenance(Condition Update)
@@ -35,6 +42,7 @@ class RentalItemMaintenance(Document):
 
             if new_condition != unit.unit_condition:
                 unit.db_set("unit_condition", new_condition, update_modified=True, notify=False)
+                self._sync_children_if_box(unit, new_condition)
 
     def on_update(self):
         # Server Script: Rental Item Maintenance Status ,Update
@@ -47,6 +55,7 @@ class RentalItemMaintenance(Document):
                 if self.workflow_state == "Complete":
                     final_condition = self._resolve_final_condition()
                     unit_doc.db_set("unit_condition", final_condition, update_modified=True)
+                    self._sync_children_if_box(unit_doc, final_condition)
             except frappe.DoesNotExistError:
                 pass # Or log error
 
@@ -57,6 +66,7 @@ class RentalItemMaintenance(Document):
             final_condition = self._resolve_final_condition()
             if unit.unit_condition != final_condition:
                 unit.db_set("unit_condition", final_condition, update_modified=True, notify=False)
+                self._sync_children_if_box(unit, final_condition)
 
 @frappe.whitelist()
 def send_to_maintenance(docname):
