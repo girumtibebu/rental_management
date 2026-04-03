@@ -53,6 +53,20 @@ class RentalMovement(Document):
         if tx == "MAINTENANCE_OUT" and not self.to_location:
             self.to_location = "Repair Shop"
 
+    def get_effective_unit_condition(self, unit_name, fallback_condition=None):
+        # Prefer latest completed maintenance final condition as the current condition.
+        final_condition = frappe.db.get_value(
+            "Rental Item Maintenance",
+            {
+                "unit_serial_number": unit_name,
+                "workflow_state": "Complete",
+                "final_condition": ["is", "set"],
+            },
+            "final_condition",
+            order_by="modified desc",
+        )
+        return final_condition or fallback_condition
+
     def update_template_tracking(self):
         units = self.get("rental_item_unit_child_table") or []
         for row in units:
@@ -98,7 +112,8 @@ class RentalMovement(Document):
                 continue
 
             master = frappe.get_doc("Rental Item Unit", row.unit_doc_id)
-            if tx == 'CHECK_OUT' and (master.movement_status != 'Warehouse' or master.unit_condition != 'OK'):
+            current_condition = self.get_effective_unit_condition(master.name, master.unit_condition)
+            if tx == 'CHECK_OUT' and (master.movement_status != 'Warehouse' or current_condition != 'OK'):
                 frappe.throw(f"Validation Error for {master.unit_serial_number}: Item must be in Warehouse and OK.")
 
             new_status = master.movement_status
@@ -117,10 +132,14 @@ class RentalMovement(Document):
                 new_status = 'Missing'
                 new_location = 'Unknown'
 
+            new_unit_condition = row.unit_condition
+            if tx == 'CHECK_OUT':
+                new_unit_condition = current_condition
+
             frappe.db.set_value("Rental Item Unit", master.name, {
                 "unit_location": new_location,
                 "movement_status": new_status,
-                "unit_condition": row.unit_condition
+                "unit_condition": new_unit_condition
             })
 
             frappe.db.set_value("Rental Item Unit Child Table", row.name, {

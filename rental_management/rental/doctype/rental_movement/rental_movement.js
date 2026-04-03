@@ -221,6 +221,7 @@ function remove_serial_logic(frm, barcode) {
 
 function validate_ui_logic(frm, unit) {
     const tx = frm.doc.transaction_type;
+    const current_condition = unit.current_condition || unit.unit_condition;
     let existing_rows = (frm.doc.rental_item_unit_child_table || []).filter(row => row.unit_doc_id === unit.name);
     if (existing_rows.length > 1) {
         frappe.msgprint({ title: __('Duplicate'), indicator: 'orange', message: __(`Unit <b>${unit.unit_serial_number}</b> is already in this list.`) });
@@ -231,8 +232,8 @@ function validate_ui_logic(frm, unit) {
             frappe.msgprint({ title: __('Invalid Status'), indicator: 'red', message: __(`Unit <b>${unit.unit_serial_number}</b> is currently <b>${unit.movement_status}</b>. It must be in 'Warehouse' to Check Out.`) });
             return false;
         }
-        if (unit.unit_condition !== 'OK') {
-            frappe.msgprint({ title: __('Condition Issue'), indicator: 'orange', message: __(`Unit <b>${unit.unit_serial_number}</b> is <b>${unit.unit_condition}</b>. Only 'OK' units can be Checked Out.`) });
+        if (current_condition !== 'OK') {
+            frappe.msgprint({ title: __('Condition Issue'), indicator: 'orange', message: __(`Unit <b>${unit.unit_serial_number}</b> is <b>${current_condition}</b>. Only 'OK' units can be Checked Out.`) });
             return false;
         }
     }

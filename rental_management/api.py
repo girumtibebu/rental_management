@@ -1,6 +1,21 @@
 import frappe
 from frappe import _
 
+
+def _get_effective_unit_condition(unit_name, fallback_condition=None):
+    """Prefer latest completed maintenance final condition as current condition."""
+    final_condition = frappe.db.get_value(
+        "Rental Item Maintenance",
+        {
+            "unit_serial_number": unit_name,
+            "workflow_state": "Complete",
+            "final_condition": ["is", "set"],
+        },
+        "final_condition",
+        order_by="modified desc",
+    )
+    return final_condition or fallback_condition
+
 @frappe.whitelist()
 def create_rental_item_units(template_name, total_units=1):
     """
@@ -103,6 +118,13 @@ def handle_unit_scan(serial):
 
     if not unit_info:
         frappe.throw(_("Unit with Serial {0} not found.").format(serial))
+
+    effective_condition = _get_effective_unit_condition(
+        unit_info.name,
+        unit_info.unit_condition,
+    )
+    unit_info.current_condition = effective_condition
+    unit_info.unit_condition = effective_condition
 
     return unit_info
 
