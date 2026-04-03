@@ -110,11 +110,21 @@ def handle_unit_scan(serial):
     if not serial:
         frappe.throw(_("No barcode provided."))
 
-    unit_info = frappe.db.get_value('Rental Item Unit', 
-        {'unit_serial_number': serial}, 
-        ['name', 'unit_serial_number', 'unit_name', 'unit_condition', 'unit_location', 'movement_status'], 
-        as_dict=True
+    unit_info = frappe.db.get_value(
+        'Rental Item Unit',
+        {'unit_serial_number': serial},
+        ['name', 'unit_serial_number', 'unit_name', 'unit_condition', 'unit_location', 'movement_status'],
+        as_dict=True,
     )
+
+    # Support callers that provide document name instead of serial.
+    if not unit_info:
+        unit_info = frappe.db.get_value(
+            'Rental Item Unit',
+            {'name': serial},
+            ['name', 'unit_serial_number', 'unit_name', 'unit_condition', 'unit_location', 'movement_status'],
+            as_dict=True,
+        )
 
     if not unit_info:
         frappe.throw(_("Unit with Serial {0} not found.").format(serial))

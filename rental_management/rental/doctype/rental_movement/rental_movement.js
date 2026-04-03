@@ -68,25 +68,28 @@ frappe.ui.form.on('Rental Item Unit Child Table', {
     unit_doc_id: function (frm, cdt, cdn) {
         let row = locals[cdt][cdn];
         if (row.unit_doc_id) {
-            frappe.db.get_value('Rental Item Unit', row.unit_doc_id,
-                ['name', 'unit_serial_number', 'unit_name', 'unit_condition', 'unit_location', 'movement_status'],
-                (d) => {
-                    if (d) {
-                        if (!validate_ui_logic(frm, d)) {
-                            frm.get_field('rental_item_unit_child_table').grid.grid_rows_by_docname[cdn].remove();
-                            frm.refresh_field('rental_item_unit_child_table');
-                            return;
-                        }
-                        frappe.model.set_value(cdt, cdn, {
-                            'unit_serial_number': d.unit_serial_number,
-                            'unit_name': d.unit_name,
-                            'unit_condition': d.unit_condition,
-                            'prev_location': d.unit_location,
-                            'prev_movement_status': d.movement_status
-                        });
+            frappe.call({
+                method: "rental_management.api.handle_unit_scan",
+                args: { serial: row.unit_doc_id },
+                callback: function (r) {
+                    const d = r.message;
+                    if (!d) return;
+
+                    if (!validate_ui_logic(frm, d)) {
+                        frm.get_field('rental_item_unit_child_table').grid.grid_rows_by_docname[cdn].remove();
+                        frm.refresh_field('rental_item_unit_child_table');
+                        return;
                     }
+
+                    frappe.model.set_value(cdt, cdn, {
+                        'unit_serial_number': d.unit_serial_number,
+                        'unit_name': d.unit_name,
+                        'unit_condition': d.unit_condition,
+                        'prev_location': d.unit_location,
+                        'prev_movement_status': d.movement_status
+                    });
                 }
-            );
+            });
         }
     }
 });
