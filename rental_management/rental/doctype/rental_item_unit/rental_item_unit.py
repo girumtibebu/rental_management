@@ -3,9 +3,19 @@ from frappe.model.document import Document
 from frappe import _
 
 
-def sync_box_condition_to_children(box_name, box_condition):
-    if not box_name or not box_condition:
+def sync_box_condition_to_children(box_name, box_condition=None):
+    if not box_name:
         return
+
+    box_state = frappe.db.get_value(
+        "Rental Item Unit",
+        box_name,
+        ["unit_condition", "movement_status", "unit_location"],
+        as_dict=True,
+    ) or {}
+
+    movement_status_value = box_state.get("movement_status")
+    location_value = box_state.get("unit_location")
 
     child_rows = frappe.get_all(
         "Box Item Unit Child Table",
@@ -17,21 +27,51 @@ def sync_box_condition_to_children(box_name, box_condition):
         fields=["name", "document_id"],
     )
 
+    child_conditions = []
+
     for row in child_rows:
+        child_name = row.get("document_id")
+        child_condition = None
+        if child_name:
+            child_info = frappe.db.get_value(
+                "Rental Item Unit",
+                child_name,
+                ["unit_condition"],
+                as_dict=True,
+            ) or {}
+            child_condition = child_info.get("unit_condition")
+            if child_condition:
+                child_conditions.append(child_condition)
+
         frappe.db.set_value(
             "Box Item Unit Child Table",
             row.name,
-            "unit_condition",
-            box_condition,
+            {
+                "unit_condition": child_condition,
+                "movement_status": movement_status_value,
+                "current_location": location_value,
+            },
             update_modified=False,
         )
-        child_name = row.get("document_id")
         if child_name:
             frappe.db.set_value(
                 "Rental Item Unit",
                 child_name,
+                {
+                    "movement_status": movement_status_value,
+                    "unit_location": location_value,
+                },
+                update_modified=False,
+            )
+
+    if child_conditions:
+        derived_condition = child_conditions[0] if len(set(child_conditions)) == 1 else "Partially Ok"
+        if derived_condition != box_state.get("unit_condition"):
+            frappe.db.set_value(
+                "Rental Item Unit",
+                box_name,
                 "unit_condition",
-                box_condition,
+                derived_condition,
                 update_modified=False,
             )
 
@@ -41,7 +81,7 @@ class RentalItemUnit(Document):
         # This part was disabled in server scripts, but I'll integrate the logic for "Box" type
         if self.unit_type == "Box":
             self.sync_box_units_on_save()
-            self.sync_child_conditions_with_box()
+            self.sync_child_states_with_box()
 
     def after_insert(self):
         # Server Script: Math for Total Count
@@ -50,8 +90,8 @@ class RentalItemUnit(Document):
     def on_update(self):
         # Server Script: Math for Total Count
         self.update_template_quantities()
-        if self.unit_type == "Box" and self.unit_condition:
-            sync_box_condition_to_children(self.name, self.unit_condition)
+        if self.unit_type == "Box":
+            sync_box_condition_to_children(self.name)
 
     def sync_box_units_on_save(self):
         # Logic from "Rental Item Unit - Update parent box"
@@ -86,17 +126,40 @@ class RentalItemUnit(Document):
                     if frappe.db.get_value("Rental Item Unit", u, "parent_box") == self.name:
                         frappe.db.set_value("Rental Item Unit", u, "parent_box", None)
 
-    def sync_child_conditions_with_box(self):
-        # Box condition is authoritative for every child unit.
-        if not self.unit_condition:
-            return
+    def sync_child_states_with_box(self):
+        child_conditions = []
 
         for item in self.item_unit_list or []:
-            if item.unit_condition != self.unit_condition:
-                item.unit_condition = self.unit_condition
+            child_name = item.get("document_id")
+            if not child_name:
+                continue
 
-        if self.name:
-            sync_box_condition_to_children(self.name, self.unit_condition)
+            child_info = frappe.db.get_value(
+                "Rental Item Unit",
+                child_name,
+                ["unit_condition"],
+                as_dict=True,
+            ) or {}
+
+            child_condition = child_info.get("unit_condition")
+            if child_condition:
+                child_conditions.append(child_condition)
+            item.unit_condition = child_condition
+            item.movement_status = self.movement_status
+            item.current_location = self.unit_location
+
+            frappe.db.set_value(
+                "Rental Item Unit",
+                child_name,
+                {
+                    "movement_status": self.movement_status,
+                    "unit_location": self.unit_location,
+                },
+                update_modified=False,
+            )
+
+        if child_conditions:
+            self.unit_condition = child_conditions[0] if len(set(child_conditions)) == 1 else "Partially Ok"
 
     def update_template_quantities(self):
         # Logic from "Math for Total Count"

@@ -143,8 +143,10 @@ class RentalMovement(Document):
                 "unit_condition": new_unit_condition
             })
 
-            if master.unit_type == "Box" and new_unit_condition:
-                sync_box_condition_to_children(master.name, new_unit_condition)
+            if master.unit_type == "Box":
+                sync_box_condition_to_children(master.name)
+            elif master.parent_box:
+                sync_box_condition_to_children(master.parent_box)
 
             frappe.db.set_value("Rental Item Unit Child Table", row.name, {
                 "unit_location": new_location,

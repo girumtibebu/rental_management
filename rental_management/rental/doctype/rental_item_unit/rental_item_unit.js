@@ -22,7 +22,8 @@ frappe.ui.form.on('Rental Item Unit', {
 
         // Client Script: Rental Item Unit - update box condition
         if (frm.doc.unit_type === 'Box' && frm.doc.item_unit_list && frm.doc.item_unit_list.length > 0) {
-            sync_child_conditions_to_box(frm);
+            sync_child_state_to_box(frm);
+            update_box_condition_from_rows(frm);
         }
     },
 
@@ -43,26 +44,50 @@ frappe.ui.form.on('Rental Item Unit', {
     },
 
     item_unit_list_add: function (frm) {
-        if (frm.doc.unit_type === 'Box') sync_child_conditions_to_box(frm);
+        if (frm.doc.unit_type === 'Box') {
+            sync_child_state_to_box(frm);
+            update_box_condition_from_rows(frm);
+        }
     },
 
     item_unit_list_remove: function (frm) {
-        if (frm.doc.unit_type === 'Box') sync_child_conditions_to_box(frm);
+        if (frm.doc.unit_type === 'Box') {
+            sync_child_state_to_box(frm);
+            update_box_condition_from_rows(frm);
+        }
     },
 
     unit_condition: function (frm) {
         if (frm.doc.unit_type === 'Box') {
-            sync_child_conditions_to_box(frm);
+            update_box_condition_from_rows(frm);
+        }
+    },
+
+    movement_status: function (frm) {
+        if (frm.doc.unit_type === 'Box') {
+            sync_child_state_to_box(frm);
+        }
+    },
+
+    unit_location: function (frm) {
+        if (frm.doc.unit_type === 'Box') {
+            sync_child_state_to_box(frm);
         }
     }
 });
 
 frappe.ui.form.on('Box Item Unit Child Table', {
+    unit_condition: function (frm) {
+        if (frm.doc.unit_type === 'Box') {
+            update_box_condition_from_rows(frm);
+        }
+    },
+
     document_id: function (frm, cdt, cdn) {
         let row = locals[cdt][cdn];
         if (row.document_id) {
             frappe.db.get_value('Rental Item Unit', row.document_id,
-                ['name', 'unit_name', 'unit_condition', 'unit_serial_number', 'unit_type'],
+                ['name', 'unit_name', 'unit_condition', 'unit_serial_number', 'unit_type', 'movement_status', 'unit_location'],
                 (d) => {
                     if (d) {
                         if (d.unit_type === "Box") {
@@ -77,11 +102,14 @@ frappe.ui.form.on('Box Item Unit Child Table', {
                         }
                         frappe.model.set_value(cdt, cdn, {
                             'unit_name': d.unit_name,
-                            'unit_condition': frm.doc.unit_condition || d.unit_condition,
-                            'unit_serial_number': d.unit_serial_number
+                            'unit_condition': d.unit_condition,
+                            'unit_serial_number': d.unit_serial_number,
+                            'movement_status': frm.doc.movement_status || d.movement_status,
+                            'current_location': frm.doc.unit_location || d.unit_location
                         });
                         if (frm.doc.unit_type === 'Box') {
-                            sync_child_conditions_to_box(frm);
+                            sync_child_state_to_box(frm);
+                            update_box_condition_from_rows(frm);
                         }
                     }
                 }
@@ -108,7 +136,7 @@ function call_unit_api(frm, scan_value) {
             ["or", ["unit_serial_number", "=", scan_value]],
             ["or", ["unit_name", "=", scan_value]]
         ],
-        fields: ['name', 'unit_name', 'unit_condition', 'unit_serial_number', 'unit_type'],
+        fields: ['name', 'unit_name', 'unit_condition', 'unit_serial_number', 'unit_type', 'movement_status', 'unit_location'],
         limit: 1
     }).then(res => {
         if (res && res.length > 0) {
@@ -135,12 +163,15 @@ function call_unit_api(frm, scan_value) {
                 frappe.model.set_value(row.doctype, row.name, {
                     'document_id': d.name,
                     'unit_name': d.unit_name,
-                    'unit_condition': frm.doc.unit_condition || d.unit_condition,
-                    'unit_serial_number': d.unit_serial_number
+                    'unit_condition': d.unit_condition,
+                    'unit_serial_number': d.unit_serial_number,
+                    'movement_status': frm.doc.movement_status || d.movement_status,
+                    'current_location': frm.doc.unit_location || d.unit_location
                 });
                 frm.refresh_field('item_unit_list');
                 if (frm.doc.unit_type === 'Box') {
-                    sync_child_conditions_to_box(frm);
+                    sync_child_state_to_box(frm);
+                    update_box_condition_from_rows(frm);
                 }
                 frappe.show_alert({ message: __('Unit Added'), indicator: 'green' });
             }
@@ -152,12 +183,31 @@ function call_unit_api(frm, scan_value) {
     });
 }
 
-function sync_child_conditions_to_box(frm) {
-    if (frm.doc.unit_type !== 'Box' || !frm.doc.unit_condition) return;
+function sync_child_state_to_box(frm) {
+    if (frm.doc.unit_type !== 'Box') return;
 
     (frm.doc.item_unit_list || []).forEach(row => {
-        if (row.unit_condition !== frm.doc.unit_condition) {
-            frappe.model.set_value(row.doctype, row.name, 'unit_condition', frm.doc.unit_condition);
+        if (row.movement_status !== frm.doc.movement_status) {
+            frappe.model.set_value(row.doctype, row.name, 'movement_status', frm.doc.movement_status);
+        }
+        if (row.current_location !== frm.doc.unit_location) {
+            frappe.model.set_value(row.doctype, row.name, 'current_location', frm.doc.unit_location);
         }
     });
+}
+
+function update_box_condition_from_rows(frm) {
+    if (frm.doc.unit_type !== 'Box') return;
+
+    const conditions = (frm.doc.item_unit_list || [])
+        .map(row => row.unit_condition)
+        .filter(Boolean);
+
+    if (!conditions.length) return;
+
+    const unique = [...new Set(conditions)];
+    const derived = unique.length === 1 ? unique[0] : 'Partially Ok';
+    if (frm.doc.unit_condition !== derived) {
+        frm.set_value('unit_condition', derived);
+    }
 }

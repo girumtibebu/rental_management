@@ -9,7 +9,9 @@
   "document_id",
   "unit_serial_number",
   "unit_name",
-  "unit_condition"
+    "unit_condition",
+    "movement_status",
+    "current_location"
  ],
  "fields": [
   {
@@ -43,6 +45,20 @@
    "in_list_view": 1,
    "label": "Unit Condition",
    "read_only": 1
+    },
+    {
+     "fieldname": "movement_status",
+     "fieldtype": "Data",
+     "in_list_view": 1,
+     "label": "Movement Status",
+     "read_only": 1
+    },
+    {
+     "fieldname": "current_location",
+     "fieldtype": "Data",
+     "in_list_view": 1,
+     "label": "Current Location",
+     "read_only": 1
   }
  ],
  "grid_page_length": 50,
