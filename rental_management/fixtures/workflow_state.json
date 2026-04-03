@@ -1,16 +1,19 @@
 [
   {
     "doctype": "Workflow State",
+    "name": "Attention Required",
     "workflow_state_name": "Attention Required",
     "style": "Danger"
   },
   {
     "doctype": "Workflow State",
+    "name": "In Repair",
     "workflow_state_name": "In Repair",
     "style": "Warning"
   },
   {
     "doctype": "Workflow State",
+    "name": "Complete",
     "workflow_state_name": "Complete",
     "style": "Success"
   }

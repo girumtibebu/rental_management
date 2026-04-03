@@ -2,18 +2,56 @@ import frappe
 from frappe.model.document import Document
 from frappe.utils import now
 
+
 class RentalMovement(Document):
+    WAREHOUSE_ALIASES = {
+        "warehouse",
+        "main warehouse",
+        "wearehouse",
+        "waerhous",
+        "warehous",
+        "wearhouse",
+    }
+
+    def validate(self):
+        self.normalize_and_validate_locations()
+
     def after_insert(self):
         # Server Script: Rental Movement Tracking (Math)
         self.update_template_tracking()
 
-    def after_save(self):
+    def on_update(self):
         # Server Script: Rental Movement Save
         self.update_unit_master_records()
 
     def on_submit(self):
         # Server Script: Unit Log_Rental Movement
         self.create_unit_logs()
+
+    def normalize_location(self, value):
+        if not value:
+            return value
+
+        normalized = str(value).strip()
+        if normalized.lower() in self.WAREHOUSE_ALIASES:
+            return "Warehouse"
+        return normalized
+
+    def normalize_and_validate_locations(self):
+        self.from_location = self.normalize_location(self.from_location)
+        self.to_location = self.normalize_location(self.to_location)
+
+        tx = self.transaction_type
+
+        # Keep incoming warehouse moves consistent across docs.
+        if tx in ["CHECK_IN", "MAINTENANCE_IN"]:
+            self.to_location = "Warehouse"
+
+        if tx == "CHECK_OUT" and not self.to_location:
+            frappe.throw("To Location is required for CHECK_OUT.")
+
+        if tx == "MAINTENANCE_OUT" and not self.to_location:
+            self.to_location = "Repair Shop"
 
     def update_template_tracking(self):
         units = self.get("rental_item_unit_child_table") or []
@@ -68,13 +106,13 @@ class RentalMovement(Document):
 
             if tx == 'CHECK_OUT':
                 new_status = 'At Event'
-                new_location = self.to_location
+                new_location = self.normalize_location(self.to_location)
             elif tx in ['CHECK_IN', 'MAINTENANCE_IN']:
                 new_status = 'Warehouse'
-                new_location = 'Main Warehouse'
+                new_location = 'Warehouse'
             elif tx == 'MAINTENANCE_OUT':
                 new_status = 'In Maintenance'
-                new_location = 'Repair Shop'
+                new_location = self.normalize_location(self.to_location) or 'Repair Shop'
             elif tx == 'LOST':
                 new_status = 'Missing'
                 new_location = 'Unknown'
@@ -101,8 +139,8 @@ class RentalMovement(Document):
                 "event_type": "Movement",
                 "reference_doctype": self.doctype, 
                 "reference_name": self.name,       
-                "from_location": self.from_location,
-                "to_location": self.to_location,
+                "from_location": self.normalize_location(self.from_location),
+                "to_location": self.normalize_location(self.to_location),
                 "status": self.movement_status or self.transaction_type, # Safe fallback
                 "date": now()
             })
