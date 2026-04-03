@@ -22,7 +22,7 @@ frappe.ui.form.on('Rental Item Unit', {
 
         // Client Script: Rental Item Unit - update box condition
         if (frm.doc.unit_type === 'Box' && frm.doc.item_unit_list && frm.doc.item_unit_list.length > 0) {
-            sync_child_conditions(frm);
+            sync_child_conditions_to_box(frm);
         }
     },
 
@@ -43,21 +43,21 @@ frappe.ui.form.on('Rental Item Unit', {
     },
 
     item_unit_list_add: function (frm) {
-        if (frm.doc.unit_type === 'Box') update_box_unit_condition(frm);
+        if (frm.doc.unit_type === 'Box') sync_child_conditions_to_box(frm);
     },
 
     item_unit_list_remove: function (frm) {
-        if (frm.doc.unit_type === 'Box') update_box_unit_condition(frm);
+        if (frm.doc.unit_type === 'Box') sync_child_conditions_to_box(frm);
+    },
+
+    unit_condition: function (frm) {
+        if (frm.doc.unit_type === 'Box') {
+            sync_child_conditions_to_box(frm);
+        }
     }
 });
 
 frappe.ui.form.on('Box Item Unit Child Table', {
-    unit_condition: function (frm) {
-        if (frm.doc.unit_type === 'Box') {
-            update_box_unit_condition(frm);
-        }
-    },
-
     document_id: function (frm, cdt, cdn) {
         let row = locals[cdt][cdn];
         if (row.document_id) {
@@ -77,9 +77,12 @@ frappe.ui.form.on('Box Item Unit Child Table', {
                         }
                         frappe.model.set_value(cdt, cdn, {
                             'unit_name': d.unit_name,
-                            'unit_condition': d.unit_condition,
+                            'unit_condition': frm.doc.unit_condition || d.unit_condition,
                             'unit_serial_number': d.unit_serial_number
                         });
+                        if (frm.doc.unit_type === 'Box') {
+                            sync_child_conditions_to_box(frm);
+                        }
                     }
                 }
             );
@@ -132,10 +135,13 @@ function call_unit_api(frm, scan_value) {
                 frappe.model.set_value(row.doctype, row.name, {
                     'document_id': d.name,
                     'unit_name': d.unit_name,
-                    'unit_condition': d.unit_condition,
+                    'unit_condition': frm.doc.unit_condition || d.unit_condition,
                     'unit_serial_number': d.unit_serial_number
                 });
                 frm.refresh_field('item_unit_list');
+                if (frm.doc.unit_type === 'Box') {
+                    sync_child_conditions_to_box(frm);
+                }
                 frappe.show_alert({ message: __('Unit Added'), indicator: 'green' });
             }
         } else {
@@ -146,47 +152,12 @@ function call_unit_api(frm, scan_value) {
     });
 }
 
-function sync_child_conditions(frm) {
-    const document_ids = frm.doc.item_unit_list.map(row => row.document_id).filter(Boolean);
-    if (document_ids.length > 0) {
-        frappe.call({
-            method: 'frappe.client.get_list',
-            args: {
-                doctype: 'Rental Item Unit',
-                filters: [['name', 'in', document_ids]],
-                fields: ['name', 'unit_condition']
-            },
-            callback: function (r) {
-                if (r.message) {
-                    const condition_map = {};
-                    r.message.forEach(d => { condition_map[d.name] = d.unit_condition; });
-                    frm.doc.item_unit_list.forEach(row => {
-                        let latest_cond = condition_map[row.document_id];
-                        if (latest_cond && row.unit_condition !== latest_cond) {
-                            frappe.model.set_value(row.doctype, row.name, 'unit_condition', latest_cond);
-                        }
-                    });
-                    update_box_unit_condition(frm);
-                }
-            }
-        });
-    }
-}
+function sync_child_conditions_to_box(frm) {
+    if (frm.doc.unit_type !== 'Box' || !frm.doc.unit_condition) return;
 
-function update_box_unit_condition(frm) {
-    let conds = (frm.doc.item_unit_list || [])
-        .map(r => r.unit_condition)
-        .filter(Boolean);
-
-    if (!conds.length) {
-        frm.set_value('unit_condition', null);
-        return;
-    }
-
-    let uniqueConds = [...new Set(conds)];
-    let new_cond = uniqueConds.length === 1 ? uniqueConds[0] : 'Partially Ok';
-
-    if (frm.doc.unit_condition !== new_cond) {
-        frm.set_value('unit_condition', new_cond);
-    }
+    (frm.doc.item_unit_list || []).forEach(row => {
+        if (row.unit_condition !== frm.doc.unit_condition) {
+            frappe.model.set_value(row.doctype, row.name, 'unit_condition', frm.doc.unit_condition);
+        }
+    });
 }

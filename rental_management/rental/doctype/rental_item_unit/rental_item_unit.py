@@ -8,7 +8,7 @@ class RentalItemUnit(Document):
         # This part was disabled in server scripts, but I'll integrate the logic for "Box" type
         if self.unit_type == "Box":
             self.sync_box_units_on_save()
-            self.update_box_condition()
+            self.sync_child_conditions_with_box()
 
     def after_insert(self):
         # Server Script: Math for Total Count
@@ -51,22 +51,24 @@ class RentalItemUnit(Document):
                     if frappe.db.get_value("Rental Item Unit", u, "parent_box") == self.name:
                         frappe.db.set_value("Rental Item Unit", u, "parent_box", None)
 
-    def update_box_condition(self):
-        # Logic from "Rental item unit - update box condition"
-        if self.item_unit_list:
-            for item in self.item_unit_list:
-                if item.unit_serial_number:
-                    latest_cond = frappe.db.get_value("Rental Item Unit", 
-                        {"unit_serial_number": item.unit_serial_number}, "unit_condition")
-                    if latest_cond:
-                        item.unit_condition = latest_cond
+    def sync_child_conditions_with_box(self):
+        # Box condition is authoritative for every child unit.
+        if not self.unit_condition:
+            return
 
-            conditions = [d.unit_condition for d in self.item_unit_list if d.unit_condition]
-            if conditions:
-                unique_conditions = list(set(conditions))
-                new_cond = unique_conditions[0] if len(unique_conditions) == 1 else "Partially Ok"
-                if self.unit_condition != new_cond:
-                    self.unit_condition = new_cond
+        for item in self.item_unit_list or []:
+            if item.unit_condition != self.unit_condition:
+                item.unit_condition = self.unit_condition
+
+            child_name = item.get("document_id")
+            if child_name:
+                frappe.db.set_value(
+                    "Rental Item Unit",
+                    child_name,
+                    "unit_condition",
+                    self.unit_condition,
+                    update_modified=False,
+                )
 
     def update_template_quantities(self):
         # Logic from "Math for Total Count"
