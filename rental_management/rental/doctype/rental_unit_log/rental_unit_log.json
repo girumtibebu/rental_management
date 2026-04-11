@@ -7,6 +7,7 @@
  "field_order": [
   "unit",
   "event_type",
+  "date",
   "reference_doctype",
   "reference_name",
   "from_location",
@@ -20,8 +21,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Unit",
-   "options": "Rental Item Unit",
-   "unique": 1
+   "options": "Rental Item Unit"
   },
   {
    "fieldname": "event_type",
@@ -65,6 +65,12 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Status"
+  },
+  {
+   "fieldname": "date",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Date & Time"
   }
  ],
  "grid_page_length": 50,
