@@ -1,0 +1,220 @@
+# ─────────────────────────────────────────────────────────────────
+#  Rental Management – local Docker Compose stack
+#
+#  Exposes the web UI on http://localhost:8085 (or the value of
+#  HTTP_PORT) so it is reachable from Windows Chrome when running
+#  inside WSL 2.
+#
+#  Quick start
+#  ───────────
+#  1. cp .env.example .env          # review / adjust values
+#  2. docker compose up --build -d  # first run builds the image
+#  3. Wait ~3 min for create-site to finish (docker compose logs -f create-site)
+#  4. Open http://localhost:8085 in Chrome
+#     Username: Administrator   Password: value of ADMIN_PASSWORD in .env
+#
+#  To stop:  docker compose down
+#  To wipe:  docker compose down -v   (removes all volumes / data)
+# ─────────────────────────────────────────────────────────────────
+
+x-healthcheck-db: &healthcheck-db
+  condition: service_healthy
+
+x-depends-configurator: &depends-configurator
+  condition: service_completed_successfully
+
+x-depends-site: &depends-site
+  condition: service_completed_successfully
+
+x-app-volumes: &app-volumes
+  volumes:
+    - sites:/home/frappe/frappe-bench/sites
+    - logs:/home/frappe/frappe-bench/logs
+
+services:
+
+  # ── Database ──────────────────────────────────────────────────
+  db:
+    image: mariadb:10.6
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost",
+             "--password=${DB_PASSWORD:-admin}"]
+      interval: 3s
+      timeout: 5s
+      retries: 30
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --skip-character-set-client-handshake
+      - --skip-innodb-read-only-compressed
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-admin}
+    volumes:
+      - db-data:/var/lib/mysql
+
+  # ── Redis instances ───────────────────────────────────────────
+  redis-cache:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis-cache-data:/data
+
+  redis-queue:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis-queue-data:/data
+
+  # ── One-time configurator (writes common_site_config.json) ────
+  configurator:
+    build:
+      context: .
+      args:
+        ERPNEXT_VERSION: ${ERPNEXT_VERSION:-v15}
+    entrypoint: ["bash", "-c"]
+    command:
+      - |
+        bench set-config -g db_host db
+        bench set-config -gp db_port 3306
+        bench set-config -g redis_cache  "redis://redis-cache:6379"
+        bench set-config -g redis_queue  "redis://redis-queue:6379"
+        bench set-config -g redis_socketio "redis://redis-queue:6379"
+        bench set-config -gp socketio_port 9000
+    volumes:
+      - sites:/home/frappe/frappe-bench/sites
+    depends_on:
+      db:
+        <<: *healthcheck-db
+
+  # ── One-time site creator ─────────────────────────────────────
+  create-site:
+    build:
+      context: .
+      args:
+        ERPNEXT_VERSION: ${ERPNEXT_VERSION:-v15}
+    entrypoint: ["bash", "-c"]
+    command:
+      - |
+        # Wait until configurator has written common_site_config.json
+        until [ -s /home/frappe/frappe-bench/sites/common_site_config.json ]; do
+          echo "Waiting for configurator..."; sleep 3
+        done
+
+        SITE="${SITE_NAME:-mysite.localhost}"
+
+        # Skip if site already exists (e.g. after a container restart)
+        if bench --site "$SITE" show-config > /dev/null 2>&1; then
+          echo "Site $SITE already exists – skipping creation."
+          exit 0
+        fi
+
+        bench new-site \
+          --no-mariadb-socket \
+          --admin-password="${ADMIN_PASSWORD:-admin}" \
+          --db-root-password="${DB_PASSWORD:-admin}" \
+          --install-app erpnext \
+          --set-default \
+          "$SITE"
+
+        bench --site "$SITE" install-app rental_management
+        echo "✓ Site $SITE created and apps installed."
+    <<: *app-volumes
+    depends_on:
+      configurator:
+        <<: *depends-configurator
+      db:
+        <<: *healthcheck-db
+
+  # ── Frappe web (gunicorn) ────────────────────────────────────
+  backend:
+    build:
+      context: .
+      args:
+        ERPNEXT_VERSION: ${ERPNEXT_VERSION:-v15}
+    restart: unless-stopped
+    command: bench serve --port 8000
+    <<: *app-volumes
+    depends_on:
+      create-site:
+        <<: *depends-site
+
+  # ── Socket.IO server ──────────────────────────────────────────
+  websocket:
+    build:
+      context: .
+      args:
+        ERPNEXT_VERSION: ${ERPNEXT_VERSION:-v15}
+    restart: unless-stopped
+    command: node /home/frappe/frappe-bench/apps/frappe/socketio.js
+    volumes:
+      - sites:/home/frappe/frappe-bench/sites
+    depends_on:
+      create-site:
+        <<: *depends-site
+
+  # ── Background workers ────────────────────────────────────────
+  queue-short:
+    build:
+      context: .
+      args:
+        ERPNEXT_VERSION: ${ERPNEXT_VERSION:-v15}
+    restart: unless-stopped
+    command: bench worker --queue short,default
+    <<: *app-volumes
+    depends_on:
+      create-site:
+        <<: *depends-site
+
+  queue-long:
+    build:
+      context: .
+      args:
+        ERPNEXT_VERSION: ${ERPNEXT_VERSION:-v15}
+    restart: unless-stopped
+    command: bench worker --queue long,default,short
+    <<: *app-volumes
+    depends_on:
+      create-site:
+        <<: *depends-site
+
+  # ── Scheduler ─────────────────────────────────────────────────
+  scheduler:
+    build:
+      context: .
+      args:
+        ERPNEXT_VERSION: ${ERPNEXT_VERSION:-v15}
+    restart: unless-stopped
+    command: bench schedule
+    <<: *app-volumes
+    depends_on:
+      create-site:
+        <<: *depends-site
+
+  # ── Nginx reverse proxy (public entry point) ──────────────────
+  frontend:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    environment:
+      # Passed to envsubst inside the container
+      FRAPPE_BACKEND: "backend:8000"
+      FRAPPE_SOCKETIO: "websocket:9000"
+      SITE_NAME: ${SITE_NAME:-mysite.localhost}
+    volumes:
+      - ./nginx.conf:/etc/nginx/templates/default.conf.template:ro
+      - sites:/home/frappe/frappe-bench/sites:ro
+    ports:
+      # Windows Chrome: http://localhost:<HTTP_PORT>
+      - "${HTTP_PORT:-8085}:80"
+    depends_on:
+      backend:
+        condition: service_started
+      websocket:
+        condition: service_started
+
+volumes:
+  db-data:
+  redis-cache-data:
+  redis-queue-data:
+  sites:
+  logs:
