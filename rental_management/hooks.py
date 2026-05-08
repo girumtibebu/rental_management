@@ -40,11 +40,15 @@ required_apps = ["erpnext"]
 # webform_include_css = {"doctype": "public/css/doctype.css"}
 
 # include js in page
-# page_js = {"page" : "public/js/file.js"}
+page_js = {"warehouse_dashboard": "public/js/warehouse_dashboard.js"}
 
 # include js in doctype views
-# doctype_js = {"doctype" : "public/js/doctype.js"}
-# doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
+doctype_js = {
+	"Rental Item Maintenance": "public/js/rental_item_maintenance.js",
+}
+doctype_list_js = {
+    "Ops Entry": "public/js/ops_entry_list.js",
+}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
 
