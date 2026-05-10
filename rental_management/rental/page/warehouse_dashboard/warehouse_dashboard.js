@@ -5,72 +5,73 @@ frappe.pages['warehouse_dashboard'].on_page_load = function (wrapper) {
 		single_column: true,
 	});
 
-	var dashboard_html = [
+	if (!document.getElementById('warehouse-dashboard-styles')) {
+		var style = document.createElement('style');
+		style.id = 'warehouse-dashboard-styles';
+		style.textContent = [
+			'.warehouse-container{background:#000;color:#fff;min-height:100vh;font-family:"Segoe UI",sans-serif}',
+			'.yellow-top-bar{background:#ffc107;color:#000;padding:15px;display:flex;justify-content:space-between;align-items:center;gap:20px;font-size:28px;font-weight:900;text-transform:uppercase}',
+			'.main-title{text-align:center;flex:1}',
+			'.dashboard-body{display:grid;grid-template-columns:minmax(0,2fr) minmax(320px,1fr);gap:12px;padding:10px;align-items:start}',
+			'.dashboard-left,.dashboard-right{display:flex;flex-direction:column;gap:12px;min-width:0}',
+			'.dashboard-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}',
+			'.summary-card,.table-shell,.card-shell{background:#111;border:1px solid #333;overflow:hidden}',
+			'.summary-card{padding:14px 16px;text-transform:uppercase}',
+			'.summary-label{font-size:12px;letter-spacing:.08em;color:#bbb;margin-bottom:8px}',
+			'.summary-value{font-size:30px;font-weight:900;color:#ffc107}',
+			'.column-title{background:#222;padding:12px;text-align:left;font-size:16px;border-bottom:3px solid #ffc107;font-weight:700;letter-spacing:.06em;text-transform:uppercase}',
+			'.table-scroll{overflow:auto;max-height:calc(100vh - 220px)}',
+			'.ops-table{width:100%;border-collapse:collapse;min-width:1100px}',
+			'.ops-table thead th{position:sticky;top:0;background:#1d1d1d;color:#fff;font-size:12px;letter-spacing:.05em;padding:12px 10px;text-align:left;border-bottom:1px solid #333;z-index:1}',
+			'.ops-table tbody td{padding:10px;border-bottom:1px solid #2d2d2d;vertical-align:top;font-size:13px;color:#f0f0f0;white-space:normal;word-break:break-word}',
+			'.ops-table tbody tr:nth-child(even){background:#151515}',
+			'.ops-table tbody tr:hover{background:#1d1d1d}',
+			'.card-list{padding:18px;display:flex;flex-direction:column;gap:14px}',
+			'.entry-card,.project-card{background:#0f0f0f;border:1px solid #222;border-radius:12px;padding:18px}',
+			'.entry-title,.project-title{font-size:16px;font-weight:800;color:#fff;margin-bottom:10px}',
+			'.entry-meta,.project-meta{display:flex;flex-wrap:wrap;gap:10px;color:#bbb;font-size:12px;margin-bottom:12px}',
+			'.entry-description{color:#ddd;font-size:13px;line-height:1.6}',
+			'.project-empty,.entry-empty{padding:16px;color:#bbb}',
+			'.color-red{background:#b71c1c}',
+			'.color-purple{background:#8e24aa}',
+			'.color-grey{background:#424242}',
+			'@media (max-width:1200px){.dashboard-body{grid-template-columns:1fr}.dashboard-summary{grid-template-columns:1fr}.table-scroll{max-height:none}.yellow-top-bar{font-size:18px;flex-wrap:wrap}}',
+		].join('\n');
+		document.head.appendChild(style);
+	}
+
+	page.main.html([
 		'<div class="warehouse-container">',
 			'<div class="yellow-top-bar">',
 				'<div id="dashboard-clock">00:00</div>',
 				'<div class="main-title">STORE VIDEO DAILY OPERATIONS</div>',
 				'<div id="dashboard-date">Date</div>',
 			'</div>',
-			'<div class="dashboard-summary">',
-				'<div class="summary-card">',
-					'<div class="summary-label">TOTAL OPS ENTRIES</div>',
-					'<div id="entry-count" class="summary-value">0</div>',
+			'<div class="dashboard-body">',
+				'<div class="dashboard-left">',
+					'<div class="dashboard-summary">',
+						'<div class="summary-card"><div class="summary-label">TOTAL OPS ENTRIES</div><div id="entry-count" class="summary-value">0</div></div>',
+						'<div class="summary-card"><div class="summary-label">TODAY LIVE ITEMS</div><div id="live-count" class="summary-value">0</div></div>',
+					'</div>',
+					'<div class="table-shell">',
+						'<div class="column-title">OPS ENTRY LIST</div>',
+						'<div class="table-scroll">',
+							'<table class="ops-table">',
+								'<thead><tr><th>TITLE</th><th>ACTIVITY TYPE</th><th>STATUS</th><th>PRIORITY</th><th>COLOR</th><th>DESCRIPTION</th></tr></thead>',
+								'<tbody id="ops-entry-list"></tbody>',
+							'</table>',
+						'</div>',
+					'</div>',
 				'</div>',
-				'<div class="summary-card">',
-					'<div class="summary-label">TODAY LIVE ITEMS</div>',
-					'<div id="live-count" class="summary-value">0</div>',
-				'</div>',
-			'</div>',
-			'<div class="table-shell">',
-				'<div class="column-title">OPS ENTRY LIST</div>',
-				'<div class="table-scroll">',
-					'<table class="ops-table">',
-						'<thead>',
-							'<tr>',
-								'<th>NAME</th>',
-								'<th>TITLE</th>',
-								'<th>ACTIVITY TYPE</th>',
-								'<th>STATUS</th>',
-								'<th>PRIORITY</th>',
-								'<th>COLOR</th>',
-								'<th>DESCRIPTION</th>',
-							'</tr>',
-						'</thead>',
-						'<tbody id="ops-entry-list"></tbody>',
-					'</table>',
+				'<div class="dashboard-right">',
+					'<div class="card-shell">',
+						'<div class="column-title">UPCOMING PROJECTS</div>',
+						'<div class="card-list" id="project-list"></div>',
+					'</div>',
 				'</div>',
 			'</div>',
-		'</div>',
-	].join('');
-
-	var $mount = $(wrapper).find('.layout-main-section');
-	if (!$mount.length) {
-		$mount = $(wrapper).find('.layout-main-section-wrapper');
-	}
-	if (!$mount.length) {
-		$mount = $(wrapper);
-	}
-
-	function render_error(error) {
-		$mount.empty().append(
-			'<div style="padding: 20px; color: #fff; background: #b71c1c; font-weight: 700;">Warehouse dashboard failed to load: ' +
-			frappe.utils.escape_html(error && error.message ? error.message : String(error)) +
-			'</div>'
-		);
-	}
-
-	window.setTimeout(function () {
-		try {
-			$mount.empty().append(dashboard_html);
-			update_clock();
-			setInterval(update_clock, 1000);
-			setInterval(refresh_data, 10000);
-			refresh_data();
-		} catch (error) {
-			render_error(error);
-		}
-	}, 0);
+		'</div>'
+	].join(''));
 
 	function pad(value) {
 		return String(value).padStart(2, '0');
@@ -79,108 +80,47 @@ frappe.pages['warehouse_dashboard'].on_page_load = function (wrapper) {
 	function update_clock() {
 		var now = new Date();
 		$('#dashboard-clock').text(pad(now.getHours()) + ':' + pad(now.getMinutes()));
-		$('#dashboard-date').text(now.toLocaleDateString(undefined, {
-			weekday: 'short',
-			year: 'numeric',
-			month: 'short',
-			day: 'numeric',
-		}));
-	}
-
-	function format_time(value) {
-		if (!value) {
-			return '--:--';
-		}
-
-		var date_value = new Date(value);
-		if (isNaN(date_value.getTime())) {
-			return '--:--';
-		}
-
-		return pad(date_value.getHours()) + ':' + pad(date_value.getMinutes());
+		$('#dashboard-date').text(now.toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' }));
 	}
 
 	function format_datetime(value) {
 		if (!value) {
 			return '';
 		}
-
 		var date_value = new Date(value);
 		if (isNaN(date_value.getTime())) {
 			return '';
 		}
-
-		return date_value.toLocaleString(undefined, {
-			month: 'short',
-			day: 'numeric',
-			year: 'numeric',
-			hour: '2-digit',
-			minute: '2-digit',
-		});
+		return date_value.toLocaleString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 	}
 
 	function get_color_class(item) {
 		var color = (item.color || '').toLowerCase();
-		if (color.includes('red')) {
-			return 'color-red';
-		}
-		if (color.includes('purple')) {
-			return 'color-purple';
-		}
+		if (color.includes('red')) return 'color-red';
+		if (color.includes('purple')) return 'color-purple';
 		return 'color-grey';
 	}
 
 	function get_priority_rank(priority) {
 		var value = (priority || '').toLowerCase();
-		if (value === 'urgent') {
-			return 0;
-		}
-		if (value === 'high') {
-			return 1;
-		}
-		if (value === 'medium') {
-			return 2;
-		}
-		if (value === 'low') {
-			return 3;
-		}
+		if (value === 'urgent') return 0;
+		if (value === 'high') return 1;
+		if (value === 'medium') return 2;
+		if (value === 'low') return 3;
 		return 99;
 	}
 
-	function get_bucket(item) {
-		var activity_type = (item.activity_type || '').toLowerCase();
-		var title = (item.title || '').toLowerCase();
-
-		if (activity_type.includes('logistics') || activity_type.includes('truck') || title.includes('truck')) {
-			return '#logistics-list';
-		}
-		if (activity_type.includes('task') || activity_type.includes('maintenance')) {
-			return '#task-list';
-		}
-		return '#schedule-list';
-	}
-
 	function render_entry(item) {
-		var color_class = get_color_class(item);
-		var row = [
+		$('#ops-entry-list').append([
 			'<tr>',
-				'<td>' + frappe.utils.escape_html(item.name || '') + '</td>',
 				'<td>' + frappe.utils.escape_html(item.title || '') + '</td>',
 				'<td>' + frappe.utils.escape_html(item.activity_type || '') + '</td>',
 				'<td>' + frappe.utils.escape_html(item.status1 || '') + '</td>',
 				'<td>' + frappe.utils.escape_html(item.priority || '') + '</td>',
-				'<td><span class="color-pill ' + color_class + '" title="' + frappe.utils.escape_html(item.color || '') + '"></span></td>',
-				'<td>' + frappe.utils.escape_html(item.allocated_to || '') + '</td>',
-				'<td>' + frappe.utils.escape_html(format_datetime(item.exp_start_date) || '') + '</td>',
-				'<td>' + frappe.utils.escape_html(format_datetime(item.exp_end_date) || '') + '</td>',
-				'<td>' + frappe.utils.escape_html(String(item.expected_time || '')) + '</td>',
-				'<td>' + frappe.utils.escape_html(String(item.progress || '')) + '</td>',
-				'<td>' + frappe.utils.escape_html([item.reference_type, item.reference_name].filter(Boolean).join(' / ')) + '</td>',
+				'<td><span class="color-pill ' + get_color_class(item) + '" title="' + frappe.utils.escape_html(item.color || '') + '"></span></td>',
 				'<td>' + frappe.utils.escape_html(item.description || '') + '</td>',
 			'</tr>',
-		].join('');
-
-		$('#ops-entry-list').append(row);
+		].join(''));
 	}
 
 	function render_board(items) {
@@ -197,10 +137,30 @@ frappe.pages['warehouse_dashboard'].on_page_load = function (wrapper) {
 			return item.exp_start_date;
 		}).length);
 		if (!list.length) {
-			$('#ops-entry-list').append('<tr><td colspan="13" style="padding: 16px; color: #bbb;">No Ops Entry records found.</td></tr>');
+			$('#ops-entry-list').append('<tr><td colspan="6" style="padding:16px;color:#bbb;">No Ops Entry records found.</td></tr>');
 			return;
 		}
 		list.forEach(render_entry);
+	}
+
+	function render_projects(items) {
+		var list = (items || []).slice();
+		$('#project-list').empty();
+		if (!list.length) {
+			$('#project-list').append('<div class="project-empty">No upcoming projects found.</div>');
+			return;
+		}
+		list.forEach(function (project) {
+			$('#project-list').append([
+				'<div class="project-card">',
+					'<div class="project-title">' + frappe.utils.escape_html(project.project_name || project.name || '') + '</div>',
+					'<div class="project-meta">',
+						'<span><strong>Status:</strong> ' + frappe.utils.escape_html(project.status || '') + '</span>',
+						'<span><strong>Start:</strong> ' + frappe.utils.escape_html(format_datetime(project.expected_start_date) || 'TBD') + '</span>',
+					'</div>',
+				'</div>',
+			].join(''));
+		});
 	}
 
 	function refresh_data() {
@@ -208,7 +168,7 @@ frappe.pages['warehouse_dashboard'].on_page_load = function (wrapper) {
 			method: 'frappe.client.get_list',
 			args: {
 				doctype: 'Ops Entry',
-				fields: ['name', 'title', 'activity_type', 'status1', 'priority', 'color', 'allocated_to', 'exp_start_date', 'exp_end_date', 'expected_time', 'progress', 'reference_type', 'reference_name', 'description'],
+				fields: ['title', 'activity_type', 'status1', 'priority', 'color', 'description', 'exp_start_date', 'modified'],
 				order_by: 'modified desc',
 				limit_page_length: 200,
 			},
@@ -217,18 +177,24 @@ frappe.pages['warehouse_dashboard'].on_page_load = function (wrapper) {
 				update_clock();
 			},
 		});
+
+		frappe.call({
+			method: 'frappe.client.get_list',
+			args: {
+				doctype: 'Project',
+				fields: ['name', 'project_name', 'status', 'expected_start_date'],
+				filters: [['Project', 'status', '!=', 'Completed']],
+				order_by: 'expected_start_date asc',
+				limit_page_length: 10,
+			},
+			callback: function (r) {
+				render_projects(r.message || []);
+			},
+		});
 	}
 
-	window.setTimeout(function () {
-		try {
-			$mount.empty().append(dashboard_html);
-			update_clock();
-			refresh_data();
-			window.setInterval(update_clock, 1000);
-			window.setInterval(refresh_data, 10000);
-		} catch (error) {
-			render_error(error);
-		}
-	}, 0);
-
+	update_clock();
+	refresh_data();
+	window.setInterval(update_clock, 1000);
+	window.setInterval(refresh_data, 10000);
 };
