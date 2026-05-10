@@ -1,7 +1,7 @@
 frappe.pages['warehouse_dashboard'].on_page_load = function (wrapper) {
 	var page = frappe.ui.make_app_page({
 		parent: wrapper,
-		title: __('Store Video Daily Operations'),
+		title: __('Warehouse Daily Operations'),
 		single_column: true,
 	});
 
@@ -44,7 +44,7 @@ frappe.pages['warehouse_dashboard'].on_page_load = function (wrapper) {
 		'<div class="warehouse-container">',
 			'<div class="yellow-top-bar">',
 				'<div id="dashboard-clock">00:00</div>',
-				'<div class="main-title">STORE VIDEO DAILY OPERATIONS</div>',
+				'<div class="main-title">WAREHOUSE DAILY OPERATIONS</div>',
 				'<div id="dashboard-date">Date</div>',
 			'</div>',
 			'<div class="dashboard-body">',
@@ -57,7 +57,7 @@ frappe.pages['warehouse_dashboard'].on_page_load = function (wrapper) {
 						'<div class="column-title">OPS ENTRY LIST</div>',
 						'<div class="table-scroll">',
 							'<table class="ops-table">',
-								'<thead><tr><th>TITLE</th><th>ACTIVITY TYPE</th><th>STATUS</th><th>PRIORITY</th><th>COLOR</th><th>DESCRIPTION</th></tr></thead>',
+								'<thead><tr><th>TITLE</th><th>ACTIVITY TYPE</th><th>STATUS</th><th>PRIORITY</th><th>DESCRIPTION</th></tr></thead>',
 								'<tbody id="ops-entry-list"></tbody>',
 							'</table>',
 						'</div>',
@@ -94,13 +94,6 @@ frappe.pages['warehouse_dashboard'].on_page_load = function (wrapper) {
 		return date_value.toLocaleString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 	}
 
-	function get_color_class(item) {
-		var color = (item.color || '').toLowerCase();
-		if (color.includes('red')) return 'color-red';
-		if (color.includes('purple')) return 'color-purple';
-		return 'color-grey';
-	}
-
 	function get_priority_rank(priority) {
 		var value = (priority || '').toLowerCase();
 		if (value === 'urgent') return 0;
@@ -117,7 +110,6 @@ frappe.pages['warehouse_dashboard'].on_page_load = function (wrapper) {
 				'<td>' + frappe.utils.escape_html(item.activity_type || '') + '</td>',
 				'<td>' + frappe.utils.escape_html(item.status1 || '') + '</td>',
 				'<td>' + frappe.utils.escape_html(item.priority || '') + '</td>',
-				'<td><span class="color-pill ' + get_color_class(item) + '" title="' + frappe.utils.escape_html(item.color || '') + '"></span></td>',
 				'<td>' + frappe.utils.escape_html(item.description || '') + '</td>',
 			'</tr>',
 		].join(''));
@@ -137,7 +129,7 @@ frappe.pages['warehouse_dashboard'].on_page_load = function (wrapper) {
 			return item.exp_start_date;
 		}).length);
 		if (!list.length) {
-			$('#ops-entry-list').append('<tr><td colspan="6" style="padding:16px;color:#bbb;">No Ops Entry records found.</td></tr>');
+			$('#ops-entry-list').append('<tr><td colspan="5" style="padding:16px;color:#bbb;">No Ops Entry records found.</td></tr>');
 			return;
 		}
 		list.forEach(render_entry);
@@ -161,6 +153,13 @@ frappe.pages['warehouse_dashboard'].on_page_load = function (wrapper) {
 				'</div>',
 			].join(''));
 		});
+	}
+
+	function get_selective_projects() {
+		if (typeof window.rental_dashboard_select_projects === 'function') {
+			return window.rental_dashboard_select_projects();
+		}
+		return null;
 	}
 
 	function refresh_data() {
@@ -188,7 +187,8 @@ frappe.pages['warehouse_dashboard'].on_page_load = function (wrapper) {
 				limit_page_length: 10,
 			},
 			callback: function (r) {
-				render_projects(r.message || []);
+				var projects = get_selective_projects();
+				render_projects(projects || r.message || []);
 			},
 		});
 	}
