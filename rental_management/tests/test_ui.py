@@ -5,7 +5,7 @@ from frappe.tests import IntegrationTestCase
 
 from rental_management.rental.setup.install import RENTAL_ITEM_GROUP, setup
 from rental_management.rental.stock import get_warehouse
-from rental_management.ui import catalog, dashboard, maintenance, movements, units
+from rental_management.ui import catalog, dashboard, links, maintenance, movements, units
 
 
 def ensure(doctype, name, **values):
@@ -219,3 +219,26 @@ class TestRentalUI(IntegrationTestCase):
                 movements.create_movement("CHECK_OUT", units=["X"], to_location="Y")
         finally:
             frappe.set_user("Administrator")
+
+    # ------------------------------------------------------------ quick create
+    def test_missing_link_records_are_created_from_the_app(self):
+        category = links.quick_create("Item Group", f"UI Test Rigging {self.tag}")
+        self.assertEqual(frappe.db.get_value("Item Group", category, "parent_item_group"), RENTAL_ITEM_GROUP)
+        self.assertIn(category, catalog.get_categories())
+
+        first = links.quick_create("Rent Item Type", f"Truss {self.tag}")
+        second = links.quick_create("Rent Item Type", f"Truss Clamp {self.tag}")
+        codes = {frappe.db.get_value("Rent Item Type", name, "type_code") for name in (first, second)}
+        self.assertEqual(len(codes), 2)
+
+        zone = links.quick_create("Zone", f"Z{self.tag}")
+        self.assertEqual(links.quick_create("Zone", f"Z{self.tag}"), zone)
+        with self.assertRaises(frappe.ValidationError):
+            links.quick_create("User", "someone")
+
+    def test_desk_icon_opens_the_rental_app(self):
+        if not frappe.db.table_exists("Desktop Icon"):
+            return
+        icon = frappe.db.get_value("Desktop Icon", "Rental Management", ["icon_type", "link_type", "link", "hidden"], as_dict=True)
+        self.assertEqual((icon.icon_type, icon.link_type, icon.link, icon.hidden), ("App", "External", "/rental", 0))
+        self.assertFalse(frappe.db.exists("Workspace", {"module": "Rental"}))

@@ -30,17 +30,35 @@
           <div class="font-medium text-ink-gray-9">{{ option.value }}</div>
           <div v-if="option.description" class="truncate text-xs text-ink-gray-5">{{ option.description }}</div>
         </li>
-        <li v-if="!options.length" class="px-3 py-2 text-sm text-ink-gray-5">{{ loading ? 'Searching…' : 'No matches' }}</li>
+        <li
+          v-if="canCreate"
+          class="cursor-pointer px-3 py-1.5 text-sm font-medium text-ink-blue-3"
+          :class="highlighted === options.length ? 'bg-surface-blue-2' : 'hover:bg-surface-gray-2'"
+          @mousedown.prevent="create"
+          @mousemove="highlighted = options.length"
+        >
+          {{ creating ? 'Creating…' : `+ Create ${doctypeLabel} “${text.trim()}”` }}
+        </li>
+        <li v-else-if="!options.length" class="px-3 py-2 text-sm text-ink-gray-5">{{ loading ? 'Searching…' : 'No matches' }}</li>
       </ul>
     </div>
   </label>
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
-import { api } from '../api'
+import { computed, ref, watch } from 'vue'
+import { toast } from 'frappe-ui'
+import { api, readError } from '../api'
 
-const props = defineProps({ modelValue: String, label: String, doctype: String, placeholder: String, filters: Object })
+const props = defineProps({
+  modelValue: String,
+  label: String,
+  doctype: String,
+  placeholder: String,
+  filters: Object,
+  // offer "+ Create …" when nothing matches the typed name exactly
+  creatable: Boolean,
+})
 const emit = defineEmits(['update:modelValue'])
 
 const text = ref(props.modelValue || '')
@@ -48,6 +66,13 @@ const options = ref([])
 const shown = ref(false)
 const loading = ref(false)
 const highlighted = ref(0)
+const creating = ref(false)
+const doctypeLabel = computed(() => (props.label || props.doctype).replace(/\s*\(.*\)$/, '').toLowerCase())
+const canCreate = computed(() => {
+  const typed = text.value.trim().toLowerCase()
+  return props.creatable && !loading.value && typed && !options.value.some((o) => o.value.toLowerCase() === typed)
+})
+const choices = computed(() => options.value.length + (canCreate.value ? 1 : 0))
 let timer
 let ticket = 0
 
@@ -82,14 +107,29 @@ function pick(option) {
   emit('update:modelValue', option.value)
 }
 
+async function create() {
+  if (creating.value) return
+  creating.value = true
+  try {
+    const name = await api.quickCreate(props.doctype, text.value.trim())
+    toast.success(`${props.doctype} “${name}” created`)
+    pick({ value: name })
+  } catch (err) {
+    toast.error(readError(err))
+  } finally {
+    creating.value = false
+  }
+}
+
 function pickHighlighted() {
   const option = options.value[highlighted.value]
   if (option) pick(option)
+  else if (canCreate.value && highlighted.value === options.value.length) create()
 }
 
 function move(step) {
-  if (!options.value.length) return
-  highlighted.value = (highlighted.value + step + options.value.length) % options.value.length
+  if (!choices.value) return
+  highlighted.value = (highlighted.value + step + choices.value) % choices.value
 }
 
 function close() {

@@ -78,7 +78,7 @@
 
     <Pagination v-model:page="page" :total="total" :page-length="PAGE" @update:page="reload(false)" />
 
-    <NewItemDialog v-model="newOpen" :facets="facets" @created="created" />
+    <NewItemDialog v-model="newOpen" @created="created" />
   </PageFrame>
 </template>
 
