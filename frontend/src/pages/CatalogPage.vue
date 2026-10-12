@@ -36,7 +36,7 @@
       <router-link
         v-for="item in rows"
         :key="item.name"
-        :to="{ name: 'template', params: { name: item.name } }"
+        :to="{ name: 'item', params: { name: item.name } }"
         class="group overflow-hidden rounded-lg border border-outline-gray-2 bg-surface-white hover:border-outline-gray-4"
       >
         <div class="flex h-28 items-center justify-center bg-surface-gray-2">
@@ -46,16 +46,16 @@
         <div class="p-3.5">
           <div class="flex items-start justify-between gap-2">
             <div class="min-w-0">
-              <div class="truncate text-sm font-semibold text-ink-gray-9">{{ item.item_name || item.item_model }}</div>
-              <div class="truncate text-xs text-ink-gray-5">{{ item.item_category }} · {{ item.item_brand }}</div>
+              <div class="truncate text-sm font-semibold text-ink-gray-9">{{ item.item_name || item.rental_model }}</div>
+              <div class="truncate text-xs text-ink-gray-5">{{ item.category }} · {{ item.brand }}</div>
             </div>
             <Badge :label="item.kind" theme="gray" size="sm" />
           </div>
 
+          <div class="mt-3 flex items-baseline justify-between text-sm">
+            <span class="font-semibold tabular text-ink-gray-9">{{ number(item.counts.available) }} <span class="font-normal text-ink-gray-5">available of {{ number(item.counts.total) }}</span></span>
+          </div>
           <template v-if="item.kind !== 'Bulk'">
-            <div class="mt-3 flex items-baseline justify-between text-sm">
-              <span class="font-semibold tabular text-ink-gray-9">{{ item.counts.available }} <span class="font-normal text-ink-gray-5">available of {{ item.counts.total }}</span></span>
-            </div>
             <div class="mt-1.5 flex h-1.5 overflow-hidden rounded-full bg-surface-gray-2">
               <div class="bg-surface-green-7" :style="{ width: share(item.counts.available, item.counts.total) }" />
               <div class="bg-surface-blue-7" :style="{ width: share(item.counts['At Event'], item.counts.total) }" />
@@ -68,9 +68,7 @@
               <span v-if="item.counts.Missing" class="text-ink-red-6">{{ item.counts.Missing }} missing</span>
             </div>
           </template>
-          <div v-else class="mt-3 text-sm text-ink-gray-6">Counted in bulk, not serialised</div>
-
-          <Badge v-if="item.status === 'Draft'" label="Draft — not active yet" theme="orange" size="sm" class="mt-2" />
+          <div v-else class="mt-2 text-[11px] text-ink-gray-5">{{ number(item.counts['At Event']) }} {{ item.stock_uom }} out · counted, not serialised</div>
         </div>
       </router-link>
     </div>
@@ -80,7 +78,7 @@
 
     <Pagination v-model:page="page" :total="total" :page-length="PAGE" @update:page="reload(false)" />
 
-    <NewTemplateDialog v-model="newOpen" :facets="facets" @created="created" />
+    <NewItemDialog v-model="newOpen" :facets="facets" @created="created" />
   </PageFrame>
 </template>
 
@@ -89,7 +87,7 @@ import { onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { Badge, Button, toast } from 'frappe-ui'
 import Icon from '../components/Icon.vue'
-import NewTemplateDialog from '../components/NewTemplateDialog.vue'
+import NewItemDialog from '../components/NewItemDialog.vue'
 import PageFrame from '../components/PageFrame.vue'
 import Pagination from '../components/Pagination.vue'
 import { api, readError } from '../api'
@@ -118,7 +116,7 @@ const share = (part, whole) => `${whole ? (part / whole) * 100 : 0}%`
 async function load() {
   loading.value = true
   try {
-    const result = await api.listTemplates({ ...filters, page: page.value, page_length: PAGE })
+    const result = await api.listItems({ ...filters, page: page.value, page_length: PAGE })
     rows.value = result.rows
     total.value = result.total
   } catch (err) {
@@ -135,7 +133,7 @@ function reload(resetPage) {
 }
 
 function created(name) {
-  router.push({ name: 'template', params: { name } })
+  router.push({ name: 'item', params: { name } })
 }
 
 onMounted(() => {

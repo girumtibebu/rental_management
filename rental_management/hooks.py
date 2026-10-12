@@ -11,15 +11,15 @@ app_license = "mit"
 required_apps = ["erpnext"]
 
 # Each item in the list will be shown as an app in the apps page
-# add_to_apps_screen = [
-# 	{
-# 		"name": "rental_management",
-# 		"logo": "/assets/rental_management/logo.png",
-# 		"title": "Rental Management",
-# 		"route": "/rental_management",
-# 		"has_permission": "rental_management.api.permission.has_app_permission"
-# 	}
-# ]
+add_to_apps_screen = [
+	{
+		"name": "rental_management",
+		"logo": "/assets/rental_management/images/rental.svg",
+		"title": "Rental",
+		"route": "/rental",
+		"has_permission": "rental_management.ui.common.has_app_permission",
+	}
+]
 
 # Includes in <head>
 # ------------------
@@ -49,7 +49,6 @@ page_js = {"warehouse_dashboard": "public/js/warehouse_dashboard.js"}
 
 # include js in doctype views
 doctype_js = {
-	"Rental Item Maintenance": "public/js/rental_item_maintenance.js",
 	"Item": "public/js/item.js",
 	"Serial No": "public/js/serial_no.js",
 }
@@ -146,7 +145,10 @@ after_migrate = "rental_management.rental.setup.install.after_migrate"
 
 doc_events = {
 	"Item": {"validate": "rental_management.rental.item.validate_item"},
-	"Serial No": {"validate": "rental_management.rental.item.validate_serial_no"},
+	"Serial No": {
+		"validate": "rental_management.rental.item.validate_serial_no",
+		"on_update": "rental_management.rental.item.on_update_serial_no",
+	},
 }
 
 # doc_events = {
@@ -268,7 +270,6 @@ doc_events = {
 # ignore_translatable_strings_from = []
 
 fixtures = [
-    {"dt": "Print Format", "filters": [["module", "=", "Rental"]]},
     {"dt": "Custom Field", "filters": [["module", "=", "Rental"]]},
     {"dt": "Property Setter", "filters": [["module", "=", "Rental"]]},
     {"dt": "Workflow", "filters": [["document_type", "in", ["Rental Item Maintenance"]]]},

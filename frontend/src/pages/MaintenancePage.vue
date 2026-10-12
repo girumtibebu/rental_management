@@ -24,8 +24,8 @@
             >
               <div class="flex items-start justify-between gap-2">
                 <div class="min-w-0">
-                  <div class="truncate text-sm font-medium text-ink-gray-9">{{ ticket.unit_name }}</div>
-                  <div class="font-mono text-xs text-ink-gray-5">{{ ticket.serial_number }}</div>
+                  <div class="truncate text-sm font-medium text-ink-gray-9">{{ ticket.item_name }}</div>
+                  <div class="font-mono text-xs text-ink-gray-5">{{ ticket.serial_no }}</div>
                 </div>
                 <StatusBadge :value="state === 'Complete' ? ticket.final_condition : ticket.unit_condition" kind="condition" />
               </div>
@@ -51,10 +51,10 @@
           <div class="flex flex-wrap items-center gap-2">
             <StatusBadge :value="detail.ticket.workflow_state" kind="ticket" size="md" />
             <router-link v-if="detail.unit" :to="{ name: 'unit', params: { name: detail.unit.name } }" class="font-mono text-xs text-ink-blue-6 hover:underline" @click="ticketOpen = false">
-              {{ detail.unit.unit_serial_number }}
+              {{ detail.unit.serial_no }}
             </router-link>
-            <span class="text-ink-gray-7">{{ detail.unit?.unit_name }}</span>
-            <StatusBadge v-if="detail.unit" :value="detail.unit.unit_condition" kind="condition" />
+            <span class="text-ink-gray-7">{{ detail.unit?.item_name }}</span>
+            <StatusBadge v-if="detail.unit" :value="detail.unit.condition" kind="condition" />
           </div>
 
           <div class="rounded-md bg-surface-gray-1 px-3 py-2">

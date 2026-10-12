@@ -9,7 +9,7 @@
     <template #actions>
       <template v-if="move">
         <StatusBadge :value="move.transaction_type" kind="type" size="md" />
-        <a :href="`/desk/rental-movement/${encodeURIComponent(move.name)}`" target="_blank">
+        <a :href="`/desk/stock-entry/${encodeURIComponent(move.name)}`" target="_blank">
           <Button size="sm" variant="ghost"><template #prefix><Icon name="external" :size="13" /></template>Desk</Button>
         </a>
       </template>
@@ -22,10 +22,10 @@
         <div><div class="text-xs text-ink-gray-5">From</div><div class="font-medium text-ink-gray-9">{{ move.from_location || '—' }}</div></div>
         <div><div class="text-xs text-ink-gray-5">To</div><div class="font-medium text-ink-gray-9">{{ move.to_location || '—' }}</div></div>
         <div><div class="text-xs text-ink-gray-5">Issued to</div><div class="font-medium text-ink-gray-9">{{ move.issued_to || '—' }}</div></div>
-        <div><div class="text-xs text-ink-gray-5">Received by</div><div class="font-medium text-ink-gray-9">{{ move.recieved_by || '—' }}</div></div>
+        <div><div class="text-xs text-ink-gray-5">Received by</div><div class="font-medium text-ink-gray-9">{{ move.received_by || '—' }}</div></div>
         <div v-if="data.note" class="sm:col-span-2 lg:col-span-4">
           <div class="text-xs text-ink-gray-5">Note</div>
-          <div class="text-ink-gray-8" v-html="data.note" />
+          <div class="whitespace-pre-line text-ink-gray-8">{{ data.note }}</div>
         </div>
       </section>
 
@@ -37,12 +37,12 @@
               v-for="row in data.units"
               :key="row.name"
               class="cursor-pointer border-b border-outline-gray-1 last:border-0 hover:bg-surface-gray-1"
-              @click="router.push({ name: 'unit', params: { name: row.unit_doc_id } })"
+              @click="router.push({ name: 'unit', params: { name: row.name } })"
             >
-              <td class="px-4 py-2.5 font-mono text-xs font-medium text-ink-gray-9">{{ row.unit_serial_number }}</td>
-              <td class="px-3 py-2.5 text-ink-gray-7">{{ row.unit_name }}</td>
-              <td class="px-3 py-2.5 text-xs text-ink-gray-6">{{ row.prev_location || '—' }} <span v-if="row.prev_movement_status">({{ row.prev_movement_status }})</span></td>
-              <td class="px-4 py-2.5 text-right"><StatusBadge :value="row.unit_condition" kind="condition" /></td>
+              <td class="px-4 py-2.5 font-mono text-xs font-medium text-ink-gray-9">{{ row.serial_no }}</td>
+              <td class="px-3 py-2.5 text-ink-gray-7">{{ row.item_name }}</td>
+              <td class="px-3 py-2.5 text-xs text-ink-gray-6">from {{ row.previous || '—' }}</td>
+              <td class="px-4 py-2.5 text-right"><StatusBadge :value="row.condition" kind="condition" /></td>
             </tr>
             <tr v-if="!data.units.length"><td class="px-4 py-8 text-center text-sm text-ink-gray-5">No serialised units on this movement.</td></tr>
           </tbody>
@@ -53,10 +53,10 @@
         <header class="border-b border-outline-gray-1 px-4 py-2.5 text-sm font-semibold text-ink-gray-9">Bulk items ({{ data.bulk.length }})</header>
         <table class="w-full text-sm">
           <tbody>
-            <tr v-for="row in data.bulk" :key="row.name" class="border-b border-outline-gray-1 last:border-0">
-              <td class="px-4 py-2.5 font-medium text-ink-gray-8">{{ row.item_name || row.item_template }}</td>
+            <tr v-for="row in data.bulk" :key="row.item_code" class="border-b border-outline-gray-1 last:border-0">
+              <td class="px-4 py-2.5 font-medium text-ink-gray-8">{{ row.item_name || row.item_code }}</td>
               <td class="px-3 py-2.5 text-right tabular">× {{ row.qty }}</td>
-              <td class="px-4 py-2.5 text-xs text-ink-gray-5">{{ row.note }}</td>
+              <td class="px-4 py-2.5 text-xs text-ink-gray-5">{{ row.uom }}</td>
             </tr>
           </tbody>
         </table>

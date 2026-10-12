@@ -80,6 +80,32 @@ def validate_serial_no(doc, method=None):
     if doc.parent_box:
         if doc.parent_box == doc.name:
             frappe.throw(_("A serial number cannot be its own parent box."))
-        box_item = frappe.db.get_value("Serial No", doc.parent_box, "item_code")
-        if frappe.db.get_value("Item", box_item, "rental_tracking") != "Box":
+        box = frappe.db.get_value("Serial No", doc.parent_box, ["item_code", "warehouse"], as_dict=True)
+        if frappe.db.get_value("Item", box.item_code, "rental_tracking") != "Box":
             frappe.throw(_("{0} is not a box serial number.").format(frappe.bold(doc.parent_box)))
+        if doc.has_value_changed("parent_box") and box.warehouse != doc.warehouse:
+            frappe.throw(_("{0} and the box {1} are not in the same warehouse.").format(doc.name, doc.parent_box))
+
+
+def on_update_serial_no(doc, method=None):
+    if doc.has_value_changed("parent_box"):
+        for box in {doc.parent_box, (doc.get_doc_before_save() or {}).get("parent_box")}:
+            refresh_box_condition(box)
+
+
+def get_box_contents(box):
+    return frappe.get_all("Serial No", filters={"parent_box": box}, pluck="name", order_by="name asc")
+
+
+def set_condition(serial, condition):
+    frappe.db.set_value("Serial No", serial, "rental_condition", condition)
+    refresh_box_condition(frappe.db.get_value("Serial No", serial, "parent_box"))
+
+
+def refresh_box_condition(box):
+    """A box takes the condition its contents share, or Partially Ok when they differ."""
+    if not box:
+        return
+    conditions = set(frappe.get_all("Serial No", filters={"parent_box": box}, pluck="rental_condition"))
+    if conditions:
+        frappe.db.set_value("Serial No", box, "rental_condition", conditions.pop() if len(conditions) == 1 else "Partially Ok")

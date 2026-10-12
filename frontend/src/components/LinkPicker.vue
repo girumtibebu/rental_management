@@ -40,7 +40,7 @@
 import { ref, watch } from 'vue'
 import { api } from '../api'
 
-const props = defineProps({ modelValue: String, label: String, doctype: String, placeholder: String })
+const props = defineProps({ modelValue: String, label: String, doctype: String, placeholder: String, filters: Object })
 const emit = defineEmits(['update:modelValue'])
 
 const text = ref(props.modelValue || '')
@@ -58,7 +58,7 @@ watch(() => props.modelValue, (value) => {
 async function fetch(txt) {
   const mine = ++ticket
   loading.value = true
-  const found = (await api.searchLink(props.doctype, txt).catch(() => [])) || []
+  const found = (await api.searchLink(props.doctype, txt, props.filters).catch(() => [])) || []
   if (mine !== ticket) return
   options.value = found
   highlighted.value = 0

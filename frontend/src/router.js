@@ -13,7 +13,7 @@ export default createRouter({
   routes: [
     { path: '/', name: 'dashboard', component: () => import('./pages/DashboardPage.vue'), meta: { title: 'Dashboard' } },
     { path: '/catalog', name: 'catalog', component: () => import('./pages/CatalogPage.vue'), meta: { title: 'Catalog' } },
-    { path: '/catalog/:name', name: 'template', component: () => import('./pages/TemplatePage.vue'), meta: { title: 'Catalog', parent: 'catalog' } },
+    { path: '/catalog/:name', name: 'item', component: () => import('./pages/ItemPage.vue'), meta: { title: 'Catalog', parent: 'catalog' } },
     { path: '/units', name: 'units', component: () => import('./pages/UnitsPage.vue'), meta: { title: 'Units' } },
     { path: '/units/:name', name: 'unit', component: () => import('./pages/UnitPage.vue'), meta: { title: 'Units', parent: 'units' } },
     { path: '/movements', name: 'movements', component: () => import('./pages/MovementsPage.vue'), meta: { title: 'Movements' } },

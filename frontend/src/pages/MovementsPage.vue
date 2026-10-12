@@ -50,7 +50,7 @@
             <td class="px-3 py-2.5"><StatusBadge :value="move.transaction_type" kind="type" /></td>
             <td class="px-3 py-2.5 text-ink-gray-7">{{ move.from_location || '—' }} → {{ move.to_location || '—' }}</td>
             <td class="px-3 py-2.5 text-right tabular text-ink-gray-8">{{ move.units }}<span v-if="move.bulk" class="text-xs text-ink-gray-5"> + {{ move.bulk }} bulk</span></td>
-            <td class="px-3 py-2.5 text-ink-gray-7">{{ move.issued_to || move.recieved_by || userName(move.owner) }}</td>
+            <td class="px-3 py-2.5 text-ink-gray-7">{{ move.issued_to || move.received_by || userName(move.owner) }}</td>
             <td class="px-4 py-2.5 text-right text-xs text-ink-gray-5" :title="fullDate(move.creation)">{{ timeAgo(move.creation) }}</td>
           </tr>
           <tr v-if="!rows.length && !loading"><td colspan="6" class="px-4 py-12 text-center text-sm text-ink-gray-5">No movements yet.</td></tr>

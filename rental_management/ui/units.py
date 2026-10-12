@@ -1,69 +1,59 @@
-"""Units: the physical, serial-numbered equipment."""
+"""Units: rental equipment tracked by native Serial No."""
 
 import frappe
 from frappe import _
 
-from rental_management.ui.common import (
-    MAINTENANCE,
-    UNIT,
-    UNIT_LOG,
-    like,
-    location_label,
-    paging,
-    storage_path,
-    template_index,
-)
+from rental_management.rental.item import get_box_contents
+from rental_management.rental.stock import NOT_IN_STOCK, get_place, get_status, get_venues, get_warehouse
+from rental_management.ui.common import MAINTENANCE, STOCK_ENTRY, describe_units, item_index, like, paging
 
-LIST_FIELDS = [
+UNIT_FIELDS = [
     "name",
-    "unit_serial_number",
-    "unit_name",
-    "item_template",
-    "movement_status",
-    "unit_location",
-    "unit_condition",
-    "maintenance_status",
-    "unit_type",
+    "item_code",
+    "item_name",
+    "warehouse",
+    "rental_condition",
     "parent_box",
-    "zone",
-    "section",
-    "level",
-    "position",
+    "location_code",
+    "rental_zone",
+    "rental_aisle",
+    "rental_section",
+    "rental_level",
+    "rental_position",
     "modified",
+    "creation",
+    "owner",
 ]
+STORAGE_FIELDS = ("rental_zone", "rental_aisle", "rental_section", "rental_level", "rental_position")
 
 
-def describe(unit, templates):
-    template = templates.get(unit.item_template) or {}
-    return {
-        **unit,
-        "location": location_label(unit),
-        "storage": storage_path(unit),
-        "category": template.get("item_category"),
-        "kind": template.get("rental_item_type_box") or unit.get("unit_type"),
-        "image": template.get("image"),
-    }
-
-
-def build_filters(status, condition, template, unit_type, location, boxed):
-    filters = [["disabled", "=", 0]]
-    for field, value in (
-        ("movement_status", status),
-        ("unit_condition", condition),
-        ("item_template", template),
-        ("unit_type", unit_type),
-    ):
+def get_rental_items(item_code=None, category=None, kind=None):
+    filters = {"is_rental_item": 1, "rental_tracking": ["in", ["Unit", "Box"]]}
+    for field, value in (("name", item_code), ("item_group", category), ("rental_tracking", kind)):
         if value:
-            filters.append([field, "=", value])
-    if location:
-        filters.append(["unit_location", "like", like(location)])
+            filters[field] = value
+    return frappe.get_all("Item", filters=filters, pluck="name") or ["-"]
+
+
+def build_filters(status, condition, item_code, category, kind, boxed):
+    filters = [["item_code", "in", get_rental_items(item_code, category, kind)]]
+    if status == NOT_IN_STOCK:
+        filters.append(["warehouse", "is", "not set"])
+    elif status:
+        filters.append(["warehouse", "=", get_warehouse(status)])
+    if condition:
+        filters.append(["rental_condition", "=", condition])
     if boxed == "boxed":
-        filters.append(["parent_box", "not in", ["", "None"]])
+        filters.append(["parent_box", "is", "set"])
     return filters
 
 
-def categories_to_templates(category):
-    return frappe.get_all("Rental Item Template", {"item_category": category}, pluck="name")
+def serials_at(location, filters):
+    """Serials whose current venue matches `location`."""
+    names = frappe.get_list("Serial No", filters=filters, pluck="name", limit_page_length=0)
+    venues = get_venues(names)
+    pattern = (location or "").strip().lower()
+    return [name for name in names if pattern in (venues.get(name) or "").lower()] or ["-"]
 
 
 @frappe.whitelist()
@@ -71,49 +61,46 @@ def list_units(
     search=None,
     status=None,
     condition=None,
-    template=None,
+    item_code=None,
     category=None,
-    unit_type=None,
+    kind=None,
     location=None,
     boxed=None,
     page=1,
     page_length=25,
 ):
     start, length = paging(page, page_length)
-    filters = build_filters(status, condition, template, unit_type, location, boxed)
-    if category:
-        filters.append(["item_template", "in", categories_to_templates(category) or ["-"]])
+    filters = build_filters(status, condition, item_code, category, kind, boxed)
+    if location:
+        filters.append(["name", "in", serials_at(location, filters)])
     or_filters = None
     if search:
         pattern = like(search)
-        or_filters = [
-            ["unit_serial_number", "like", pattern],
-            ["unit_name", "like", pattern],
-            ["name", "like", pattern],
-            ["unit_location", "like", pattern],
-        ]
+        or_filters = [["name", "like", pattern], ["item_name", "like", pattern], ["location_code", "like", pattern]]
     rows = frappe.get_list(
-        UNIT,
+        "Serial No",
         filters=filters,
         or_filters=or_filters,
-        fields=LIST_FIELDS,
+        fields=UNIT_FIELDS,
         order_by="modified desc",
         limit_start=start,
         limit_page_length=length,
     )
-    total = len(frappe.get_list(UNIT, filters=filters, or_filters=or_filters, pluck="name", limit_page_length=0))
-    templates = template_index([row.item_template for row in rows])
-    return {"rows": [describe(row, templates) for row in rows], "total": total}
+    total = len(frappe.get_list("Serial No", filters=filters, or_filters=or_filters, pluck="name", limit_page_length=0))
+    return {"rows": describe_units(rows), "total": total}
 
 
 def resolve(code):
-    """The unit document name for a scanned serial number or document name."""
+    """The rental serial for a scanned code, or None."""
     code = (code or "").strip()
     if not code:
         return None
-    return frappe.db.get_value(UNIT, {"unit_serial_number": code}, "name") or (
-        code if frappe.db.exists(UNIT, code) else None
-    )
+    item_code = frappe.db.get_value("Serial No", code, "item_code")
+    return code if item_code and frappe.db.get_value("Item", item_code, "is_rental_item") else None
+
+
+def load_unit(name):
+    return describe_units([frappe.db.get_value("Serial No", name, UNIT_FIELDS, as_dict=True)])[0]
 
 
 @frappe.whitelist()
@@ -122,124 +109,132 @@ def find_unit(code):
     name = resolve(code)
     if not name:
         return None
-    frappe.has_permission(UNIT, "read", doc=name, throw=True)
-    unit = frappe.db.get_value(UNIT, name, LIST_FIELDS, as_dict=True)
-    return describe(unit, template_index([unit.item_template]))
-
-
-def box_contents(name):
-    rows = frappe.get_all(
-        "Box Item Unit Child Table",
-        filters={"parent": name, "parenttype": UNIT},
-        fields=["document_id", "unit_serial_number", "unit_name", "unit_condition", "movement_status"],
-        order_by="idx asc",
-    )
-    return [row for row in rows if row.document_id]
+    frappe.has_permission("Serial No", "read", doc=name, throw=True)
+    return load_unit(name)
 
 
 def movement_events(name):
-    """Every movement this unit took part in (from the movement rows, which are always written)."""
+    """Every Stock Entry that moved this serial, with where it came from and went to."""
     rows = frappe.db.sql(
         """
-        select m.name, m.transaction_type, m.from_location, m.to_location, m.creation, m.owner
-        from `tabRental Item Unit Child Table` c
-        join `tabRental Movement` m on m.name = c.parent
-        where c.unit_doc_id = %s
-        order by m.creation desc
-        limit 60
+        select entry.voucher_no, entry.type_of_transaction, entry.warehouse
+        from `tabSerial and Batch Entry` entry
+        join `tabSerial and Batch Bundle` bundle on bundle.name = entry.parent
+        where entry.serial_no = %s and bundle.voucher_type = 'Stock Entry'
+            and bundle.docstatus = 1 and bundle.is_cancelled = 0
         """,
         name,
         as_dict=True,
     )
+    moves = {}
+    for row in rows:
+        side = "to" if row.type_of_transaction == "Inward" else "from"
+        moves.setdefault(row.voucher_no, {})[side] = get_status(row.warehouse)
+    if not moves:
+        return []
+    entries = frappe.get_all(
+        STOCK_ENTRY,
+        filters={"name": ["in", list(moves)]},
+        fields=["name", "rental_movement_type", "purpose", "rental_venue", "posting_date", "posting_time", "owner"],
+    )
     return [
         {
-            "name": row.name,
+            "name": entry.name,
             "kind": "Movement",
-            "reference_doctype": "Rental Movement",
-            "reference_name": row.name,
-            "status": row.transaction_type,
-            "from_location": row.from_location,
-            "to_location": row.to_location,
-            "when": str(row.creation),
-            "owner": row.owner,
+            "reference_name": entry.name,
+            "status": entry.rental_movement_type or entry.purpose,
+            "from_location": get_place(moves[entry.name].get("from")) if moves[entry.name].get("from") else "",
+            "to_location": get_place(moves[entry.name].get("to"), entry.rental_venue) if moves[entry.name].get("to") else "",
+            "when": f"{entry.posting_date} {entry.posting_time}",
+            "owner": entry.owner,
         }
-        for row in rows
+        for entry in entries
+    ]
+
+
+def ticket_events(name):
+    tickets = frappe.get_all(
+        MAINTENANCE,
+        filters={"serial_no": name},
+        fields=["name", "workflow_state", "issue_description", "creation", "owner"],
+        order_by="creation desc",
+        limit=30,
+    )
+    return [
+        {
+            "name": ticket.name,
+            "kind": "Maintenance ticket",
+            "reference_name": ticket.name,
+            "status": ticket.workflow_state,
+            "detail": ticket.issue_description,
+            "when": str(ticket.creation),
+            "owner": ticket.owner,
+        }
+        for ticket in tickets
     ]
 
 
 def history(name):
-    """Movements and maintenance for a unit, newest first."""
-    events = movement_events(name)
-    seen = {event["reference_name"] for event in events}
-    for log in frappe.get_all(
-        UNIT_LOG,
-        filters={"unit": name},
-        fields=["name", "event_type", "reference_doctype", "reference_name", "from_location", "to_location", "status", "date"],
-        order_by="date desc",
-        limit=60,
-    ):
-        if log.reference_name not in seen:
-            events.append({**log, "when": str(log.date), "kind": log.event_type})
-    for ticket in frappe.get_all(
-        MAINTENANCE,
-        filters={"unit_serial_number": name},
-        fields=["name", "workflow_state", "unit_condition", "final_condition", "issue_description", "creation", "owner"],
-        order_by="creation desc",
-        limit=30,
-    ):
-        events.append(
-            {
-                "name": ticket.name,
-                "kind": "Maintenance ticket",
-                "reference_doctype": MAINTENANCE,
-                "reference_name": ticket.name,
-                "status": ticket.workflow_state,
-                "detail": ticket.issue_description,
-                "when": str(ticket.creation),
-                "owner": ticket.owner,
-            }
-        )
+    """Movements and maintenance for a serial, newest first."""
+    events = movement_events(name) + ticket_events(name)
     events.sort(key=lambda event: event["when"], reverse=True)
     return events[:80]
 
 
-@frappe.whitelist()
-def get_unit(name):
-    doc = frappe.get_doc(UNIT, name)
-    doc.check_permission("read")
-    unit = doc.as_dict(no_default_fields=False)
-    template = template_index([doc.item_template]).get(doc.item_template) or {}
-    open_ticket = frappe.db.get_value(
+def open_ticket(name):
+    return frappe.db.get_value(
         MAINTENANCE,
-        {"unit_serial_number": name, "docstatus": ["<", 2], "workflow_state": ["!=", "Complete"]},
+        {"serial_no": name, "docstatus": 0},
         ["name", "workflow_state"],
         as_dict=True,
     )
-    parent = doc.parent_box if doc.parent_box and str(doc.parent_box).lower() != "none" else None
+
+
+@frappe.whitelist()
+def get_unit(name):
+    doc = frappe.get_doc("Serial No", name)
+    doc.check_permission("read")
+    unit = load_unit(name)
+    item = item_index([doc.item_code]).get(doc.item_code) or {}
+    contents = get_box_contents(name) if unit["kind"] == "Box" else []
     return {
-        "unit": {k: unit.get(k) for k in LIST_FIELDS + ["creation", "owner", "image", "unit_model", "unit_brand"]},
-        "location": location_label(unit),
-        "storage": storage_path(unit),
-        "template": template,
-        "parent_box": parent,
-        "contents": box_contents(name) if doc.unit_type == "Box" else [],
-        "open_ticket": open_ticket,
+        "unit": unit,
+        "item": item,
+        "parent_box": doc.parent_box,
+        "contents": describe_units([frappe.db.get_value("Serial No", child, UNIT_FIELDS, as_dict=True) for child in contents]),
+        "open_ticket": open_ticket(name),
         "history": history(name),
         "can": {
-            "write": bool(frappe.has_permission(UNIT, "write", doc=doc)),
-            "move": bool(frappe.has_permission("Rental Movement", "create")),
+            "write": bool(frappe.has_permission("Serial No", "write", doc=doc)),
+            "move": bool(frappe.has_permission(STOCK_ENTRY, "submit")),
             "maintain": bool(frappe.has_permission(MAINTENANCE, "create")),
         },
     }
 
 
 @frappe.whitelist()
-def update_storage(name, zone=None, section=None, level=None, position=None):
+def update_storage(name, rental_zone=None, rental_aisle=None, rental_section=None, rental_level=None, rental_position=None):
     """Set where a stocked unit lives in the warehouse."""
-    doc = frappe.get_doc(UNIT, name)
+    doc = frappe.get_doc("Serial No", name)
     doc.check_permission("write")
-    if doc.movement_status != "Warehouse":
+    if get_status(doc.warehouse) != "Warehouse":
         frappe.throw(_("Only units in the warehouse can be given a storage address"))
-    doc.zone, doc.section, doc.level, doc.position = zone or None, section or None, level or None, position or None
+    values = (rental_zone, rental_aisle, rental_section, rental_level, rental_position)
+    for field, value in zip(STORAGE_FIELDS, values, strict=True):
+        doc.set(field, value or None)
     doc.save()
     return get_unit(name)
+
+
+@frappe.whitelist()
+def pack(box, units):
+    """Put units into a box serial, or take them out when `box` is empty."""
+    for code in frappe.parse_json(units) or []:
+        name = resolve(code)
+        if not name:
+            frappe.throw(_("No unit with serial {0}").format(code))
+        doc = frappe.get_doc("Serial No", name)
+        doc.check_permission("write")
+        doc.parent_box = box or None
+        doc.save()
+    return get_unit(box) if box else None

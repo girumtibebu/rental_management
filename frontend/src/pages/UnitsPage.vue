@@ -32,18 +32,18 @@
           <option value="">All categories</option>
           <option v-for="item in facets.categories" :key="item" :value="item">{{ item }}</option>
         </select>
-        <select v-model="filters.unit_type" class="h-8 rounded-md border border-outline-gray-3 bg-surface-white px-2 py-0 text-sm" @change="reload(true)">
+        <select v-model="filters.kind" class="h-8 rounded-md border border-outline-gray-3 bg-surface-white px-2 py-0 text-sm" @change="reload(true)">
           <option value="">Units and boxes</option>
           <option value="Unit">Units</option>
           <option value="Box">Boxes</option>
         </select>
 
         <button
-          v-if="filters.template || filters.location"
+          v-if="filters.item_code || filters.location"
           class="flex items-center gap-1 rounded-full bg-surface-blue-2 px-2.5 py-1 text-xs text-ink-blue-8"
           @click="clearExtra"
         >
-          {{ filters.template || filters.location }} <Icon name="close" :size="10" />
+          {{ filters.item_code || filters.location }} <Icon name="close" :size="10" />
         </button>
         <Button v-if="filtered" size="sm" variant="ghost" @click="clearAll">Clear filters</Button>
       </div>
@@ -68,18 +68,18 @@
               class="cursor-pointer border-b border-outline-gray-1 last:border-0 hover:bg-surface-gray-1"
               @click="open(unit)"
             >
-              <td class="px-4 py-2.5 font-mono text-xs font-medium text-ink-gray-9">{{ unit.unit_serial_number || unit.name }}</td>
+              <td class="px-4 py-2.5 font-mono text-xs font-medium text-ink-gray-9">{{ unit.serial_no }}</td>
               <td class="px-3 py-2.5">
-                <div class="font-medium text-ink-gray-8">{{ unit.unit_name }}</div>
+                <div class="font-medium text-ink-gray-8">{{ unit.item_name }}</div>
                 <div class="text-xs text-ink-gray-5">{{ unit.category }} · {{ unit.kind }}</div>
               </td>
-              <td class="px-3 py-2.5"><StatusBadge :value="unit.movement_status" /></td>
-              <td class="px-3 py-2.5"><StatusBadge :value="unit.unit_condition" kind="condition" /></td>
+              <td class="px-3 py-2.5"><StatusBadge :value="unit.status" /></td>
+              <td class="px-3 py-2.5"><StatusBadge :value="unit.condition" kind="condition" /></td>
               <td class="px-3 py-2.5 text-ink-gray-7">
                 {{ unit.location || '—' }}
                 <div v-if="unit.storage" class="text-xs text-ink-gray-5">{{ unit.storage }}</div>
               </td>
-              <td class="px-3 py-2.5 font-mono text-xs text-ink-gray-6">{{ hasBox(unit) ? unit.parent_box : '' }}</td>
+              <td class="px-3 py-2.5 font-mono text-xs text-ink-gray-6">{{ unit.parent_box || '' }}</td>
               <td class="px-4 py-2.5 text-right text-xs text-ink-gray-5">{{ timeAgo(unit.modified) }}</td>
             </tr>
             <tr v-if="!rows.length && !loading">
@@ -114,6 +114,7 @@ const STATUS_FILTERS = [
   { value: 'At Event', label: 'At event' },
   { value: 'In Maintenance', label: 'In repair' },
   { value: 'Missing', label: 'Missing' },
+  { value: 'Not In Stock', label: 'Not in stock' },
 ]
 const CONDITIONS = ['OK', 'Need Cleaning', 'Damaged', 'Partially Ok', 'Scrapped']
 
@@ -126,8 +127,8 @@ const filters = reactive({
   status: q.status || '',
   condition: q.condition || '',
   category: q.category || '',
-  unit_type: q.unit_type || '',
-  template: q.template || '',
+  kind: q.kind || '',
+  item_code: q.item_code || '',
   location: q.location || '',
 })
 const facets = reactive({ categories: [] })
@@ -138,7 +139,6 @@ const loading = ref(true)
 let timer
 
 const filtered = computed(() => Object.values(filters).some(Boolean))
-const hasBox = (unit) => unit.parent_box && String(unit.parent_box).toLowerCase() !== 'none'
 
 async function load() {
   loading.value = true
@@ -168,7 +168,7 @@ function setStatus(value) {
 }
 
 function clearExtra() {
-  filters.template = ''
+  filters.item_code = ''
   filters.location = ''
   reload(true)
 }

@@ -25,11 +25,11 @@
         <section class="rounded-lg border border-outline-gray-2 bg-surface-white">
           <header class="border-b border-outline-gray-1 px-4 py-2.5 text-sm font-semibold text-ink-gray-9">Where equipment is</header>
           <ul v-if="data.locations.length" class="divide-y divide-outline-gray-1">
-            <li v-for="row in data.locations" :key="row.location + row.movement_status">
-              <router-link :to="{ name: 'units', query: { status: row.movement_status, location: row.location === 'Unknown' ? '' : row.location } }" class="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-surface-gray-1">
+            <li v-for="row in data.locations" :key="row.location + row.status">
+              <router-link :to="{ name: 'units', query: { status: row.status, location: row.location === 'Unknown' ? '' : row.location } }" class="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-surface-gray-1">
                 <Icon name="pin" :size="14" class="text-ink-gray-5" />
                 <span class="flex-1 truncate font-medium text-ink-gray-8">{{ row.location }}</span>
-                <StatusBadge :value="row.movement_status" />
+                <StatusBadge :value="row.status" />
                 <span class="w-12 text-right font-semibold tabular text-ink-gray-9">{{ row.units }}</span>
               </router-link>
             </li>
@@ -62,7 +62,7 @@
           </header>
           <ul v-if="data.tight.length" class="divide-y divide-outline-gray-1">
             <li v-for="row in data.tight" :key="row.name">
-              <router-link :to="{ name: 'template', params: { name: row.name } }" class="flex items-center gap-3 px-4 py-2.5 hover:bg-surface-gray-1">
+              <router-link :to="{ name: 'item', params: { name: row.name } }" class="flex items-center gap-3 px-4 py-2.5 hover:bg-surface-gray-1">
                 <div class="min-w-0 flex-1">
                   <div class="truncate text-sm font-medium text-ink-gray-8">{{ row.item_name }}</div>
                   <div class="text-xs text-ink-gray-5">{{ row.category }} · {{ row.out }} out</div>
@@ -87,8 +87,8 @@
           <ul v-if="data.tickets.length" class="divide-y divide-outline-gray-1">
             <li v-for="ticket in data.tickets" :key="ticket.name" class="flex items-center gap-3 px-4 py-2.5">
               <div class="min-w-0 flex-1">
-                <div class="truncate text-sm font-medium text-ink-gray-8">{{ ticket.unit_name }}</div>
-                <div class="truncate text-xs text-ink-gray-5">{{ ticket.serial_number }} · {{ ticket.issue_description || 'No description' }}</div>
+                <div class="truncate text-sm font-medium text-ink-gray-8">{{ ticket.item_name }}</div>
+                <div class="truncate text-xs text-ink-gray-5">{{ ticket.serial_no }} · {{ ticket.issue_description || 'No description' }}</div>
               </div>
               <StatusBadge :value="ticket.workflow_state" kind="ticket" />
               <span class="w-16 text-right text-xs text-ink-gray-5">{{ timeAgo(ticket.creation) }}</span>
@@ -134,7 +134,7 @@ onMounted(refreshSummary)
 const cards = computed(() => {
   const t = data.value.totals
   return [
-    { label: 'Total units', value: t.total, note: `${t.templates} catalog items`, query: {} },
+    { label: 'Total units', value: t.total, note: `${t.items} catalog items`, query: {} },
     { label: 'In warehouse', value: t.Warehouse, note: 'ready to go out', query: { status: 'Warehouse' } },
     { label: 'At events', value: t['At Event'], note: 'out with crews', query: { status: 'At Event' } },
     { label: 'In repair', value: t['In Maintenance'], note: 'at the repair shop', query: { status: 'In Maintenance' } },

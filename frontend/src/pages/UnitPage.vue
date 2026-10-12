@@ -1,21 +1,21 @@
 <template>
   <PageFrame
-    :title="unit ? unit.unit_serial_number || unit.name : 'Unit'"
-    :subtitle="unit ? `${unit.unit_name || ''}` : ''"
+    :title="unit ? unit.serial_no : 'Unit'"
+    :subtitle="unit ? unit.item_name || '' : ''"
     :back-to="{ name: 'units' }"
     back-label="All units"
   >
     <template #actions>
       <template v-if="data">
-        <StatusBadge :value="unit.movement_status" size="md" />
-        <StatusBadge :value="unit.unit_condition" kind="condition" size="md" />
+        <StatusBadge :value="unit.status" size="md" />
+        <StatusBadge :value="unit.condition" kind="condition" size="md" />
         <Button v-for="action in moveActions" :key="action.type" size="sm" :disabled="!data.can.move" @click="move(action.type)">
           <template #prefix><Icon :name="action.icon" :size="13" /></template>{{ action.label }}
         </Button>
         <Button size="sm" :disabled="!data.can.maintain || Boolean(data.open_ticket)" @click="flagOpen = true">
           <template #prefix><Icon name="alert" :size="13" /></template>Report a problem
         </Button>
-        <a :href="`/desk/rental-item-unit/${encodeURIComponent(unit.name)}`" target="_blank">
+        <a :href="`/desk/serial-no/${encodeURIComponent(unit.name)}`" target="_blank">
           <Button size="sm" variant="ghost"><template #prefix><Icon name="external" :size="13" /></template>Desk</Button>
         </a>
       </template>
@@ -39,22 +39,25 @@
           <dl class="grid grid-cols-[110px_1fr] gap-y-2 px-4 py-3 text-sm">
             <dt class="text-ink-gray-5">Equipment</dt>
             <dd>
-              <router-link v-if="unit.item_template" :to="{ name: 'template', params: { name: unit.item_template } }" class="text-ink-blue-6 hover:underline">
-                {{ data.template.item_name || unit.item_template }}
+              <router-link :to="{ name: 'item', params: { name: unit.item_code } }" class="text-ink-blue-6 hover:underline">
+                {{ data.item.item_name || unit.item_code }}
               </router-link>
             </dd>
             <dt class="text-ink-gray-5">Category</dt>
-            <dd>{{ data.template.item_category || '—' }} · {{ data.template.item_brand || '' }}</dd>
-            <dt class="text-ink-gray-5">Type</dt>
-            <dd>{{ data.template.rental_item_type_box || unit.unit_type }}</dd>
+            <dd>{{ data.item.item_group || '—' }} · {{ data.item.brand || '' }}</dd>
+            <dt class="text-ink-gray-5">Tracked as</dt>
+            <dd>{{ unit.kind }}</dd>
             <dt class="text-ink-gray-5">Location</dt>
-            <dd>{{ data.location || '—' }}</dd>
+            <dd>{{ unit.location || '—' }}</dd>
+            <dt class="text-ink-gray-5">Warehouse</dt>
+            <dd class="text-ink-gray-7">{{ unit.warehouse || 'Not in stock' }}</dd>
             <dt class="text-ink-gray-5">Storage</dt>
-            <dd>{{ data.storage || '—' }}</dd>
+            <dd class="font-mono text-xs">{{ unit.storage || '—' }}</dd>
             <template v-if="data.parent_box">
               <dt class="text-ink-gray-5">In box</dt>
-              <dd>
+              <dd class="flex items-center gap-2">
                 <router-link :to="{ name: 'unit', params: { name: data.parent_box } }" class="font-mono text-xs text-ink-blue-6 hover:underline">{{ data.parent_box }}</router-link>
+                <button v-if="data.can.write" class="text-xs text-ink-gray-5 hover:text-ink-red-6" @click="unpack(unit.name)">Take out</button>
               </dd>
             </template>
             <dt class="text-ink-gray-5">Added</dt>
@@ -62,30 +65,40 @@
           </dl>
         </section>
 
-        <section v-if="unit.movement_status === 'Warehouse' && data.can.write" class="rounded-lg border border-outline-gray-2 bg-surface-white">
+        <section v-if="unit.status === 'Warehouse' && data.can.write" class="rounded-lg border border-outline-gray-2 bg-surface-white">
           <header class="border-b border-outline-gray-1 px-4 py-2.5 text-sm font-semibold text-ink-gray-9">Warehouse storage</header>
           <div class="grid grid-cols-2 gap-3 px-4 py-3">
-            <LinkPicker v-model="place.zone" label="Zone" doctype="Zone" />
-            <LinkPicker v-model="place.section" label="Section" doctype="Section" />
-            <LinkPicker v-model="place.level" label="Level" doctype="Level" />
-            <LinkPicker v-model="place.position" label="Position" doctype="Position" />
+            <LinkPicker v-model="place.rental_zone" label="Zone" doctype="Zone" />
+            <LinkPicker v-model="place.rental_aisle" label="Aisle" doctype="Aisle" />
+            <LinkPicker v-model="place.rental_section" label="Section" doctype="Section" />
+            <LinkPicker v-model="place.rental_level" label="Level" doctype="Level" />
+            <LinkPicker v-model="place.rental_position" label="Position" doctype="Position" />
           </div>
           <div class="flex justify-end border-t border-outline-gray-1 px-4 py-2.5">
             <Button size="sm" variant="solid" :loading="saving" @click="saveStorage">Save storage</Button>
           </div>
         </section>
 
-        <section v-if="data.contents.length" class="rounded-lg border border-outline-gray-2 bg-surface-white">
+        <section v-if="unit.kind === 'Box'" class="rounded-lg border border-outline-gray-2 bg-surface-white">
           <header class="border-b border-outline-gray-1 px-4 py-2.5 text-sm font-semibold text-ink-gray-9">In this box ({{ data.contents.length }})</header>
-          <ul class="divide-y divide-outline-gray-1">
-            <li v-for="item in data.contents" :key="item.document_id">
-              <router-link :to="{ name: 'unit', params: { name: item.document_id } }" class="flex items-center gap-3 px-4 py-2 text-sm hover:bg-surface-gray-1">
-                <span class="font-mono text-xs text-ink-gray-8">{{ item.unit_serial_number }}</span>
-                <span class="flex-1 truncate text-ink-gray-6">{{ item.unit_name }}</span>
-                <StatusBadge :value="item.unit_condition" kind="condition" />
-              </router-link>
+          <ul v-if="data.contents.length" class="divide-y divide-outline-gray-1">
+            <li v-for="child in data.contents" :key="child.name" class="flex items-center gap-3 px-4 py-2 text-sm">
+              <router-link :to="{ name: 'unit', params: { name: child.name } }" class="font-mono text-xs text-ink-blue-6 hover:underline">{{ child.serial_no }}</router-link>
+              <span class="flex-1 truncate text-ink-gray-6">{{ child.item_name }}</span>
+              <StatusBadge :value="child.condition" kind="condition" />
+              <button v-if="data.can.write" class="text-ink-gray-4 hover:text-ink-red-6" title="Take out" @click="unpack(child.name)"><Icon name="close" :size="12" /></button>
             </li>
           </ul>
+          <div v-if="data.can.write" class="border-t border-outline-gray-1 p-3">
+            <input
+              v-model="packCode"
+              class="h-8 w-full rounded-md border border-outline-gray-3 px-2.5 font-mono text-sm outline-none focus:border-outline-blue-3"
+              placeholder="Scan a unit to pack it into this box"
+              autocomplete="off"
+              :disabled="saving"
+              @keydown.enter.prevent="packUnit"
+            />
+          </div>
         </section>
       </div>
 
@@ -116,7 +129,7 @@
       </section>
     </div>
 
-    <FlagProblemDialog v-model="flagOpen" :serial="unit?.unit_serial_number" @created="afterTicket" />
+    <FlagProblemDialog v-model="flagOpen" :serial="unit?.serial_no" @created="afterTicket" />
   </PageFrame>
 </template>
 
@@ -140,7 +153,8 @@ const data = ref(null)
 const failure = ref('')
 const flagOpen = ref(false)
 const saving = ref(false)
-const place = reactive({ zone: '', section: '', level: '', position: '' })
+const packCode = ref('')
+const place = reactive({ rental_zone: '', rental_aisle: '', rental_section: '', rental_level: '', rental_position: '' })
 
 const unit = computed(() => data.value?.unit)
 
@@ -153,7 +167,7 @@ const ACTIONS = {
   'In Maintenance': [{ type: 'MAINTENANCE_IN', label: 'Back from repair', icon: 'check' }],
   Missing: [{ type: 'CHECK_IN', label: 'Found — check in', icon: 'in' }],
 }
-const moveActions = computed(() => ACTIONS[unit.value?.movement_status] || [])
+const moveActions = computed(() => (data.value?.parent_box ? [] : ACTIONS[unit.value?.status] || []))
 
 function fill(result) {
   data.value = result
@@ -168,19 +182,30 @@ async function load() {
   }
 }
 
-const move = (type) => router.push({ name: 'movement-new', query: { type, unit: unit.value.unit_serial_number || unit.value.name } })
+const move = (type) => router.push({ name: 'movement-new', query: { type, unit: unit.value.serial_no } })
 
-async function saveStorage() {
+async function save(request, message) {
   saving.value = true
   try {
-    fill(await api.updateStorage(unit.value.name, place))
-    toast.success('Storage saved')
+    await request()
+    toast.success(message)
+    await load()
   } catch (err) {
     toast.error(readError(err))
   } finally {
     saving.value = false
   }
 }
+
+const saveStorage = () => save(() => api.updateStorage(unit.value.name, place), 'Storage saved')
+
+function packUnit() {
+  const code = packCode.value.trim()
+  if (!code) return
+  save(() => api.pack(unit.value.name, [code]), `${code} packed`).then(() => (packCode.value = ''))
+}
+
+const unpack = (name) => save(() => api.pack('', [name]), `${name} taken out`)
 
 async function afterTicket() {
   await load()

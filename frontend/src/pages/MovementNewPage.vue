@@ -46,12 +46,13 @@
             </span>
             <div class="min-w-0 flex-1">
               <div class="flex items-center gap-2">
-                <span class="font-mono text-sm font-medium text-ink-gray-9">{{ item.unit?.unit_serial_number || item.code }}</span>
-                <span v-if="item.unit" class="truncate text-sm text-ink-gray-7">{{ item.unit.unit_name }}</span>
+                <span class="font-mono text-sm font-medium text-ink-gray-9">{{ item.unit?.serial_no || item.code }}</span>
+                <span v-if="item.unit" class="truncate text-sm text-ink-gray-7">{{ item.unit.item_name }}</span>
+                <span v-if="item.unit?.contents" class="rounded bg-surface-gray-2 px-1.5 text-[11px] text-ink-gray-6">box · {{ item.unit.contents }} inside</span>
               </div>
               <div v-if="item.problem" class="text-xs text-ink-red-6">{{ item.problem }}</div>
               <div v-else-if="item.unit" class="flex items-center gap-1.5 text-xs text-ink-gray-5">
-                <StatusBadge :value="item.unit.movement_status" /> <StatusBadge :value="item.unit.unit_condition" kind="condition" />
+                <StatusBadge :value="item.unit.status" /> <StatusBadge :value="item.unit.condition" kind="condition" />
                 <span>{{ item.unit.location }}</span>
               </div>
             </div>
@@ -66,16 +67,16 @@
         <div v-if="canBulk" class="border-t border-outline-gray-1 p-4">
           <div class="mb-2 text-sm font-medium text-ink-gray-8">Bulk items <span class="text-xs font-normal text-ink-gray-5">(counted, not scanned)</span></div>
           <ul v-if="bulk.length" class="mb-2 flex flex-col gap-1">
-            <li v-for="(row, index) in bulk" :key="row.template" class="flex items-center gap-2 rounded-md bg-surface-gray-1 px-3 py-1.5 text-sm">
-              <span class="flex-1 truncate">{{ row.template }}</span>
+            <li v-for="(row, index) in bulk" :key="row.item_code" class="flex items-center gap-2 rounded-md bg-surface-gray-1 px-3 py-1.5 text-sm">
+              <span class="flex-1 truncate">{{ row.item_code }}</span>
               <span class="tabular font-medium">× {{ row.qty }}</span>
               <button class="text-ink-gray-4 hover:text-ink-red-6" @click="bulk.splice(index, 1)"><Icon name="close" :size="12" /></button>
             </li>
           </ul>
           <div class="flex items-end gap-2">
-            <div class="flex-1"><LinkPicker v-model="bulkDraft.template" doctype="Rental Item Template" placeholder="Search a bulk item…" /></div>
+            <div class="flex-1"><LinkPicker v-model="bulkDraft.item_code" doctype="Item" :filters="BULK_FILTERS" placeholder="Search a bulk item…" /></div>
             <input v-model.number="bulkDraft.qty" type="number" min="1" class="h-8 w-20 rounded-md border border-outline-gray-3 px-2 text-sm" />
-            <Button :disabled="!bulkDraft.template || !(bulkDraft.qty > 0)" @click="addBulk">Add</Button>
+            <Button :disabled="!bulkDraft.item_code || !(bulkDraft.qty > 0)" @click="addBulk">Add</Button>
           </div>
         </div>
       </section>
@@ -143,7 +144,8 @@ const scanning = ref(false)
 const busy = ref(false)
 const items = ref([])
 const bulk = ref([])
-const bulkDraft = reactive({ template: '', qty: 1 })
+const bulkDraft = reactive({ item_code: '', qty: 1 })
+const BULK_FILTERS = { is_rental_item: 1, rental_tracking: 'Bulk', disabled: 0 }
 const to = ref(type.value === 'MAINTENANCE_OUT' ? 'Repair Shop' : '')
 const issuedTo = ref('')
 const receivedBy = ref('')
@@ -151,7 +153,7 @@ const note = ref('')
 
 const goesOut = computed(() => ['CHECK_OUT', 'MAINTENANCE_OUT', 'LOST'].includes(type.value) && type.value !== 'LOST')
 const canBulk = computed(() => ['CHECK_OUT', 'CHECK_IN'].includes(type.value))
-const validCodes = computed(() => items.value.filter((item) => item.ok).map((item) => item.unit.unit_serial_number || item.code))
+const validCodes = computed(() => items.value.filter((item) => item.ok).map((item) => item.unit.serial_no))
 const blocked = computed(() => items.value.filter((item) => !item.ok).length)
 const needsDestination = computed(() => type.value === 'CHECK_OUT' && !to.value.trim())
 const canSubmit = computed(() => (validCodes.value.length || bulk.value.length) && !needsDestination.value)
@@ -171,7 +173,7 @@ async function check(value) {
 async function scan() {
   const value = code.value.trim()
   if (!value) return
-  if (items.value.some((item) => item.code.toLowerCase() === value.toLowerCase() || item.unit?.unit_serial_number?.toLowerCase() === value.toLowerCase())) {
+  if (items.value.some((item) => item.code.toLowerCase() === value.toLowerCase() || item.unit?.serial_no?.toLowerCase() === value.toLowerCase())) {
     code.value = ''
     return toast.info(`${value} is already in the list`)
   }
@@ -200,10 +202,10 @@ async function setType(kind) {
 const remove = (item) => (items.value = items.value.filter((row) => row !== item))
 
 function addBulk() {
-  const existing = bulk.value.find((row) => row.template === bulkDraft.template)
+  const existing = bulk.value.find((row) => row.item_code === bulkDraft.item_code)
   if (existing) existing.qty += bulkDraft.qty
-  else bulk.value.push({ template: bulkDraft.template, qty: bulkDraft.qty })
-  bulkDraft.template = ''
+  else bulk.value.push({ item_code: bulkDraft.item_code, qty: bulkDraft.qty })
+  bulkDraft.item_code = ''
   bulkDraft.qty = 1
 }
 

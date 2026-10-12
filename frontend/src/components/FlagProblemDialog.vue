@@ -14,8 +14,8 @@
             @blur="lookup"
           />
           <span v-if="unit" class="flex items-center gap-2 text-xs text-ink-gray-6">
-            <Icon name="check" :size="12" class="text-ink-green-6" /> {{ unit.unit_name }}
-            <StatusBadge :value="unit.movement_status" /> <StatusBadge :value="unit.unit_condition" kind="condition" />
+            <Icon name="check" :size="12" class="text-ink-green-6" /> {{ unit.item_name }}
+            <StatusBadge :value="unit.status" /> <StatusBadge :value="unit.condition" kind="condition" />
           </span>
           <span v-else-if="missing" class="text-xs text-ink-red-6">No unit with serial {{ serial.trim() }}</span>
         </label>
@@ -105,7 +105,7 @@ async function lookup() {
 async function submit() {
   busy.value = true
   try {
-    const name = await api.createTicket({ code: unit.value.unit_serial_number || unit.value.name, unit_condition: condition.value, issue_description: description.value })
+    const name = await api.createTicket({ code: unit.value.serial_no, unit_condition: condition.value, issue_description: description.value })
     toast.success('Ticket created')
     open.value = false
     emit('created', name)

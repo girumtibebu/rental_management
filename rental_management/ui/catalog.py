@@ -1,198 +1,208 @@
-"""Catalog: item templates and how many of each are available."""
-
-import re
+"""Catalog: rental items on the native Item master, and how many of each are available."""
 
 import frappe
 from frappe import _
+from frappe.model.naming import make_autoname
+from frappe.utils import cint, flt
 
-from rental_management.api import create_rental_item_units
-from rental_management.ui.common import BULK_ITEM, TEMPLATE, UNIT, like, paging
+from rental_management.rental.item import get_serial_prefix
+from rental_management.rental.setup.install import RENTAL_ITEM_GROUP
+from rental_management.rental.stock import STATUSES, get_bulk_quantities, get_place, get_warehouse_statuses, post_movement
+from rental_management.ui.common import CONDITIONS, ITEM_FIELDS, describe_item, like, paging
 
 KINDS = ("Unit", "Box", "Bulk")
 MAX_UNITS_PER_BATCH = 50
 
 
-def unit_counts(template_names=None):
-    """{template: {total, Warehouse, At Event, In Maintenance, Missing, needs_attention}} in one query."""
-    frappe.has_permission(UNIT, "read", throw=True)
+def empty_counts():
+    return {"total": 0, **dict.fromkeys(STATUSES, 0), "needs_attention": 0, "available": 0}
+
+
+def serial_counts(item_codes):
+    """{item_code: counts} for serialised items, in one query."""
+    if not item_codes:
+        return {}
+    statuses = get_warehouse_statuses()
     rows = frappe.db.sql(
         """
-        select item_template, movement_status, unit_condition, count(*) as total
-        from `tabRental Item Unit`
-        where disabled = 0 and ifnull(item_template, '') != ''
-        group by item_template, movement_status, unit_condition
+        select item_code, warehouse, rental_condition, count(*) as total
+        from `tabSerial No`
+        where item_code in %(items)s and warehouse in %(warehouses)s
+        group by item_code, warehouse, rental_condition
         """,
+        {"items": list(item_codes), "warehouses": list(statuses)},
         as_dict=True,
     )
-    wanted = set(template_names) if template_names is not None else None
     counts = {}
     for row in rows:
-        if wanted is not None and row.item_template not in wanted:
-            continue
-        entry = counts.setdefault(
-            row.item_template,
-            {"total": 0, "Warehouse": 0, "At Event": 0, "In Maintenance": 0, "Missing": 0, "needs_attention": 0, "available": 0},
-        )
+        entry = counts.setdefault(row.item_code, empty_counts())
+        status = statuses[row.warehouse]
         entry["total"] += row.total
-        if row.movement_status in entry:
-            entry[row.movement_status] += row.total
-        if row.unit_condition != "OK":
+        entry[status] += row.total
+        if row.rental_condition != "OK":
             entry["needs_attention"] += row.total
-        if row.movement_status == "Warehouse" and row.unit_condition == "OK":
+        if status == "Warehouse" and row.rental_condition == "OK":
             entry["available"] += row.total
     return counts
 
 
-def describe(template, counts):
-    return {
-        **template,
-        "kind": template.rental_item_type_box,
-        "counts": counts.get(template.name) or {"total": 0, "Warehouse": 0, "At Event": 0, "In Maintenance": 0, "Missing": 0, "needs_attention": 0, "available": 0},
-    }
+def bulk_counts(item_codes):
+    counts = {}
+    for item_code, quantities in get_bulk_quantities(item_codes).items():
+        counts[item_code] = {
+            **empty_counts(),
+            **quantities,
+            "total": sum(quantities.values()),
+            "available": quantities["Warehouse"],
+        }
+    return counts
 
 
-TEMPLATE_FIELDS = [
-    "name",
-    "item_name",
-    "item_model",
-    "item_category",
-    "item_type",
-    "item_brand",
-    "rental_item_type_box",
-    "status",
-    "uom",
-    "image",
-    "sku_naming_series",
-    "modified",
-]
+def get_counts(items):
+    serialised = [item.name for item in items if item.rental_tracking != "Bulk"]
+    bulk = [item.name for item in items if item.rental_tracking == "Bulk"]
+    return {**serial_counts(serialised), **bulk_counts(bulk)}
+
+
+def with_counts(items):
+    counts = get_counts(items)
+    return [{**describe_item(item), "counts": counts.get(item.name) or empty_counts()} for item in items]
 
 
 @frappe.whitelist()
-def list_templates(search=None, category=None, kind=None, page=1, page_length=24):
+def list_items(search=None, category=None, kind=None, page=1, page_length=24):
     start, length = paging(page, page_length)
-    filters = []
+    filters = {"is_rental_item": 1, "disabled": 0}
     if category:
-        filters.append(["item_category", "=", category])
+        filters["item_group"] = category
     if kind:
-        filters.append(["rental_item_type_box", "=", kind])
+        filters["rental_tracking"] = kind
     or_filters = None
     if search:
         pattern = like(search)
-        or_filters = [["item_name", "like", pattern], ["item_model", "like", pattern], ["name", "like", pattern]]
+        or_filters = [["item_name", "like", pattern], ["rental_model", "like", pattern], ["name", "like", pattern]]
     rows = frappe.get_list(
-        TEMPLATE,
+        "Item",
         filters=filters,
         or_filters=or_filters,
-        fields=TEMPLATE_FIELDS,
+        fields=ITEM_FIELDS,
         order_by="modified desc",
         limit_start=start,
         limit_page_length=length,
     )
-    total = len(frappe.get_list(TEMPLATE, filters=filters, or_filters=or_filters, pluck="name", limit_page_length=0))
-    counts = unit_counts([row.name for row in rows])
-    return {"rows": [describe(row, counts) for row in rows], "total": total}
+    total = len(frappe.get_list("Item", filters=filters, or_filters=or_filters, pluck="name", limit_page_length=0))
+    return {"rows": with_counts(rows), "total": total}
+
+
+def get_categories():
+    return frappe.get_all("Item Group", filters={"parent_item_group": RENTAL_ITEM_GROUP}, pluck="name", order_by="name asc")
 
 
 @frappe.whitelist()
 def facets():
-    """Option lists for filters and the new-template form."""
-    names = lambda doctype: frappe.get_all(doctype, pluck="name", order_by="name asc")  # noqa: E731
+    """Option lists for filters and the new-item form."""
     return {
-        "categories": names("Rent Item Category"),
-        "types": names("Rent Item Type"),
-        "brands": names("Rent Item Brand"),
+        "categories": get_categories(),
+        "types": frappe.get_all("Rent Item Type", pluck="name", order_by="name asc"),
+        "brands": frappe.get_all("Brand", pluck="name", order_by="name asc"),
         "kinds": list(KINDS),
-        "conditions": names("Rental Item Condition"),
+        "conditions": list(CONDITIONS),
     }
 
 
 @frappe.whitelist()
-def get_template(name):
-    doc = frappe.get_doc(TEMPLATE, name)
+def get_item(name):
+    doc = frappe.get_doc("Item", name)
     doc.check_permission("read")
-    data = {field: doc.get(field) for field in TEMPLATE_FIELDS + ["item_model_long", "suffix", "total_quantity", "available_quantity"]}
-    kind = doc.rental_item_type_box
-    bulk = frappe.get_all(
-        BULK_ITEM,
-        filters={"bulk_item_link": name},
-        fields=["name", "name1", "uom", "size", "bulk_type", "quantity", "total_availability", "status"],
-    )
+    if not doc.is_rental_item:
+        frappe.throw(_("{0} is not a rental item").format(name))
+    item = with_counts([frappe._dict({field: doc.get(field) for field in ITEM_FIELDS})])[0]
+    can_stock = bool(frappe.has_permission("Stock Entry", "submit"))
     return {
-        "template": describe(frappe._dict(data), unit_counts([name])),
-        "bulk": bulk,
+        "item": item,
+        "stock": [
+            {"status": status, "place": get_place(status), "qty": item["counts"][status]} for status in STATUSES
+        ],
         "can": {
-            "write": bool(frappe.has_permission(TEMPLATE, "write", doc=doc)),
-            "generate": doc.status == "Completed" and kind != "Bulk" and bool(frappe.has_permission(UNIT, "create")),
-            "activate": doc.status == "Draft" and bool(frappe.has_permission(TEMPLATE, "write", doc=doc)),
+            "write": bool(frappe.has_permission("Item", "write", doc=doc)),
+            "generate": doc.rental_tracking != "Bulk" and can_stock and bool(frappe.has_permission("Serial No", "create")),
+            "receive": doc.rental_tracking == "Bulk" and can_stock,
         },
     }
 
 
-def code(value):
-    return re.sub(r"[^a-zA-Z0-9]", "", value or "").upper()
-
-
-def sku_series(kind, model, brand, item_type, suffix):
-    """The serial pattern the Desk form builds, e.g. LEDWALL-RO-LE-###."""
-    if kind == "Bulk" or not suffix:
-        return "NONE"
-    prefix = code(model) if kind == "Box" else f"{code(model)}-{code(brand)[:2]}-{code(item_type)[:2]}"
-    return f"{prefix}-{'#' * int(suffix)}"
+def get_item_code(kind, model, brand, item_type):
+    """Unit items use the serial prefix (MODEL-BR-TY); boxes and bulk items use the model code."""
+    item_code = get_serial_prefix(model, brand, item_type, "Unit" if kind == "Unit" else "Box")
+    if not item_code:
+        frappe.throw(_("A model name is required"))
+    return item_code
 
 
 @frappe.whitelist()
-def create_template(item_model, item_category, item_type, item_brand, rental_item_type_box, uom=None, suffix="3", size=None, activate=1):
-    """Create an item template the same way the Desk form does (name and serial pattern included)."""
-    if rental_item_type_box not in KINDS:
+def create_item(rental_model, item_group, rental_item_type, brand, rental_tracking, stock_uom=None, rental_serial_digits="3", rental_size=None):
+    """Create a rental Item. Its code is the serial prefix, so labels and item codes read the same."""
+    if rental_tracking not in KINDS:
         frappe.throw(_("Choose Unit, Box or Bulk"))
-    if str(suffix or "3") not in ("1", "2", "3", "4"):
+    if str(rental_serial_digits or "3") not in ("1", "2", "3", "4"):
         frappe.throw(_("The serial digits must be 1 to 4"))
-    model = (item_model or "").strip()
-    if not model:
-        frappe.throw(_("A model name is required"))
+    model = (rental_model or "").strip()
+    item_code = get_item_code(rental_tracking, model, brand, rental_item_type)
+    if frappe.db.exists("Item", item_code):
+        frappe.throw(_("A rental item {0} already exists").format(frappe.bold(item_code)))
     doc = frappe.get_doc(
         {
-            "doctype": TEMPLATE,
-            "item_model": model,
-            "item_model_long": model,
-            "item_category": item_category,
-            "item_type": item_type,
-            "item_brand": item_brand,
-            "item_name": " ".join(part for part in (model, item_brand, item_type) if part),
-            "rental_item_type_box": rental_item_type_box,
-            "uom": uom or None,
-            "size": size,
-            "suffix": suffix or "3",
-            "sku_naming_series": sku_series(rental_item_type_box, model, item_brand, item_type, suffix),
-            "status": "Draft",
+            "doctype": "Item",
+            "item_code": item_code,
+            "item_name": " ".join(part for part in (model, brand, rental_item_type) if part),
+            "item_group": item_group,
+            "brand": brand,
+            "stock_uom": stock_uom or "Nos",
+            "is_rental_item": 1,
+            "rental_tracking": rental_tracking,
+            "rental_model": model,
+            "rental_item_type": rental_item_type,
+            "rental_serial_digits": str(rental_serial_digits or "3"),
+            "rental_size": rental_size,
         }
     )
     doc.insert()
-    if int(activate or 0):
-        doc.status = "Completed"
-        doc.save()
     return doc.name
 
 
-@frappe.whitelist()
-def activate_template(name):
-    doc = frappe.get_doc(TEMPLATE, name)
-    doc.check_permission("write")
-    doc.status = "Completed"
-    doc.save()
-    return get_template(name)
+def next_serials(series, count):
+    """`count` new serial numbers from the item's series, skipping any already in use."""
+    serials = []
+    while len(serials) < count:
+        name = make_autoname(series, "Serial No")
+        if not frappe.db.exists("Serial No", name):
+            serials.append(name)
+    return serials
 
 
 @frappe.whitelist()
-def generate_units(template, count=1):
-    """Create serial-numbered units for a template (existing numbering rules apply)."""
-    count = int(count)
+def generate_units(item_code, count=1):
+    """Create serial numbers for an item and receive them into the rental store."""
+    count = cint(count)
     if not 1 <= count <= MAX_UNITS_PER_BATCH:
         frappe.throw(_("Create between 1 and {0} units at a time").format(MAX_UNITS_PER_BATCH))
-    doc = frappe.get_doc(TEMPLATE, template)
-    doc.check_permission("write")
-    if doc.status != "Completed":
-        frappe.throw(_("Activate the template before creating units"))
-    if doc.rental_item_type_box == "Bulk":
+    item = frappe.get_doc("Item", item_code)
+    item.check_permission("read")
+    if item.rental_tracking == "Bulk" or not item.has_serial_no:
         frappe.throw(_("Bulk items are counted, not serialised"))
-    return create_rental_item_units(template, count)
+    frappe.has_permission("Serial No", "create", throw=True)
+    serials = next_serials(item.serial_no_series, count)
+    for name in serials:
+        frappe.get_doc({"doctype": "Serial No", "serial_no": name, "item_code": item_code}).insert()
+    movement = post_movement("PURCHASE", serials=serials, remarks=_("New rental units"))
+    return {"units_created": serials, "movement": movement}
+
+
+@frappe.whitelist()
+def receive_stock(item_code, qty):
+    """Add bulk quantity to the rental store."""
+    if frappe.db.get_value("Item", item_code, "rental_tracking") != "Bulk":
+        frappe.throw(_("Only bulk items are received by quantity"))
+    if flt(qty) <= 0:
+        frappe.throw(_("Enter a quantity above zero"))
+    return post_movement("PURCHASE", bulk=[(item_code, flt(qty))], remarks=_("Bulk stock received"))

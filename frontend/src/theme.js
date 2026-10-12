@@ -5,6 +5,7 @@ export const STATUS_THEME = {
   'At Event': 'blue',
   'In Maintenance': 'orange',
   Missing: 'red',
+  'Not In Stock': 'gray',
 }
 
 export const CONDITION_THEME = {
