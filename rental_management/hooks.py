@@ -45,6 +45,8 @@ page_js = {"warehouse_dashboard": "public/js/warehouse_dashboard.js"}
 # include js in doctype views
 doctype_js = {
 	"Rental Item Maintenance": "public/js/rental_item_maintenance.js",
+	"Item": "public/js/item.js",
+	"Serial No": "public/js/serial_no.js",
 }
 doctype_list_js = {
     "Ops Entry": "public/js/ops_entry_list.js",
@@ -90,7 +92,8 @@ doctype_list_js = {
 # ------------
 
 # before_install = "rental_management.install.before_install"
-# after_install = "rental_management.install.after_install"
+after_install = "rental_management.rental.setup.install.after_install"
+after_migrate = "rental_management.rental.setup.install.after_migrate"
 
 # Uninstallation
 # ------------
@@ -135,6 +138,11 @@ doctype_list_js = {
 # Document Events
 # ---------------
 # Hook on document methods and events
+
+doc_events = {
+	"Item": {"validate": "rental_management.rental.item.validate_item"},
+	"Serial No": {"validate": "rental_management.rental.item.validate_serial_no"},
+}
 
 # doc_events = {
 # 	"*": {
