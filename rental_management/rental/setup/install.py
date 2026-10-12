@@ -24,6 +24,8 @@ def setup():
     setup_custom_fields()
     setup_item_group()
     setup_settings()
+    # rental units are serial numbers, which ERPNext only accepts with this switched on
+    frappe.db.set_single_value("Stock Settings", "enable_serial_and_batch_no_for_item", 1)
 
 
 def setup_item_group():

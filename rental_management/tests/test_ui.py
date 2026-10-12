@@ -209,7 +209,7 @@ class TestRentalUI(IntegrationTestCase):
     def test_users_without_access_are_refused(self):
         user = "rental.noaccess@example.com"
         if not frappe.db.exists("User", user):
-            frappe.get_doc({"doctype": "User", "email": user, "first_name": "Plain", "send_welcome_email": 0, "roles": [{"role": "Blogger"}]}).insert()
+            frappe.get_doc({"doctype": "User", "email": user, "first_name": "Plain", "send_welcome_email": 0}).insert()
         frappe.set_user(user)
         try:
             for call in (dashboard.get_dashboard, units.list_units):

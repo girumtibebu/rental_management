@@ -66,11 +66,12 @@ def get_venues(serials):
         select entry.serial_no, stock_entry.rental_venue
         from `tabSerial and Batch Entry` entry
         join `tabSerial and Batch Bundle` bundle on bundle.name = entry.parent
+        join `tabSerial No` serial on serial.name = entry.serial_no and serial.warehouse = bundle.warehouse
         join `tabStock Entry` stock_entry on stock_entry.name = bundle.voucher_no
         where entry.serial_no in %(serials)s
             and bundle.docstatus = 1 and bundle.is_cancelled = 0
             and bundle.voucher_type = 'Stock Entry' and bundle.type_of_transaction = 'Inward'
-        order by bundle.posting_datetime desc, bundle.creation desc
+        order by stock_entry.posting_date desc, stock_entry.posting_time desc, stock_entry.name desc
         """,
         {"serials": serials},
         as_dict=True,

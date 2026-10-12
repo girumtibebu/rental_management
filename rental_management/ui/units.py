@@ -2,6 +2,7 @@
 
 import frappe
 from frappe import _
+from frappe.utils import get_datetime
 
 from rental_management.rental.item import get_box_contents
 from rental_management.rental.stock import NOT_IN_STOCK, get_place, get_status, get_venues, get_warehouse
@@ -145,7 +146,7 @@ def movement_events(name):
             "status": entry.rental_movement_type or entry.purpose,
             "from_location": get_place(moves[entry.name].get("from")) if moves[entry.name].get("from") else "",
             "to_location": get_place(moves[entry.name].get("to"), entry.rental_venue) if moves[entry.name].get("to") else "",
-            "when": f"{entry.posting_date} {entry.posting_time}",
+            "when": str(get_datetime(f"{entry.posting_date} {entry.posting_time}")),
             "owner": entry.owner,
         }
         for entry in entries
@@ -177,7 +178,7 @@ def ticket_events(name):
 def history(name):
     """Movements and maintenance for a serial, newest first."""
     events = movement_events(name) + ticket_events(name)
-    events.sort(key=lambda event: event["when"], reverse=True)
+    events.sort(key=lambda event: (event["when"][:19], event["name"]), reverse=True)
     return events[:80]
 
 
