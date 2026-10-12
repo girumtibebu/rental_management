@@ -68,11 +68,11 @@
         <section v-if="unit.status === 'Warehouse' && data.can.write" class="rounded-lg border border-outline-gray-2 bg-surface-white">
           <header class="border-b border-outline-gray-1 px-4 py-2.5 text-sm font-semibold text-ink-gray-9">Warehouse storage</header>
           <div class="grid grid-cols-2 gap-3 px-4 py-3">
-            <LinkPicker v-model="place.rental_zone" label="Zone" doctype="Zone" />
-            <LinkPicker v-model="place.rental_aisle" label="Aisle" doctype="Aisle" />
-            <LinkPicker v-model="place.rental_section" label="Section" doctype="Section" />
-            <LinkPicker v-model="place.rental_level" label="Level" doctype="Level" />
-            <LinkPicker v-model="place.rental_position" label="Position" doctype="Position" />
+            <LinkPicker v-model="place.rental_zone" label="Zone" doctype="Zone" creatable />
+            <LinkPicker v-model="place.rental_aisle" label="Aisle" doctype="Aisle" creatable />
+            <LinkPicker v-model="place.rental_section" label="Section" doctype="Section" creatable />
+            <LinkPicker v-model="place.rental_level" label="Level" doctype="Level" creatable />
+            <LinkPicker v-model="place.rental_position" label="Position" doctype="Position" creatable />
           </div>
           <div class="flex justify-end border-t border-outline-gray-1 px-4 py-2.5">
             <Button size="sm" variant="solid" :loading="saving" @click="saveStorage">Save storage</Button>

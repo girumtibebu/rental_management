@@ -24,25 +24,13 @@
         </label>
 
         <div class="grid grid-cols-3 gap-3">
-          <label class="grid gap-1">
-            <span class="text-ink-gray-6">Category</span>
-            <select v-model="form.category" class="h-8 rounded-md border border-outline-gray-3 bg-surface-white px-2 py-0">
-              <option value="" disabled>Choose…</option>
-              <option v-for="name in facets.categories" :key="name" :value="name">{{ name }}</option>
-            </select>
-          </label>
-          <label class="grid gap-1">
-            <span class="text-ink-gray-6">Type</span>
-            <select v-model="form.type" class="h-8 rounded-md border border-outline-gray-3 bg-surface-white px-2 py-0">
-              <option value="" disabled>Choose…</option>
-              <option v-for="name in facets.types" :key="name" :value="name">{{ name }}</option>
-            </select>
-          </label>
-          <LinkPicker v-model="form.brand" label="Brand" doctype="Brand" />
+          <LinkPicker v-model="form.category" label="Category" doctype="Item Group" :filters="CATEGORY_FILTERS" creatable />
+          <LinkPicker v-model="form.type" label="Type" doctype="Rent Item Type" creatable />
+          <LinkPicker v-model="form.brand" label="Brand" doctype="Brand" creatable />
         </div>
 
         <div class="grid grid-cols-2 gap-3">
-          <LinkPicker v-model="form.uom" label="Unit of measure (default Nos)" doctype="UOM" />
+          <LinkPicker v-model="form.uom" label="Unit of measure (default Nos)" doctype="UOM" creatable />
           <label v-if="form.kind !== 'Bulk'" class="grid gap-1">
             <span class="text-ink-gray-6">Serial digits</span>
             <select v-model="form.digits" class="h-8 rounded-md border border-outline-gray-3 bg-surface-white px-2 py-0">
@@ -70,9 +58,10 @@ import { Button, Dialog, toast } from 'frappe-ui'
 import LinkPicker from './LinkPicker.vue'
 import { api, readError } from '../api'
 
-const props = defineProps({ modelValue: Boolean, facets: Object })
+const props = defineProps({ modelValue: Boolean })
 const emit = defineEmits(['update:modelValue', 'created'])
 
+const CATEGORY_FILTERS = { parent_item_group: 'Rental' }
 const KINDS = [
   { value: 'Unit', hint: 'One serial number each' },
   { value: 'Box', hint: 'A case holding units' },

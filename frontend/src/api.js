@@ -31,6 +31,7 @@ export const api = {
   startRepair: (name) => call(P + 'maintenance.start_repair', { name }),
   completeTicket: (values) => call(P + 'maintenance.complete', values),
 
+  quickCreate: (doctype, value) => call(P + 'links.quick_create', { doctype, value }),
   searchLink: (doctype, txt, filters) =>
     call('frappe.desk.search.search_link', { doctype, txt: txt || '', page_length: 10, filters: json(filters) }),
 }
