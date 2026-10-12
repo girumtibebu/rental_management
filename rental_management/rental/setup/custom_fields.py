@@ -1,13 +1,16 @@
-"""Rental fields added to the native Item and Serial No doctypes.
+"""Rental fields added to the native Item, Serial No and Stock Entry doctypes.
 
-Rental items live on the ERPNext Item master; individual units are native
-Serial Nos. These fields carry the rental-specific data on top of them.
+Rental items live on the ERPNext Item master, individual units are native
+Serial Nos and movements are Stock Entries. These fields carry the
+rental-specific data on top of them.
 """
 
+import frappe
 from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 
+from rental_management.rental.stock import MOVEMENT_TYPES
+
 RENTAL_CONDITIONS = "OK\nNeed Cleaning\nPartially Ok\nDamaged\nScrapped"
-RENTAL_STATUSES = "Warehouse\nAt Event\nIn Maintenance\nMissing"
 LOCATION_DOCTYPES = ("Zone", "Aisle", "Section", "Level", "Position")
 
 
@@ -86,22 +89,12 @@ def get_custom_fields():
             "insert_after": "brand",
         },
         {
-            "fieldname": "rental_status",
-            "fieldtype": "Select",
-            "label": "Rental Status",
-            "options": RENTAL_STATUSES,
-            "default": "Warehouse",
-            "insert_after": "rental_details_section",
-            "in_list_view": 1,
-            "in_standard_filter": 1,
-        },
-        {
             "fieldname": "rental_condition",
             "fieldtype": "Select",
             "label": "Condition",
             "options": RENTAL_CONDITIONS,
             "default": "OK",
-            "insert_after": "rental_status",
+            "insert_after": "rental_details_section",
             "in_list_view": 1,
             "in_standard_filter": 1,
         },
@@ -141,8 +134,47 @@ def get_custom_fields():
         }
     )
 
-    return {"Item": item_fields, "Serial No": serial_no_fields}
+    stock_entry_fields = [
+        {
+            "fieldname": "rental_movement_type",
+            "fieldtype": "Select",
+            "label": "Rental Movement",
+            "options": "\n" + "\n".join(MOVEMENT_TYPES),
+            "insert_after": "stock_entry_type",
+            "read_only": 1,
+            "in_standard_filter": 1,
+            "description": "Set by the Rental app. The warehouse a serial is in is its rental status.",
+        },
+        {
+            "fieldname": "rental_venue",
+            "fieldtype": "Data",
+            "label": "Venue",
+            "insert_after": "rental_movement_type",
+            "read_only": 1,
+            "depends_on": "rental_movement_type",
+        },
+        {
+            "fieldname": "rental_issued_to",
+            "fieldtype": "Data",
+            "label": "Issued To",
+            "insert_after": "rental_venue",
+            "read_only": 1,
+            "depends_on": "rental_movement_type",
+        },
+        {
+            "fieldname": "rental_received_by",
+            "fieldtype": "Data",
+            "label": "Received By",
+            "insert_after": "rental_issued_to",
+            "read_only": 1,
+            "depends_on": "rental_movement_type",
+        },
+    ]
+
+    return {"Item": item_fields, "Serial No": serial_no_fields, "Stock Entry": stock_entry_fields}
 
 
 def setup_custom_fields():
+    # rental status is the serial's warehouse since v2.0.2
+    frappe.delete_doc("Custom Field", "Serial No-rental_status", ignore_missing=True, force=True)
     create_custom_fields(get_custom_fields(), update=True)

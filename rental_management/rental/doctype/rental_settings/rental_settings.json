@@ -1,0 +1,91 @@
+{
+ "actions": [],
+ "creation": "2026-10-12 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "company",
+  "warehouses_section",
+  "store_warehouse",
+  "event_warehouse",
+  "column_break_warehouses",
+  "repair_warehouse",
+  "missing_warehouse"
+ ],
+ "fields": [
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "description": "A serial's rental status is the warehouse it is in. Movements in the Rental app post Stock Entries between these warehouses.",
+   "fieldname": "warehouses_section",
+   "fieldtype": "Section Break",
+   "label": "Warehouses"
+  },
+  {
+   "fieldname": "store_warehouse",
+   "fieldtype": "Link",
+   "label": "In Warehouse",
+   "options": "Warehouse",
+   "reqd": 1
+  },
+  {
+   "fieldname": "event_warehouse",
+   "fieldtype": "Link",
+   "label": "At Event",
+   "options": "Warehouse",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_warehouses",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "repair_warehouse",
+   "fieldtype": "Link",
+   "label": "In Maintenance",
+   "options": "Warehouse",
+   "reqd": 1
+  },
+  {
+   "fieldname": "missing_warehouse",
+   "fieldtype": "Link",
+   "label": "Missing",
+   "options": "Warehouse",
+   "reqd": 1
+  }
+ ],
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-10-12 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Rental",
+ "name": "Rental Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "read": 1,
+   "role": "Stock Manager",
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "Stock User"
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
