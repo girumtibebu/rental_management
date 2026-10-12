@@ -6,7 +6,7 @@ movement is a submitted Stock Entry, so the stock ledger is the history.
 
 import frappe
 from frappe import _
-from frappe.utils import cint, flt
+from frappe.utils import add_to_date, cint, flt, now_datetime
 
 SETTINGS = "Rental Settings"
 NOT_IN_STOCK = "Not In Stock"
@@ -181,12 +181,27 @@ def post_movement(movement_type, serials=(), bulk=(), venue=None, issued_to=None
             "items": rows,
         }
     )
+    posting_datetime = posting_datetime or get_latest_posting({row["item_code"] for row in rows})
     if posting_datetime:
         stock_entry.set_posting_time = 1
         stock_entry.posting_date, stock_entry.posting_time = str(posting_datetime).split(" ")
     stock_entry.insert()
     stock_entry.submit()
     return stock_entry.name
+
+
+def get_latest_posting(item_codes):
+    """A second after the items' last stock entry when that is not before now, else None.
+
+    ERPNext only counts stock posted strictly earlier, and refuses a serial
+    move dated before an existing entry. Both bite after a WSL clock jump or
+    when two moves land in the same instant.
+    """
+    latest = frappe.db.sql(
+        "select max(posting_datetime) from `tabStock Ledger Entry` where item_code in %(items)s and is_cancelled = 0",
+        {"items": list(item_codes)},
+    )[0][0]
+    return add_to_date(latest, seconds=1) if latest and latest >= now_datetime() else None
 
 
 def set_series_counter(prefix, value):
