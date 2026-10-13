@@ -32,7 +32,7 @@ from frappe.utils import (
 
 from rental_management.rental.item import get_serial_prefix
 from rental_management.rental.setup.install import RENTAL_ITEM_GROUP, setup
-from rental_management.rental.stock import post_movement, set_series_counter
+from rental_management.rental.stock import get_warehouse, post_movement, set_series_counter
 
 REPLAYED_TYPES = ("CHECK_OUT", "CHECK_IN", "MAINTENANCE_OUT", "MAINTENANCE_IN", "LOST")
 STATUS_AFTER = {
@@ -440,20 +440,37 @@ def replay_movements(data, items, units, statuses):
 		if last and posting <= last:
 			posting = add_to_date(last, seconds=1)
 		last = posting
-		post_movement(
-			movement.transaction_type,
-			serials=serials,
-			bulk=bulk,
-			venue=venue_for(movement.transaction_type, movement.to_location),
-			issued_to=movement.issued_to,
-			received_by=movement.recieved_by,
-			remarks=f"Migrated from {movement.name}. {strip_html(movement.text_editor_fdyh or '')}".strip(),
-			posting_datetime=str(posting),
-		)
+		try:
+			post_movement(
+				movement.transaction_type,
+				serials=serials,
+				bulk=bulk,
+				venue=venue_for(movement.transaction_type, movement.to_location),
+				issued_to=movement.issued_to,
+				received_by=movement.recieved_by,
+				remarks=f"Migrated from {movement.name}. {strip_html(movement.text_editor_fdyh or '')}".strip(),
+				posting_datetime=str(posting),
+				sources=sources_of(serials, statuses),
+			)
+		except Exception:
+			print(
+				f"Replaying {movement.name} ({movement.transaction_type} at {posting}) failed for {serials} {bulk}"
+			)
+			raise
 		replayed += 1
+		if replayed % 25 == 0:
+			print(f"Replayed {replayed} movements, up to {movement.name} at {posting}")
 		for serial in serials:
 			statuses[serial] = STATUS_AFTER[movement.transaction_type]
 	return replayed
+
+
+def sources_of(serials, statuses):
+	"""Take each serial from the warehouse the import has it in, not from Serial No.warehouse.
+
+	ERPNext can be behind on Serial No.warehouse while backdated entries are reposted.
+	"""
+	return {serial: get_warehouse(statuses[serial]) for serial in serials}
 
 
 def venue_for(movement_type, place):
@@ -477,6 +494,7 @@ def match_old_statuses(units, statuses):
 			serials=serials,
 			venue=venue,
 			remarks="Migrated: matches the status the old unit record had",
+			sources=sources_of(serials, statuses),
 		)
 	return len(groups)
 
