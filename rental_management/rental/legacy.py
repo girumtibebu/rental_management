@@ -580,8 +580,6 @@ def match_old_statuses(units, statuses):
 			movement_type = MOVE_TO[unit.status]
 			groups.setdefault((movement_type, venue_for(movement_type, unit.place)), []).append(unit.serial)
 	for (movement_type, venue), serials in groups.items():
-		for serial in serials:
-			statuses[serial] = STATUS_AFTER[movement_type]
 		post_movement(
 			movement_type,
 			serials=serials,
@@ -589,6 +587,8 @@ def match_old_statuses(units, statuses):
 			remarks="Migrated: matches the status the old unit record had",
 			sources=sources_of(serials, statuses),
 		)
+		for serial in serials:
+			statuses[serial] = STATUS_AFTER[movement_type]
 	return len(groups)
 
 
