@@ -463,19 +463,50 @@ def replay_movements(data, items, units, statuses):
 			print(f"Replayed {replayed} movements, up to {movement.name} at {posting}")
 		for serial in serials:
 			statuses[serial] = STATUS_AFTER[movement.transaction_type]
+		check_ledger(movement, serials, statuses)
 	return replayed
+
+
+def check_ledger(movement, serials, statuses):
+	"""Stop at the first movement after which the stock ledger disagrees with where the import has the units."""
+	items = {
+		row.name: row.item_code
+		for row in frappe.get_all(
+			"Serial No", filters={"name": ["in", serials]}, fields=["name", "item_code"]
+		)
+	}
+	for item_code in set(items.values()):
+		item_serials = frappe.get_all("Serial No", filters={"item_code": item_code}, pluck="name")
+		expected = {}
+		for serial in item_serials:
+			if serial in statuses:
+				warehouse = get_warehouse(statuses[serial])
+				expected[warehouse] = expected.get(warehouse, 0) + 1
+		for warehouse, count in expected.items():
+			actual = frappe.db.sql(
+				"""select qty_after_transaction from `tabStock Ledger Entry`
+				where item_code = %s and warehouse = %s and is_cancelled = 0
+				order by posting_datetime desc, creation desc limit 1""",
+				(item_code, warehouse),
+			)
+			actual = flt(actual[0][0]) if actual else 0
+			if actual != count:
+				print(
+					f"After {movement.name}: {item_code} in {warehouse} is {actual} in the ledger, {count} expected"
+				)
+				print_ledger(list(item_serials))
+				frappe.throw(f"Stock ledger out of step with the import after {movement.name}")
 
 
 def print_ledger(serials):
 	"""What the stock ledger and the Serial Nos say about these serials' items, to explain a failed replay."""
 	items = sorted(set(frappe.get_all("Serial No", filters={"name": ["in", serials]}, pluck="item_code")))
-	for serial in frappe.get_all(
-		"Serial No", filters={"name": ["in", serials]}, fields=["name", "warehouse"]
-	):
-		print("serial", serial.name, serial.warehouse)
+	print("repost entries", frappe.db.count("Repost Item Valuation", {"docstatus": 1}))
 	for row in frappe.db.sql(
-		"""select item_code, warehouse, posting_datetime, actual_qty, qty_after_transaction, voucher_no, is_cancelled
-		from `tabStock Ledger Entry` where item_code in %(items)s order by posting_datetime, creation""",
+		"""select sle.item_code, sle.warehouse, sle.posting_datetime, sle.posting_date, sle.posting_time,
+			sle.actual_qty, sle.qty_after_transaction, sle.voucher_no, sle.is_cancelled, sle.creation, se.remarks
+		from `tabStock Ledger Entry` sle left join `tabStock Entry` se on se.name = sle.voucher_no
+		where sle.item_code in %(items)s order by sle.posting_datetime, sle.creation""",
 		{"items": items or [""]},
 		as_dict=True,
 	):
