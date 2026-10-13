@@ -45,6 +45,8 @@ class TestLegacyImport(IntegrationTestCase):
 						**unit,
 						"name": "U1",
 						"creation": "2026-01-01 10:00:01",
+						"movement_status": "At Event",
+						"unit_location": "Expo",
 						"unit_serial_number": f"BEAM{tag}-RO-SP-001",
 						"zone": f"Z{tag}",
 					},
@@ -86,11 +88,14 @@ class TestLegacyImport(IntegrationTestCase):
 		first, second = f"BEAM{self.tag}-RO-SP-001", f"BEAM{self.tag}-RO-SP-002"
 		self.assertEqual(frappe.db.get_value("Serial No", first, "item_code"), f"BEAM{self.tag}-RO-SP")
 		self.assertEqual(frappe.db.get_value("Serial No", first, "rental_zone"), f"Z{self.tag}")
-		# the replayed check-out, and the old status for the unit no movement explained
+		# U1 by the replayed check-out, U2 by matching the status its old record had
 		self.assertEqual(units.find_unit(first)["status"], "At Event")
 		self.assertEqual(units.find_unit(second)["status"], "At Event")
 		self.assertEqual(frappe.db.get_value("Serial No", second, "rental_condition"), "Damaged")
-		self.assertEqual((summary.serials_created, summary.movements_replayed, summary.tickets), (2, 1, 1))
+		self.assertEqual(
+			(summary.serials_created, summary.movements_replayed, summary.status_fixes, summary.tickets),
+			(2, 1, 1, 1),
+		)
 
 		again = import_legacy(self.legacy())
 		self.assertEqual(
