@@ -456,6 +456,7 @@ def replay_movements(data, items, units, statuses):
 			print(
 				f"Replaying {movement.name} ({movement.transaction_type} at {posting}) failed for {serials} {bulk}"
 			)
+			print_ledger(serials)
 			raise
 		replayed += 1
 		if replayed % 25 == 0:
@@ -463,6 +464,22 @@ def replay_movements(data, items, units, statuses):
 		for serial in serials:
 			statuses[serial] = STATUS_AFTER[movement.transaction_type]
 	return replayed
+
+
+def print_ledger(serials):
+	"""What the stock ledger and the Serial Nos say about these serials' items, to explain a failed replay."""
+	items = sorted(set(frappe.get_all("Serial No", filters={"name": ["in", serials]}, pluck="item_code")))
+	for serial in frappe.get_all(
+		"Serial No", filters={"name": ["in", serials]}, fields=["name", "warehouse"]
+	):
+		print("serial", serial.name, serial.warehouse)
+	for row in frappe.db.sql(
+		"""select item_code, warehouse, posting_datetime, actual_qty, qty_after_transaction, voucher_no, is_cancelled
+		from `tabStock Ledger Entry` where item_code in %(items)s order by posting_datetime, creation""",
+		{"items": items or [""]},
+		as_dict=True,
+	):
+		print("sle", *row.values())
 
 
 def sources_of(serials, statuses):
