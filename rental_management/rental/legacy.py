@@ -18,7 +18,17 @@ import re
 
 import frappe
 from frappe.model.workflow import apply_workflow
-from frappe.utils import add_to_date, cint, flt, get_datetime, now_datetime, strip_html
+from frappe.utils import (
+	add_days,
+	add_to_date,
+	add_years,
+	cint,
+	flt,
+	get_datetime,
+	getdate,
+	now_datetime,
+	strip_html,
+)
 
 from rental_management.rental.item import get_serial_prefix
 from rental_management.rental.setup.install import RENTAL_ITEM_GROUP, setup
@@ -313,6 +323,8 @@ def opening_time(data, units):
 def receive_opening_stock(data, items, units, pending):
 	"""Receive the new units, one Stock Entry per item, and bulk quantities into the rental store."""
 	posting = opening_time(data, units)
+	if pending:
+		ensure_fiscal_years(posting)
 	by_item = {}
 	for unit in units.values():
 		if unit.serial in pending:
@@ -333,6 +345,35 @@ def receive_opening_stock(data, items, units, pending):
 	if bulk:
 		post_movement("PURCHASE", bulk=bulk, remarks="Opening rental stock", posting_datetime=posting)
 	return {serial: "Warehouse" for serial in pending}
+
+
+def ensure_fiscal_years(posting):
+	"""Add fiscal years, shaped like the earliest one, back to the date old stock is posted on."""
+	date = getdate(posting)
+	years = frappe.get_all(
+		"Fiscal Year",
+		filters={"disabled": 0},
+		fields=["name", "year_start_date"],
+		order_by="year_start_date asc",
+	)
+	if not years or years[0].year_start_date <= date:
+		return
+	companies = frappe.get_all("Fiscal Year Company", filters={"parent": years[0].name}, pluck="company")
+	start = years[0].year_start_date
+	while start > date:
+		end, start = add_days(start, -1), add_years(start, -1)
+		name = f"{start.year}-{end.year}" if start.year != end.year else str(start.year)
+		if frappe.db.exists("Fiscal Year", name):
+			name = f"{name} ({start})"
+		frappe.get_doc(
+			{
+				"doctype": "Fiscal Year",
+				"year": name,
+				"year_start_date": start,
+				"year_end_date": end,
+				"companies": [{"company": row} for row in companies],
+			}
+		).insert(ignore_permissions=True)
 
 
 def movement_serials(data, movement, units, statuses):
