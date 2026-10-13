@@ -15,8 +15,11 @@ import again only adds what is missing.
 
 import gzip
 import re
+from contextlib import contextmanager
+from datetime import timedelta
 
 import frappe
+from frappe.model import document
 from frappe.model.workflow import apply_workflow
 from frappe.utils import (
 	add_days,
@@ -133,9 +136,11 @@ def import_legacy(data, skip_templates=()):
 	items = import_templates(data, templates)
 	units, created = import_units(data, items)
 	pending = needs_stock(units)
-	statuses = receive_opening_stock(data, items, units, pending)
-	replayed = replay_movements(data, items, units, statuses)
-	matched = match_old_statuses(units, statuses)
+	with monotonic_clock():
+		statuses = receive_opening_stock(data, items, units, pending)
+		replayed = replay_movements(data, items, units, statuses)
+		matched = match_old_statuses(units, statuses)
+	sync_serial_warehouses(statuses)
 	tickets = import_tickets(data, units)
 	summary.update(
 		items=len(items),
@@ -150,6 +155,44 @@ def import_legacy(data, skip_templates=()):
 		),
 	)
 	return summary
+
+
+@contextmanager
+def monotonic_clock():
+	"""Keep document timestamps moving forward while the old history is posted.
+
+	ERPNext finds the stock entry before a new one by posting time and then by
+	creation time, and some v16 releases also require the earlier entry to
+	have been created first. A system clock that steps back (WSL does) then
+	hides an earlier entry and the quantities after it go wrong.
+	"""
+	original = document.now
+	last = None
+
+	def now():
+		nonlocal last
+		value = get_datetime(original())
+		if last and value <= last:
+			value = last + timedelta(microseconds=1)
+		last = value
+		return value.strftime("%Y-%m-%d %H:%M:%S.%f")
+
+	document.now = now
+	try:
+		yield
+	finally:
+		document.now = original
+
+
+def sync_serial_warehouses(statuses):
+	"""Serial No.warehouse is what the rental app reads; ERPNext may only fill it once it reposts."""
+	for serial, status in statuses.items():
+		frappe.db.set_value(
+			"Serial No",
+			serial,
+			{"warehouse": get_warehouse(status), "status": "Active"},
+			update_modified=False,
+		)
 
 
 def ensure(doctype, name, **values):
@@ -537,6 +580,8 @@ def match_old_statuses(units, statuses):
 			movement_type = MOVE_TO[unit.status]
 			groups.setdefault((movement_type, venue_for(movement_type, unit.place)), []).append(unit.serial)
 	for (movement_type, venue), serials in groups.items():
+		for serial in serials:
+			statuses[serial] = STATUS_AFTER[movement_type]
 		post_movement(
 			movement_type,
 			serials=serials,
