@@ -9,22 +9,47 @@
       <template v-if="data">
         <StatusBadge :value="unit.status" size="md" />
         <StatusBadge :value="unit.condition" kind="condition" size="md" />
-        <Button v-for="action in moveActions" :key="action.type" size="sm" :disabled="!data.can.move" @click="move(action.type)">
-          <template #prefix><Icon :name="action.icon" :size="13" /></template>{{ action.label }}
-        </Button>
-        <Button size="sm" :disabled="!data.can.maintain || Boolean(data.open_ticket)" @click="flagOpen = true">
-          <template #prefix><Icon name="alert" :size="13" /></template>Report a problem
-        </Button>
-        <a :href="`/desk/serial-no/${encodeURIComponent(unit.name)}`" target="_blank">
-          <Button size="sm" variant="ghost"><template #prefix><Icon name="external" :size="13" /></template>Desk</Button>
-        </a>
+        <div class="hidden sm:flex items-center gap-2">
+          <Button v-for="action in moveActions" :key="action.type" size="sm" :disabled="!data.can.move" @click="move(action.type)">
+            <template #prefix><Icon :name="action.icon" :size="13" /></template>{{ action.label }}
+          </Button>
+          <Button size="sm" :disabled="!data.can.maintain || Boolean(data.open_ticket)" @click="flagOpen = true">
+            <template #prefix><Icon name="alert" :size="13" /></template>Report a problem
+          </Button>
+          <a :href="`/desk/serial-no/${encodeURIComponent(unit.name)}`" target="_blank">
+            <Button size="sm" variant="ghost"><template #prefix><Icon name="external" :size="13" /></template>Desk</Button>
+          </a>
+        </div>
       </template>
     </template>
 
     <div v-if="!data" class="p-10 text-center text-sm text-ink-gray-5">{{ failure || 'Loading…' }}</div>
 
-    <div v-else class="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
-      <div class="flex flex-col gap-4">
+    <div v-else class="flex flex-col gap-4">
+      <!-- Mobile Quick Actions Bar -->
+      <div v-if="moveActions.length || data.can.maintain" class="flex flex-wrap gap-2 sm:hidden">
+        <button
+          v-for="action in moveActions"
+          :key="action.type"
+          class="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-outline-blue-3 bg-surface-blue-2 py-2.5 px-3 text-xs font-bold text-ink-blue-8 active:scale-95 shadow-2xs disabled:opacity-50"
+          :disabled="!data.can.move"
+          @click="move(action.type)"
+        >
+          <Icon :name="action.icon" :size="14" />
+          <span>{{ action.label }}</span>
+        </button>
+        <button
+          class="flex items-center justify-center gap-1.5 rounded-xl border border-outline-gray-2 bg-surface-white py-2.5 px-3 text-xs font-semibold text-ink-amber-8 active:scale-95 shadow-2xs disabled:opacity-50"
+          :disabled="!data.can.maintain || Boolean(data.open_ticket)"
+          @click="flagOpen = true"
+        >
+          <Icon name="alert" :size="14" />
+          <span>Report problem</span>
+        </button>
+      </div>
+
+      <div class="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+        <div class="flex flex-col gap-4">
         <div
           v-if="data.open_ticket"
           class="flex items-center gap-3 rounded-lg border border-outline-amber-3 bg-surface-amber-2 px-4 py-2.5 text-sm text-ink-amber-8"
@@ -127,6 +152,7 @@
         </ol>
         <div v-else class="p-8 text-center text-sm text-ink-gray-5">No history yet. Movements and repairs show up here.</div>
       </section>
+      </div>
     </div>
 
     <FlagProblemDialog v-model="flagOpen" :serial="unit?.serial_no" @created="afterTicket" />

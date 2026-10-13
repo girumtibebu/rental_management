@@ -29,22 +29,22 @@
         </div>
       </section>
 
-      <section class="overflow-hidden rounded-lg border border-outline-gray-2 bg-surface-white">
+      <section class="overflow-hidden rounded-xl border border-outline-gray-2 bg-surface-white shadow-xs">
         <header class="border-b border-outline-gray-1 px-4 py-2.5 text-sm font-semibold text-ink-gray-9">Units ({{ data.units.length }})</header>
         <table class="w-full text-sm">
           <tbody>
             <tr
               v-for="row in data.units"
               :key="row.name"
-              class="cursor-pointer border-b border-outline-gray-1 last:border-0 hover:bg-surface-gray-1"
+              class="cursor-pointer border-b border-outline-gray-1 last:border-0 hover:bg-surface-gray-1 active:bg-surface-gray-2"
               @click="router.push({ name: 'unit', params: { name: row.name } })"
             >
-              <td class="px-4 py-2.5 font-mono text-xs font-medium text-ink-gray-9">{{ row.serial_no }}</td>
-              <td class="px-3 py-2.5 text-ink-gray-7">{{ row.item_name }}</td>
-              <td class="px-3 py-2.5 text-xs text-ink-gray-6">from {{ row.previous || '—' }}</td>
-              <td class="px-4 py-2.5 text-right"><StatusBadge :value="row.condition" kind="condition" /></td>
+              <td class="px-3 sm:px-4 py-2.5 font-mono text-xs font-semibold text-ink-gray-9">{{ row.serial_no }}</td>
+              <td class="px-2 sm:px-3 py-2.5 text-xs sm:text-sm text-ink-gray-7 truncate max-w-[140px] sm:max-w-none">{{ row.item_name }}</td>
+              <td class="hidden sm:table-cell px-3 py-2.5 text-xs text-ink-gray-6">from {{ row.previous || '—' }}</td>
+              <td class="px-3 sm:px-4 py-2.5 text-right"><StatusBadge :value="row.condition" kind="condition" size="sm" /></td>
             </tr>
-            <tr v-if="!data.units.length"><td class="px-4 py-8 text-center text-sm text-ink-gray-5">No serialised units on this movement.</td></tr>
+            <tr v-if="!data.units.length"><td colspan="4" class="px-4 py-8 text-center text-sm text-ink-gray-5">No serialised units on this movement.</td></tr>
           </tbody>
         </table>
       </section>

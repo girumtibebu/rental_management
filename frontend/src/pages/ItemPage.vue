@@ -35,24 +35,24 @@
         </button>
       </div>
 
-      <section v-if="item.kind !== 'Bulk'" class="overflow-hidden rounded-lg border border-outline-gray-2 bg-surface-white">
+      <section v-if="item.kind !== 'Bulk'" class="overflow-hidden rounded-xl border border-outline-gray-2 bg-surface-white shadow-xs">
         <header class="flex items-center justify-between border-b border-outline-gray-1 px-4 py-2.5">
           <span class="text-sm font-semibold text-ink-gray-9">Units <span class="font-mono text-xs font-normal text-ink-gray-5">{{ item.serial_no_series }}</span></span>
-          <router-link :to="{ name: 'units', query: { item_code: item.name } }" class="text-xs text-ink-blue-6 hover:underline">Open in Units</router-link>
+          <router-link :to="{ name: 'units', query: { item_code: item.name } }" class="text-xs font-semibold text-ink-blue-6 hover:underline">Open in Units</router-link>
         </header>
         <table class="w-full text-sm">
           <tbody>
             <tr
               v-for="unit in units"
               :key="unit.name"
-              class="cursor-pointer border-b border-outline-gray-1 last:border-0 hover:bg-surface-gray-1"
+              class="cursor-pointer border-b border-outline-gray-1 last:border-0 hover:bg-surface-gray-1 active:bg-surface-gray-2"
               @click="router.push({ name: 'unit', params: { name: unit.name } })"
             >
-              <td class="px-4 py-2.5 font-mono text-xs font-medium text-ink-gray-9">{{ unit.serial_no }}</td>
-              <td class="px-3 py-2.5"><StatusBadge :value="unit.status" /></td>
-              <td class="px-3 py-2.5"><StatusBadge :value="unit.condition" kind="condition" /></td>
-              <td class="px-3 py-2.5 text-ink-gray-7">{{ unit.location || '—' }}</td>
-              <td class="px-4 py-2.5 text-right text-xs text-ink-gray-5">{{ timeAgo(unit.modified) }}</td>
+              <td class="px-3 sm:px-4 py-2.5 font-mono text-xs font-semibold text-ink-gray-9">{{ unit.serial_no }}</td>
+              <td class="px-2 sm:px-3 py-2.5"><StatusBadge :value="unit.status" size="sm" /></td>
+              <td class="px-2 sm:px-3 py-2.5"><StatusBadge :value="unit.condition" kind="condition" size="sm" /></td>
+              <td class="px-2 sm:px-3 py-2.5 text-xs text-ink-gray-7 truncate max-w-[120px] sm:max-w-none">{{ unit.location || '—' }}</td>
+              <td class="hidden sm:table-cell px-4 py-2.5 text-right text-xs text-ink-gray-5">{{ timeAgo(unit.modified) }}</td>
             </tr>
             <tr v-if="!units.length">
               <td class="px-4 py-10 text-center text-sm text-ink-gray-5">

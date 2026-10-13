@@ -15,6 +15,7 @@ declare module 'vue' {
     FlagProblemDialog: typeof import('./src/components/FlagProblemDialog.vue')['default']
     Icon: typeof import('./src/components/Icon.vue')['default']
     LinkPicker: typeof import('./src/components/LinkPicker.vue')['default']
+    MobileScannerModal: typeof import('./src/components/MobileScannerModal.vue')['default']
     NewItemDialog: typeof import('./src/components/NewItemDialog.vue')['default']
     PageFrame: typeof import('./src/components/PageFrame.vue')['default']
     Pagination: typeof import('./src/components/Pagination.vue')['default']

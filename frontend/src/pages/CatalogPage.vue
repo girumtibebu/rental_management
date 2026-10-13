@@ -4,32 +4,41 @@
       <Button variant="solid" size="sm" @click="newOpen = true"><template #prefix><Icon name="plus" :size="13" /></template>New item</Button>
     </template>
 
-    <div class="flex flex-wrap items-center gap-2">
-      <div class="relative">
+    <div class="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2">
+      <div class="relative flex-1 sm:flex-initial">
         <Icon name="search" :size="13" class="pointer-events-none absolute left-2.5 top-[9px] text-ink-gray-5" />
         <input
           v-model="filters.search"
-          class="h-8 w-64 rounded-md border border-outline-gray-3 bg-surface-white pl-8 pr-2 text-sm outline-none focus:border-outline-blue-3"
+          class="h-8 w-full sm:w-64 rounded-md border border-outline-gray-3 bg-surface-white pl-8 pr-7 text-sm outline-none focus:border-outline-blue-3"
           placeholder="Search equipment…"
           @input="reload(true)"
         />
-      </div>
-      <select v-model="filters.category" class="h-8 rounded-md border border-outline-gray-3 bg-surface-white px-2 py-0 text-sm" @change="reload(true)">
-        <option value="">All categories</option>
-        <option v-for="item in facets.categories" :key="item" :value="item">{{ item }}</option>
-      </select>
-      <div class="inline-flex overflow-hidden rounded-md border border-outline-gray-3 text-sm">
         <button
-          v-for="kind in KINDS"
-          :key="kind.value"
-          class="px-3 py-1"
-          :class="filters.kind === kind.value ? 'bg-surface-gray-8 text-ink-white' : 'bg-surface-white text-ink-gray-7 hover:bg-surface-gray-2'"
-          @click="filters.kind = kind.value; reload(true)"
+          v-if="filters.search"
+          class="absolute right-2 top-2 text-ink-gray-4 hover:text-ink-gray-7"
+          @click="filters.search = ''; reload(true)"
         >
-          {{ kind.label }}
+          <Icon name="close" :size="13" />
         </button>
       </div>
-      <span class="ml-auto text-xs text-ink-gray-5">{{ number(total) }} items</span>
+      <div class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-0.5 sm:pb-0">
+        <select v-model="filters.category" class="h-8 rounded-md border border-outline-gray-3 bg-surface-white px-2 py-0 text-sm shrink-0" @change="reload(true)">
+          <option value="">All categories</option>
+          <option v-for="item in facets.categories" :key="item" :value="item">{{ item }}</option>
+        </select>
+        <div class="inline-flex overflow-hidden rounded-md border border-outline-gray-3 text-sm shrink-0">
+          <button
+            v-for="kind in KINDS"
+            :key="kind.value"
+            class="px-2.5 py-1 text-xs sm:text-sm whitespace-nowrap"
+            :class="filters.kind === kind.value ? 'bg-surface-gray-8 text-ink-white font-medium' : 'bg-surface-white text-ink-gray-7 hover:bg-surface-gray-2'"
+            @click="filters.kind = kind.value; reload(true)"
+          >
+            {{ kind.label }}
+          </button>
+        </div>
+        <span class="ml-auto text-xs text-ink-gray-5 shrink-0 hidden sm:inline">{{ number(total) }} items</span>
+      </div>
     </div>
 
     <div v-if="rows.length" class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">

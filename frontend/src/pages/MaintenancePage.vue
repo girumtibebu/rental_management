@@ -9,39 +9,64 @@
 
     <div v-if="!board" class="p-10 text-center text-sm text-ink-gray-5">{{ failure || 'Loading…' }}</div>
 
-    <div v-else class="grid min-h-0 flex-1 gap-4 lg:grid-cols-3">
-      <section v-for="state in board.states" :key="state" class="flex min-h-[260px] flex-col rounded-lg border border-outline-gray-2 bg-surface-gray-2/60">
-        <header class="flex items-center gap-2 px-3.5 py-2.5">
-          <span class="h-2 w-2 rounded-full" :class="DOT[state]" />
-          <span class="text-sm font-semibold text-ink-gray-9">{{ state }}</span>
-          <span class="rounded-full bg-surface-white px-2 text-xs tabular text-ink-gray-6 ring-1 ring-outline-gray-2">{{ board.columns[state].length }}</span>
-        </header>
-        <ul class="flex flex-1 flex-col gap-2 overflow-y-auto px-2.5 pb-2.5">
-          <li v-for="ticket in board.columns[state]" :key="ticket.name">
-            <button
-              class="w-full rounded-lg border border-outline-gray-2 bg-surface-white p-3 text-left hover:border-outline-gray-4"
-              @click="openTicket(ticket.name)"
-            >
-              <div class="flex items-start justify-between gap-2">
-                <div class="min-w-0">
-                  <div class="truncate text-sm font-medium text-ink-gray-9">{{ ticket.item_name }}</div>
-                  <div class="font-mono text-xs text-ink-gray-5">{{ ticket.serial_no }}</div>
+    <template v-else>
+      <!-- Mobile Segmented Column Tabs -->
+      <div class="flex rounded-lg border border-outline-gray-2 bg-surface-gray-2 p-1 lg:hidden">
+        <button
+          v-for="state in board.states"
+          :key="state"
+          class="flex flex-1 items-center justify-center gap-1.5 rounded-md py-1.5 text-xs font-semibold transition-all"
+          :class="activeMobileState === state ? 'bg-surface-white text-ink-gray-9 shadow-xs' : 'text-ink-gray-6'"
+          @click="activeMobileState = state"
+        >
+          <span class="h-1.5 w-1.5 rounded-full" :class="DOT[state]" />
+          <span>{{ state === 'Attention Required' ? 'Attention' : state }}</span>
+          <span class="rounded-full bg-surface-gray-2 px-1 text-[10px] tabular font-medium text-ink-gray-7">
+            {{ board.columns[state].length }}
+          </span>
+        </button>
+      </div>
+
+      <!-- Kanban Columns: Tab-filtered on Mobile, 3-column Grid on Desktop -->
+      <div class="grid min-h-0 flex-1 gap-4 lg:grid-cols-3">
+        <section
+          v-for="state in board.states"
+          :key="state"
+          class="flex min-h-[260px] flex-col rounded-xl border border-outline-gray-2 bg-surface-gray-2/60 shadow-xs"
+          :class="activeMobileState === state ? 'flex' : 'hidden lg:flex'"
+        >
+          <header class="flex items-center gap-2 px-3.5 py-2.5">
+            <span class="h-2 w-2 rounded-full" :class="DOT[state]" />
+            <span class="text-sm font-semibold text-ink-gray-9">{{ state }}</span>
+            <span class="rounded-full bg-surface-white px-2 text-xs tabular text-ink-gray-6 ring-1 ring-outline-gray-2">{{ board.columns[state].length }}</span>
+          </header>
+          <ul class="flex flex-1 flex-col gap-2 overflow-y-auto px-2.5 pb-2.5">
+            <li v-for="ticket in board.columns[state]" :key="ticket.name">
+              <button
+                class="w-full rounded-xl border border-outline-gray-2 bg-surface-white p-3 text-left hover:border-outline-gray-4 active:bg-surface-gray-1 transition-colors shadow-2xs"
+                @click="openTicket(ticket.name)"
+              >
+                <div class="flex items-start justify-between gap-2">
+                  <div class="min-w-0">
+                    <div class="truncate text-sm font-semibold text-ink-gray-9">{{ ticket.item_name }}</div>
+                    <div class="font-mono text-xs font-medium text-ink-gray-5">{{ ticket.serial_no }}</div>
+                  </div>
+                  <StatusBadge :value="state === 'Complete' ? ticket.final_condition : ticket.unit_condition" kind="condition" />
                 </div>
-                <StatusBadge :value="state === 'Complete' ? ticket.final_condition : ticket.unit_condition" kind="condition" />
-              </div>
-              <p class="mt-2 line-clamp-2 text-xs text-ink-gray-6">{{ ticket.issue_description || 'No description' }}</p>
-              <div class="mt-2 flex items-center justify-between text-[11px] text-ink-gray-5">
-                <span>{{ ticket.name }}</span>
-                <span :title="fullDate(ticket.modified)">{{ timeAgo(ticket.modified) }}</span>
-              </div>
-            </button>
-          </li>
-          <li v-if="!board.columns[state].length" class="rounded-lg border border-dashed border-outline-gray-3 px-3 py-6 text-center text-xs text-ink-gray-5">
-            {{ EMPTY[state] }}
-          </li>
-        </ul>
-      </section>
-    </div>
+                <p class="mt-2 line-clamp-2 text-xs text-ink-gray-6">{{ ticket.issue_description || 'No description' }}</p>
+                <div class="mt-2.5 flex items-center justify-between text-[11px] text-ink-gray-5 border-t border-outline-gray-1 pt-2">
+                  <span class="font-mono">{{ ticket.name }}</span>
+                  <span :title="fullDate(ticket.modified)">{{ timeAgo(ticket.modified) }}</span>
+                </div>
+              </button>
+            </li>
+            <li v-if="!board.columns[state].length" class="rounded-xl border border-dashed border-outline-gray-3 px-3 py-8 text-center text-xs text-ink-gray-5 bg-surface-white/40">
+              {{ EMPTY[state] }}
+            </li>
+          </ul>
+        </section>
+      </div>
+    </template>
 
     <FlagProblemDialog v-model="flagOpen" @created="afterChange" />
 
@@ -121,6 +146,7 @@ const { refreshSummary } = inject('rental')
 
 const board = ref(null)
 const failure = ref('')
+const activeMobileState = ref('Attention Required')
 const flagOpen = ref(route.query.flag === '1')
 const ticketOpen = ref(false)
 const detail = ref(null)
@@ -132,6 +158,9 @@ async function load() {
   try {
     board.value = await api.board()
     failure.value = ''
+    if (board.value?.states?.length && !board.value.states.includes(activeMobileState.value)) {
+      activeMobileState.value = board.value.states[0]
+    }
   } catch (err) {
     failure.value = readError(err)
   }
