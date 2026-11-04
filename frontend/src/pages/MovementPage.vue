@@ -9,16 +9,13 @@
     <template #actions>
       <template v-if="move">
         <StatusBadge :value="move.transaction_type" kind="type" size="md" />
-        <a :href="`/desk/stock-entry/${encodeURIComponent(move.name)}`" target="_blank">
-          <Button size="sm" variant="ghost"><template #prefix><Icon name="external" :size="13" /></template>Desk</Button>
-        </a>
       </template>
     </template>
 
     <div v-if="!data" class="p-10 text-center text-sm text-ink-gray-5">{{ failure || 'Loading…' }}</div>
 
     <template v-else>
-      <section class="grid gap-x-6 gap-y-3 rounded-lg border border-outline-gray-2 bg-surface-white p-4 text-sm sm:grid-cols-2 lg:grid-cols-4">
+      <section class="grid gap-x-6 gap-y-3 rounded-lg border border-outline-gray-2 bg-surface-base p-4 text-sm sm:grid-cols-2 lg:grid-cols-4">
         <div><div class="text-xs text-ink-gray-5">From</div><div class="font-medium text-ink-gray-9">{{ move.from_location || '—' }}</div></div>
         <div><div class="text-xs text-ink-gray-5">To</div><div class="font-medium text-ink-gray-9">{{ move.to_location || '—' }}</div></div>
         <div><div class="text-xs text-ink-gray-5">Issued to</div><div class="font-medium text-ink-gray-9">{{ move.issued_to || '—' }}</div></div>
@@ -29,8 +26,8 @@
         </div>
       </section>
 
-      <section class="overflow-hidden rounded-xl border border-outline-gray-2 bg-surface-white shadow-xs">
-        <header class="border-b border-outline-gray-1 px-4 py-2.5 text-sm font-semibold text-ink-gray-9">Units ({{ data.units.length }})</header>
+      <section class="overflow-hidden rounded-xl border border-outline-gray-2 bg-surface-base shadow-xs">
+        <header class="border-b border-outline-gray-1 px-4 py-2.5 text-sm-semibold text-ink-gray-9">Units ({{ data.units.length }})</header>
         <table class="w-full text-sm">
           <tbody>
             <tr
@@ -39,7 +36,7 @@
               class="cursor-pointer border-b border-outline-gray-1 last:border-0 hover:bg-surface-gray-1 active:bg-surface-gray-2"
               @click="router.push({ name: 'unit', params: { name: row.name } })"
             >
-              <td class="px-3 sm:px-4 py-2.5 font-mono text-xs font-semibold text-ink-gray-9">{{ row.serial_no }}</td>
+              <td class="px-3 sm:px-4 py-2.5 font-mono text-xs-semibold text-ink-gray-9">{{ row.serial_no }}</td>
               <td class="px-2 sm:px-3 py-2.5 text-xs sm:text-sm text-ink-gray-7 truncate max-w-[140px] sm:max-w-none">{{ row.item_name }}</td>
               <td class="hidden sm:table-cell px-3 py-2.5 text-xs text-ink-gray-6">from {{ row.previous || '—' }}</td>
               <td class="px-3 sm:px-4 py-2.5 text-right"><StatusBadge :value="row.condition" kind="condition" size="sm" /></td>
@@ -49,8 +46,8 @@
         </table>
       </section>
 
-      <section v-if="data.bulk.length" class="overflow-hidden rounded-lg border border-outline-gray-2 bg-surface-white">
-        <header class="border-b border-outline-gray-1 px-4 py-2.5 text-sm font-semibold text-ink-gray-9">Bulk items ({{ data.bulk.length }})</header>
+      <section v-if="data.bulk.length" class="overflow-hidden rounded-lg border border-outline-gray-2 bg-surface-base">
+        <header class="border-b border-outline-gray-1 px-4 py-2.5 text-sm-semibold text-ink-gray-9">Bulk items ({{ data.bulk.length }})</header>
         <table class="w-full text-sm">
           <tbody>
             <tr v-for="row in data.bulk" :key="row.item_code" class="border-b border-outline-gray-1 last:border-0">

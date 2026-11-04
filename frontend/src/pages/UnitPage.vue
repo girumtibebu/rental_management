@@ -16,9 +16,6 @@
           <Button size="sm" :disabled="!data.can.maintain || Boolean(data.open_ticket)" @click="flagOpen = true">
             <template #prefix><Icon name="alert" :size="13" /></template>Report a problem
           </Button>
-          <a :href="`/desk/serial-no/${encodeURIComponent(unit.name)}`" target="_blank">
-            <Button size="sm" variant="ghost"><template #prefix><Icon name="external" :size="13" /></template>Desk</Button>
-          </a>
         </div>
       </template>
     </template>
@@ -31,7 +28,7 @@
         <button
           v-for="action in moveActions"
           :key="action.type"
-          class="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-outline-blue-3 bg-surface-blue-2 py-2.5 px-3 text-xs font-bold text-ink-blue-8 active:scale-95 shadow-2xs disabled:opacity-50"
+          class="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-outline-blue-4 bg-surface-blue-2 py-2.5 px-3 text-xs-bold text-ink-blue-8 active:scale-95 shadow-2xs disabled:opacity-50"
           :disabled="!data.can.move"
           @click="move(action.type)"
         >
@@ -39,7 +36,7 @@
           <span>{{ action.label }}</span>
         </button>
         <button
-          class="flex items-center justify-center gap-1.5 rounded-xl border border-outline-gray-2 bg-surface-white py-2.5 px-3 text-xs font-semibold text-ink-amber-8 active:scale-95 shadow-2xs disabled:opacity-50"
+          class="flex items-center justify-center gap-1.5 rounded-xl border border-outline-gray-2 bg-surface-base py-2.5 px-3 text-xs-semibold text-ink-amber-8 active:scale-95 shadow-2xs disabled:opacity-50"
           :disabled="!data.can.maintain || Boolean(data.open_ticket)"
           @click="flagOpen = true"
         >
@@ -52,15 +49,15 @@
         <div class="flex flex-col gap-4">
         <div
           v-if="data.open_ticket"
-          class="flex items-center gap-3 rounded-lg border border-outline-amber-3 bg-surface-amber-2 px-4 py-2.5 text-sm text-ink-amber-8"
+          class="flex items-center gap-3 rounded-lg border border-outline-amber-4 bg-surface-amber-2 px-4 py-2.5 text-sm text-ink-amber-8"
         >
           <Icon name="wrench" :size="14" />
           <span class="flex-1">Open maintenance ticket {{ data.open_ticket.name }} — {{ data.open_ticket.workflow_state }}</span>
           <router-link :to="{ name: 'maintenance' }" class="font-medium underline">Open board</router-link>
         </div>
 
-        <section class="rounded-lg border border-outline-gray-2 bg-surface-white">
-          <header class="border-b border-outline-gray-1 px-4 py-2.5 text-sm font-semibold text-ink-gray-9">Details</header>
+        <section class="rounded-lg border border-outline-gray-2 bg-surface-base">
+          <header class="border-b border-outline-gray-1 px-4 py-2.5 text-sm-semibold text-ink-gray-9">Details</header>
           <dl class="grid grid-cols-[110px_1fr] gap-y-2 px-4 py-3 text-sm">
             <dt class="text-ink-gray-5">Equipment</dt>
             <dd>
@@ -90,8 +87,8 @@
           </dl>
         </section>
 
-        <section v-if="unit.status === 'Warehouse' && data.can.write" class="rounded-lg border border-outline-gray-2 bg-surface-white">
-          <header class="border-b border-outline-gray-1 px-4 py-2.5 text-sm font-semibold text-ink-gray-9">Warehouse storage</header>
+        <section v-if="unit.status === 'Warehouse' && data.can.write" class="rounded-lg border border-outline-gray-2 bg-surface-base">
+          <header class="border-b border-outline-gray-1 px-4 py-2.5 text-sm-semibold text-ink-gray-9">Warehouse storage</header>
           <div class="grid grid-cols-2 gap-3 px-4 py-3">
             <LinkPicker v-model="place.rental_zone" label="Zone" doctype="Zone" creatable />
             <LinkPicker v-model="place.rental_aisle" label="Aisle" doctype="Aisle" creatable />
@@ -104,8 +101,8 @@
           </div>
         </section>
 
-        <section v-if="unit.kind === 'Box'" class="rounded-lg border border-outline-gray-2 bg-surface-white">
-          <header class="border-b border-outline-gray-1 px-4 py-2.5 text-sm font-semibold text-ink-gray-9">In this box ({{ data.contents.length }})</header>
+        <section v-if="unit.kind === 'Box'" class="rounded-lg border border-outline-gray-2 bg-surface-base">
+          <header class="border-b border-outline-gray-1 px-4 py-2.5 text-sm-semibold text-ink-gray-9">In this box ({{ data.contents.length }})</header>
           <ul v-if="data.contents.length" class="divide-y divide-outline-gray-1">
             <li v-for="child in data.contents" :key="child.name" class="flex items-center gap-3 px-4 py-2 text-sm">
               <router-link :to="{ name: 'unit', params: { name: child.name } }" class="font-mono text-xs text-ink-blue-6 hover:underline">{{ child.serial_no }}</router-link>
@@ -115,9 +112,9 @@
             </li>
           </ul>
           <div v-if="data.can.write" class="border-t border-outline-gray-1 p-3">
-            <input
+            <TextInput
               v-model="packCode"
-              class="h-8 w-full rounded-md border border-outline-gray-3 px-2.5 font-mono text-sm outline-none focus:border-outline-blue-3"
+              class="font-mono"
               placeholder="Scan a unit to pack it into this box"
               autocomplete="off"
               :disabled="saving"
@@ -127,8 +124,8 @@
         </section>
       </div>
 
-      <section class="rounded-lg border border-outline-gray-2 bg-surface-white">
-        <header class="border-b border-outline-gray-1 px-4 py-2.5 text-sm font-semibold text-ink-gray-9">History</header>
+      <section class="rounded-lg border border-outline-gray-2 bg-surface-base">
+        <header class="border-b border-outline-gray-1 px-4 py-2.5 text-sm-semibold text-ink-gray-9">History</header>
         <ol v-if="data.history.length" class="px-4 py-3">
           <li v-for="(event, index) in data.history" :key="event.kind + event.name" class="relative flex gap-3 pb-4 last:pb-0">
             <div class="flex flex-col items-center">
@@ -162,7 +159,7 @@
 <script setup>
 import { computed, inject, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Button, toast } from 'frappe-ui'
+import { Button, TextInput, toast } from 'frappe-ui'
 import FlagProblemDialog from '../components/FlagProblemDialog.vue'
 import Icon from '../components/Icon.vue'
 import LinkPicker from '../components/LinkPicker.vue'

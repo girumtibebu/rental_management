@@ -26,3 +26,8 @@ body,
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Menus and pickers are portalled without a z-index, so the mobile drawer (z-50) would cover them. */
+[data-reka-popper-content-wrapper] {
+  z-index: 60 !important;
+}

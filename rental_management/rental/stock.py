@@ -108,12 +108,15 @@ def get_purpose(movement_type):
     return {"PURCHASE": "Material Receipt", "DISPOSE": "Material Issue"}.get(movement_type, "Material Transfer")
 
 
-def build_serial_rows(movement_type, serials):
-    """One Stock Entry row per item and source warehouse, carrying its serial numbers."""
+def build_serial_rows(movement_type, serials, sources=None):
+    """One Stock Entry row per item and source warehouse, carrying its serial numbers.
+
+    `sources` ({serial: warehouse}) overrides where a serial is taken from.
+    """
     target = TARGET_STATUS[movement_type]
     groups = {}
     for serial in frappe.get_all("Serial No", filters={"name": ["in", serials]}, fields=["name", "item_code", "warehouse"]):
-        source = None if movement_type == "PURCHASE" else serial.warehouse
+        source = None if movement_type == "PURCHASE" else (sources or {}).get(serial.name, serial.warehouse)
         groups.setdefault((serial.item_code, source), []).append(serial.name)
     rows = []
     for (item_code, source), names in groups.items():
@@ -158,11 +161,21 @@ def build_bulk_rows(movement_type, bulk):
     return rows
 
 
-def post_movement(movement_type, serials=(), bulk=(), venue=None, issued_to=None, received_by=None, remarks=None, posting_datetime=None):
+def post_movement(
+    movement_type,
+    serials=(),
+    bulk=(),
+    venue=None,
+    issued_to=None,
+    received_by=None,
+    remarks=None,
+    posting_datetime=None,
+    sources=None,
+):
     """Submit one Stock Entry for a rental movement and return its name."""
     if movement_type not in MOVEMENT_TYPES:
         frappe.throw(_("Unknown movement type {0}").format(movement_type))
-    rows = build_serial_rows(movement_type, list(serials)) if serials else []
+    rows = build_serial_rows(movement_type, list(serials), sources) if serials else []
     rows += build_bulk_rows(movement_type, list(bulk)) if bulk else []
     if not rows:
         frappe.throw(_("Add at least one unit or bulk item"))

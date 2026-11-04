@@ -13,9 +13,6 @@
         <Button v-if="data.can.receive" size="sm" variant="solid" @click="receiveOpen = true">
           <template #prefix><Icon name="plus" :size="13" /></template>Receive stock
         </Button>
-        <a :href="`/desk/item/${encodeURIComponent(item.name)}`" target="_blank">
-          <Button size="sm" variant="ghost"><template #prefix><Icon name="external" :size="13" /></template>Desk</Button>
-        </a>
       </template>
     </template>
 
@@ -26,19 +23,19 @@
         <button
           v-for="stat in stats"
           :key="stat.label"
-          class="rounded-lg border border-outline-gray-2 bg-surface-white p-4 text-left hover:border-outline-gray-4"
+          class="rounded-lg border border-outline-gray-2 bg-surface-base p-4 text-left hover:border-outline-gray-4"
           :disabled="item.kind === 'Bulk'"
           @click="filterUnits(stat.query)"
         >
           <div class="text-[11px] font-medium uppercase tracking-wide text-ink-gray-5">{{ stat.label }}</div>
-          <div class="mt-1 text-2xl font-semibold tabular text-ink-gray-9">{{ number(stat.value) }}</div>
+          <div class="mt-1 text-3xl-semibold tabular text-ink-gray-9">{{ number(stat.value) }}</div>
         </button>
       </div>
 
-      <section v-if="item.kind !== 'Bulk'" class="overflow-hidden rounded-xl border border-outline-gray-2 bg-surface-white shadow-xs">
+      <section v-if="item.kind !== 'Bulk'" class="overflow-hidden rounded-xl border border-outline-gray-2 bg-surface-base shadow-xs">
         <header class="flex items-center justify-between border-b border-outline-gray-1 px-4 py-2.5">
-          <span class="text-sm font-semibold text-ink-gray-9">Units <span class="font-mono text-xs font-normal text-ink-gray-5">{{ item.serial_no_series }}</span></span>
-          <router-link :to="{ name: 'units', query: { item_code: item.name } }" class="text-xs font-semibold text-ink-blue-6 hover:underline">Open in Units</router-link>
+          <span class="text-sm-semibold text-ink-gray-9">Units <span class="font-mono text-xs text-ink-gray-5">{{ item.serial_no_series }}</span></span>
+          <router-link :to="{ name: 'units', query: { item_code: item.name } }" class="text-xs-semibold text-ink-blue-6 hover:underline">Open in Units</router-link>
         </header>
         <table class="w-full text-sm">
           <tbody>
@@ -48,7 +45,7 @@
               class="cursor-pointer border-b border-outline-gray-1 last:border-0 hover:bg-surface-gray-1 active:bg-surface-gray-2"
               @click="router.push({ name: 'unit', params: { name: unit.name } })"
             >
-              <td class="px-3 sm:px-4 py-2.5 font-mono text-xs font-semibold text-ink-gray-9">{{ unit.serial_no }}</td>
+              <td class="px-3 sm:px-4 py-2.5 font-mono text-xs-semibold text-ink-gray-9">{{ unit.serial_no }}</td>
               <td class="px-2 sm:px-3 py-2.5"><StatusBadge :value="unit.status" size="sm" /></td>
               <td class="px-2 sm:px-3 py-2.5"><StatusBadge :value="unit.condition" kind="condition" size="sm" /></td>
               <td class="px-2 sm:px-3 py-2.5 text-xs text-ink-gray-7 truncate max-w-[120px] sm:max-w-none">{{ unit.location || '—' }}</td>
@@ -68,8 +65,8 @@
         </div>
       </section>
 
-      <section v-else class="overflow-hidden rounded-lg border border-outline-gray-2 bg-surface-white">
-        <header class="border-b border-outline-gray-1 px-4 py-2.5 text-sm font-semibold text-ink-gray-9">Bulk stock</header>
+      <section v-else class="overflow-hidden rounded-lg border border-outline-gray-2 bg-surface-base">
+        <header class="border-b border-outline-gray-1 px-4 py-2.5 text-sm-semibold text-ink-gray-9">Bulk stock</header>
         <table class="w-full text-sm">
           <tbody>
             <tr v-for="row in data.stock" :key="row.status" class="border-b border-outline-gray-1 last:border-0">
@@ -84,11 +81,10 @@
 
     <Dialog v-model="generateOpen" :options="{ title: 'Create units', size: 'sm' }">
       <template #body-content>
-        <label class="grid gap-1 text-sm">
-          <span class="text-ink-gray-6">How many units? (1 to 50)</span>
-          <input v-model.number="count" type="number" min="1" max="50" class="h-8 rounded-md border border-outline-gray-3 px-2.5 outline-none focus:border-outline-blue-3" @keydown.enter="generate" />
+        <div class="grid gap-1.5">
+          <FormControl v-model="count" type="number" label="How many units? (1 to 50)" min="1" max="50" @keydown.enter="generate" />
           <span class="text-xs text-ink-gray-5">New serial numbers follow {{ item?.serial_no_series }} and go into the warehouse.</span>
-        </label>
+        </div>
         <div class="mt-4 flex justify-end gap-2">
           <Button label="Cancel" @click="generateOpen = false" />
           <Button variant="solid" label="Create" :loading="busy" @click="generate" />
@@ -98,10 +94,7 @@
 
     <Dialog v-model="receiveOpen" :options="{ title: 'Receive bulk stock', size: 'sm' }">
       <template #body-content>
-        <label class="grid gap-1 text-sm">
-          <span class="text-ink-gray-6">Quantity to add to the warehouse</span>
-          <input v-model.number="quantity" type="number" min="1" class="h-8 rounded-md border border-outline-gray-3 px-2.5 outline-none focus:border-outline-blue-3" @keydown.enter="receive" />
-        </label>
+        <FormControl v-model="quantity" type="number" label="Quantity to add to the warehouse" min="1" @keydown.enter="receive" />
         <div class="mt-4 flex justify-end gap-2">
           <Button label="Cancel" @click="receiveOpen = false" />
           <Button variant="solid" label="Receive" :loading="busy" @click="receive" />
@@ -114,7 +107,7 @@
 <script setup>
 import { computed, inject, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Button, Dialog, toast } from 'frappe-ui'
+import { Button, Dialog, FormControl, toast } from 'frappe-ui'
 import Icon from '../components/Icon.vue'
 import PageFrame from '../components/PageFrame.vue'
 import StatusBadge from '../components/StatusBadge.vue'
@@ -181,10 +174,10 @@ async function run(request, message, close) {
 }
 
 const generate = () =>
-  run(() => api.generateUnits(item.value.name, count.value), (result) => `${result.units_created.length} units created`, () => (generateOpen.value = false))
+  run(() => api.generateUnits(item.value.name, Number(count.value)), (result) => `${result.units_created.length} units created`, () => (generateOpen.value = false))
 
 const receive = () =>
-  run(() => api.receiveStock(item.value.name, quantity.value), () => `${quantity.value} ${item.value.stock_uom} received`, () => (receiveOpen.value = false))
+  run(() => api.receiveStock(item.value.name, Number(quantity.value)), () => `${quantity.value} ${item.value.stock_uom} received`, () => (receiveOpen.value = false))
 
 onMounted(load)
 </script>
