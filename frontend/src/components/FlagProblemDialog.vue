@@ -2,12 +2,11 @@
   <Dialog v-model="open" :options="{ title: 'Report a problem', size: 'md' }">
     <template #body-content>
       <div class="grid gap-3 text-sm">
-        <label class="grid gap-1">
-          <span class="text-ink-gray-6">Unit serial</span>
-          <input
+        <div class="grid gap-1.5">
+          <TextInput
             ref="serialInput"
             v-model="serial"
-            class="h-8 rounded-md border border-outline-gray-3 px-2.5 font-mono outline-none focus:border-outline-blue-3"
+            class="font-mono"
             placeholder="Scan or type a serial"
             autocomplete="off"
             @keydown.enter.prevent="lookup"
@@ -18,7 +17,7 @@
             <StatusBadge :value="unit.status" /> <StatusBadge :value="unit.condition" kind="condition" />
           </span>
           <span v-else-if="missing" class="text-xs text-ink-red-6">No unit with serial {{ serial.trim() }}</span>
-        </label>
+        </div>
 
         <div class="grid gap-1">
           <span class="text-ink-gray-6">What is wrong?</span>
@@ -27,7 +26,7 @@
               v-for="option in OPTIONS"
               :key="option.value"
               class="rounded-lg border px-3 py-2 text-left"
-              :class="condition === option.value ? 'border-outline-blue-3 bg-surface-blue-2' : 'border-outline-gray-2 hover:border-outline-gray-4'"
+              :class="condition === option.value ? 'border-outline-blue-4 bg-surface-blue-2' : 'border-outline-gray-2 hover:border-outline-gray-4'"
               @click="condition = option.value"
             >
               <div class="font-medium text-ink-gray-9">{{ option.value }}</div>
@@ -36,15 +35,7 @@
           </div>
         </div>
 
-        <label class="grid gap-1">
-          <span class="text-ink-gray-6">Description</span>
-          <textarea
-            v-model="description"
-            rows="3"
-            class="rounded-md border border-outline-gray-3 p-2.5 outline-none focus:border-outline-blue-3"
-            placeholder="What happened? Which part is affected?"
-          />
-        </label>
+        <FormControl v-model="description" type="textarea" :rows="3" label="Description" placeholder="What happened? Which part is affected?" />
 
         <div class="mt-1 flex justify-end gap-2">
           <Button label="Cancel" @click="open = false" />
@@ -57,7 +48,7 @@
 
 <script setup>
 import { computed, nextTick, ref, watch } from 'vue'
-import { Button, Dialog, toast } from 'frappe-ui'
+import { Button, Dialog, FormControl, TextInput, toast } from 'frappe-ui'
 import Icon from './Icon.vue'
 import StatusBadge from './StatusBadge.vue'
 import { api, readError } from '../api'
@@ -88,7 +79,7 @@ watch(open, async (value) => {
   description.value = ''
   if (serial.value) lookup()
   await nextTick()
-  if (!serial.value) serialInput.value?.focus()
+  if (!serial.value) serialInput.value?.$el?.querySelector('input')?.focus()
 })
 
 async function lookup() {

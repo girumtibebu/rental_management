@@ -9,7 +9,7 @@
               v-for="kind in KINDS"
               :key="kind.value"
               class="rounded-lg border px-3 py-2 text-left"
-              :class="form.kind === kind.value ? 'border-outline-blue-3 bg-surface-blue-2' : 'border-outline-gray-2 hover:border-outline-gray-4'"
+              :class="form.kind === kind.value ? 'border-outline-blue-4 bg-surface-blue-2' : 'border-outline-gray-2 hover:border-outline-gray-4'"
               @click="form.kind = kind.value"
             >
               <div class="font-medium text-ink-gray-9">{{ kind.value }}</div>
@@ -18,10 +18,7 @@
           </div>
         </div>
 
-        <label class="grid gap-1">
-          <span class="text-ink-gray-6">Model name</span>
-          <input v-model="form.model" class="h-8 rounded-md border border-outline-gray-3 px-2.5 outline-none focus:border-outline-blue-3" placeholder="e.g. LED Wall Panel 3.9mm" />
-        </label>
+        <FormControl v-model="form.model" label="Model name" placeholder="e.g. LED Wall Panel 3.9mm" />
 
         <div class="grid grid-cols-3 gap-3">
           <LinkPicker v-model="form.category" label="Category" doctype="Item Group" :filters="CATEGORY_FILTERS" creatable />
@@ -31,12 +28,12 @@
 
         <div class="grid grid-cols-2 gap-3">
           <LinkPicker v-model="form.uom" label="Unit of measure (default Nos)" doctype="UOM" creatable />
-          <label v-if="form.kind !== 'Bulk'" class="grid gap-1">
-            <span class="text-ink-gray-6">Serial digits</span>
-            <select v-model="form.digits" class="h-8 rounded-md border border-outline-gray-3 bg-surface-white px-2 py-0">
-              <option v-for="n in ['1', '2', '3', '4']" :key="n" :value="n">{{ n }} digits — {{ example(n) }}</option>
-            </select>
-          </label>
+          <Select
+            v-if="form.kind !== 'Bulk'"
+            v-model="form.digits"
+            label="Serial digits"
+            :options="['1', '2', '3', '4'].map((n) => ({ label: `${n} digits — ${example(n)}`, value: n }))"
+          />
         </div>
 
         <p v-if="form.kind !== 'Bulk' && preview" class="rounded-md bg-surface-gray-1 px-3 py-2 text-xs text-ink-gray-6">
@@ -54,7 +51,7 @@
 
 <script setup>
 import { computed, reactive, ref, watch } from 'vue'
-import { Button, Dialog, toast } from 'frappe-ui'
+import { Button, Dialog, FormControl, Select, toast } from 'frappe-ui'
 import LinkPicker from './LinkPicker.vue'
 import { api, readError } from '../api'
 
