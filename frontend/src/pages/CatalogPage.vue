@@ -79,15 +79,15 @@
         </tbody>
       </table>
     </div>
-    <div v-else-if="rows.length" class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+    <div v-else-if="rows.length" class="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
       <router-link
         v-for="item in rows"
         :key="item.name"
         :to="{ name: 'item', params: { name: item.name } }"
         class="group overflow-hidden rounded-lg border border-outline-gray-2 bg-surface-base hover:border-outline-gray-4"
       >
-        <div class="flex h-28 items-center justify-center bg-surface-gray-2">
-          <img v-if="item.image" :src="item.image" class="h-full w-full object-cover" />
+        <div class="flex aspect-[4/5] items-center justify-center bg-surface-gray-2">
+          <img v-if="item.image" :src="item.image" :alt="item.item_name" loading="lazy" class="h-full w-full object-contain" />
           <Icon v-else name="box" :size="30" class="text-ink-gray-4" />
         </div>
         <div class="p-3.5">
