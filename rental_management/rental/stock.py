@@ -8,7 +8,7 @@ import frappe
 from frappe import _
 from frappe.utils import add_to_date, cint, flt, now_datetime
 
-SETTINGS = "Rental Settings"
+WORKSPACE = "Rental Workspace"
 NOT_IN_STOCK = "Not In Stock"
 
 WAREHOUSE_FIELDS = {
@@ -34,11 +34,25 @@ BULK_SOURCE_STATUS = {"CHECK_OUT": "Warehouse", "CHECK_IN": "At Event", "DISPOSE
 PLACE_LABELS = {"Warehouse": "Warehouse", "At Event": "At event", "In Maintenance": "Repair Shop", "Missing": "Missing"}
 
 
-def get_settings():
-    settings = frappe.get_cached_doc(SETTINGS)
+def get_workspace_name(name=None):
+    """The workspace to work in: the one asked for, the one set for this request, else the default."""
+    name = name or frappe.flags.get("rental_workspace")
+    if name:
+        return name
+    default = frappe.db.get_value(WORKSPACE, {"is_default": 1, "enabled": 1}, "name")
+    if not default:
+        frappe.throw(_("Create a Rental Workspace and mark it as the default first"))
+    return default
+
+
+def get_settings(workspace=None):
+    """The Rental Workspace in use. Callers read company and the four warehouses from it."""
+    settings = frappe.get_cached_doc(WORKSPACE, get_workspace_name(workspace))
+    if not settings.enabled:
+        frappe.throw(_("Rental Workspace {0} is disabled").format(settings.name))
     missing = [field for field in ("company", *WAREHOUSE_FIELDS.values()) if not settings.get(field)]
     if missing:
-        frappe.throw(_("Complete Rental Settings first: {0} is not set").format(", ".join(missing)))
+        frappe.throw(_("Complete Rental Workspace {0} first: {1} is not set").format(settings.name, ", ".join(missing)))
     return settings
 
 

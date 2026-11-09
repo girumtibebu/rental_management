@@ -1,0 +1,143 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:workspace_name",
+ "creation": "2026-11-09 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "workspace_name",
+  "enabled",
+  "is_default",
+  "column_break_main",
+  "company",
+  "mode",
+  "hold_days",
+  "warehouses_section",
+  "store_warehouse",
+  "event_warehouse",
+  "column_break_warehouses",
+  "repair_warehouse",
+  "missing_warehouse"
+ ],
+ "fields": [
+  {
+   "fieldname": "workspace_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Workspace Name",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "label": "Enabled"
+  },
+  {
+   "description": "Opened for users who have no other workspace chosen. Only one workspace can be the default.",
+   "fieldname": "is_default",
+   "fieldtype": "Check",
+   "label": "Default Workspace"
+  },
+  {
+   "fieldname": "column_break_main",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "default": "Serial First",
+   "description": "Serial First opens on scanning units; Bulk First opens on item quantities.",
+   "fieldname": "mode",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Mode",
+   "options": "Serial First\nBulk First",
+   "reqd": 1
+  },
+  {
+   "default": "14",
+   "description": "How long a quotation holds stock before the hold lapses.",
+   "fieldname": "hold_days",
+   "fieldtype": "Int",
+   "label": "Quotation Hold (days)"
+  },
+  {
+   "description": "A rental status is the warehouse the stock is in. Movements in the Rental app post Stock Entries between these warehouses.",
+   "fieldname": "warehouses_section",
+   "fieldtype": "Section Break",
+   "label": "Warehouses"
+  },
+  {
+   "fieldname": "store_warehouse",
+   "fieldtype": "Link",
+   "label": "In Warehouse",
+   "options": "Warehouse",
+   "reqd": 1
+  },
+  {
+   "fieldname": "event_warehouse",
+   "fieldtype": "Link",
+   "label": "At Event",
+   "options": "Warehouse",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_warehouses",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "repair_warehouse",
+   "fieldtype": "Link",
+   "label": "In Maintenance",
+   "options": "Warehouse",
+   "reqd": 1
+  },
+  {
+   "fieldname": "missing_warehouse",
+   "fieldtype": "Link",
+   "label": "Missing",
+   "options": "Warehouse",
+   "reqd": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-11-09 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Rental",
+ "name": "Rental Workspace",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "read": 1,
+   "role": "Stock Manager",
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "Stock User"
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
