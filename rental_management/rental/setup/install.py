@@ -1,12 +1,13 @@
 import frappe
 
 from rental_management.rental.setup.custom_fields import setup_custom_fields
-from rental_management.rental.stock import SETTINGS, WAREHOUSE_FIELDS
+from rental_management.rental.stock import WAREHOUSE_FIELDS, WORKSPACE
 
 APP = "rental_management"
 RENTAL_ITEM_GROUP = "Rental"
 # Desk pages the app shipped before v2.0.2; they point at doctypes that no longer exist
 LEGACY_WORKSPACES = ("Rental", "Rental Home", "Rental Management")
+DEFAULT_WORKSPACE = "Eternal Events"
 WAREHOUSE_NAMES = {
     "store_warehouse": "Rental Store",
     "event_warehouse": "Rental At Event",
@@ -47,17 +48,37 @@ def get_root_item_group():
 
 
 def setup_settings():
-    """Fill the empty Rental Settings fields: the default company and its four rental warehouses."""
-    settings = frappe.get_single(SETTINGS)
-    settings.company = settings.company or frappe.defaults.get_global_default("company")
-    if not settings.company:
+    """Make sure one default Rental Workspace exists.
+
+    The first run on a site fills it from the old Rental Settings (company and
+    warehouses) or, on a new site, creates the default company's four rental
+    warehouses. Later runs leave existing workspaces alone.
+    """
+    if frappe.db.exists(WORKSPACE, {"is_default": 1}):
         return
-    parent = get_rental_warehouse_group(settings.company)
+    old = frappe.get_single("Rental Settings") if frappe.db.table_exists("Rental Settings") else None
+    company = (old and old.company) or frappe.defaults.get_global_default("company")
+    if not company:
+        return
+    parent = get_rental_warehouse_group(company)
+    values = {}
     for field in WAREHOUSE_FIELDS.values():
-        if not settings.get(field):
-            settings.set(field, get_or_create_warehouse(WAREHOUSE_NAMES[field], settings.company, parent))
-    settings.flags.ignore_permissions = True
-    settings.save()
+        values[field] = (old and old.get(field)) or get_or_create_warehouse(WAREHOUSE_NAMES[field], company, parent)
+    name = DEFAULT_WORKSPACE
+    if frappe.db.exists(WORKSPACE, name):
+        frappe.db.set_value(WORKSPACE, name, "is_default", 1)
+        return
+    frappe.get_doc(
+        {
+            "doctype": WORKSPACE,
+            "workspace_name": name,
+            "company": company,
+            "mode": "Serial First",
+            "enabled": 1,
+            "is_default": 1,
+            **values,
+        }
+    ).insert(ignore_permissions=True)
 
 
 def get_rental_warehouse_group(company):

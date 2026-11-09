@@ -1,53 +1,24 @@
 <template>
-  <label class="grid gap-1 text-sm">
-    <span v-if="label" class="text-ink-gray-6">{{ label }}</span>
-    <div class="relative">
-      <input
-        v-model="text"
-        class="h-8 w-full rounded-md border border-outline-gray-3 bg-surface-white px-2.5 outline-none focus:border-outline-blue-3"
-        :placeholder="placeholder || 'Search…'"
-        autocomplete="off"
-        @focus="open"
-        @input="search"
-        @blur="close"
-        @keydown.down.prevent="move(1)"
-        @keydown.up.prevent="move(-1)"
-        @keydown.enter.prevent="pickHighlighted"
-        @keydown.esc="shown = false"
-      />
-      <ul
-        v-if="shown"
-        class="absolute left-0 right-0 top-9 z-50 max-h-56 overflow-auto rounded-md border border-outline-gray-2 bg-surface-white py-1 shadow-xl"
-      >
-        <li
-          v-for="(option, index) in options"
-          :key="option.value"
-          class="cursor-pointer px-3 py-1.5 text-sm"
-          :class="index === highlighted ? 'bg-surface-blue-2' : 'hover:bg-surface-gray-2'"
-          @mousedown.prevent="pick(option)"
-          @mousemove="highlighted = index"
-        >
-          <div class="font-medium text-ink-gray-9">{{ option.value }}</div>
-          <div v-if="option.description" class="truncate text-xs text-ink-gray-5">{{ option.description }}</div>
-        </li>
-        <li
-          v-if="canCreate"
-          class="cursor-pointer px-3 py-1.5 text-sm font-medium text-ink-blue-3"
-          :class="highlighted === options.length ? 'bg-surface-blue-2' : 'hover:bg-surface-gray-2'"
-          @mousedown.prevent="create"
-          @mousemove="highlighted = options.length"
-        >
-          {{ creating ? 'Creating…' : `+ Create ${doctypeLabel} “${text.trim()}”` }}
-        </li>
-        <li v-else-if="!options.length" class="px-3 py-2 text-sm text-ink-gray-5">{{ loading ? 'Searching…' : 'No matches' }}</li>
-      </ul>
-    </div>
-  </label>
+  <!-- frappe-ui Combobox renders its list in a portal, so it is never cut off by a card or dialog edge. -->
+  <Combobox
+    v-model:query="query"
+    :model-value="modelValue || null"
+    :options="items"
+    :label="label"
+    :placeholder="placeholder || 'Search…'"
+    :loading="loading"
+    :filterable="false"
+    open-on-focus
+    open-on-click
+    empty-text="No matches"
+    @update:model-value="(value) => emit('update:modelValue', value || '')"
+    @update:open="(isOpen) => isOpen && fetch(query)"
+  />
 </template>
 
 <script setup>
 import { computed, ref, watch } from 'vue'
-import { toast } from 'frappe-ui'
+import { Combobox, toast } from 'frappe-ui'
 import { api, readError } from '../api'
 
 const props = defineProps({
@@ -61,82 +32,61 @@ const props = defineProps({
 })
 const emit = defineEmits(['update:modelValue'])
 
-const text = ref(props.modelValue || '')
-const options = ref([])
-const shown = ref(false)
+const query = ref(props.modelValue || '')
+const found = ref([])
 const loading = ref(false)
-const highlighted = ref(0)
-const creating = ref(false)
 const doctypeLabel = computed(() => (props.label || props.doctype).replace(/\s*\(.*\)$/, '').toLowerCase())
-const canCreate = computed(() => {
-  const typed = text.value.trim().toLowerCase()
-  return props.creatable && !loading.value && typed && !options.value.some((o) => o.value.toLowerCase() === typed)
-})
-const choices = computed(() => options.value.length + (canCreate.value ? 1 : 0))
 let timer
 let ticket = 0
 
+const items = computed(() => {
+  const options = found.value.map((o) => ({ label: o.value, value: o.value, description: o.description }))
+  // Keep the committed value resolvable even when the latest search did not return it.
+  if (props.modelValue && !options.some((o) => o.value === props.modelValue)) {
+    options.unshift({ label: props.modelValue, value: props.modelValue })
+  }
+  if (props.creatable) {
+    options.push({
+      type: 'custom',
+      key: 'create',
+      label: `Create ${doctypeLabel.value}`,
+      icon: 'lucide-plus',
+      condition: ({ query: typed }) => {
+        const text = typed.trim().toLowerCase()
+        return Boolean(text) && !loading.value && !found.value.some((o) => o.value.toLowerCase() === text)
+      },
+      onClick: ({ query: typed }) => create(typed.trim()),
+    })
+  }
+  return options
+})
+
 watch(() => props.modelValue, (value) => {
-  text.value = value || ''
+  if ((value || '') !== query.value) query.value = value || ''
+})
+
+watch(query, (text) => {
+  clearTimeout(timer)
+  timer = setTimeout(() => fetch(text), 150)
 })
 
 async function fetch(txt) {
   const mine = ++ticket
   loading.value = true
-  const found = (await api.searchLink(props.doctype, txt, props.filters).catch(() => [])) || []
+  // The input shows the committed value; searching for it would hide every other option.
+  const result = (await api.searchLink(props.doctype, txt === props.modelValue ? '' : txt, props.filters).catch(() => [])) || []
   if (mine !== ticket) return
-  options.value = found
-  highlighted.value = 0
+  found.value = result
   loading.value = false
 }
 
-function open() {
-  shown.value = true
-  fetch(text.value)
-}
-
-function search() {
-  shown.value = true
-  clearTimeout(timer)
-  timer = setTimeout(() => fetch(text.value), 150)
-}
-
-function pick(option) {
-  text.value = option.value
-  shown.value = false
-  emit('update:modelValue', option.value)
-}
-
-async function create() {
-  if (creating.value) return
-  creating.value = true
+async function create(text) {
   try {
-    const name = await api.quickCreate(props.doctype, text.value.trim())
+    const name = await api.quickCreate(props.doctype, text)
     toast.success(`${props.doctype} “${name}” created`)
-    pick({ value: name })
+    emit('update:modelValue', name)
   } catch (err) {
     toast.error(readError(err))
-  } finally {
-    creating.value = false
   }
-}
-
-function pickHighlighted() {
-  const option = options.value[highlighted.value]
-  if (option) pick(option)
-  else if (canCreate.value && highlighted.value === options.value.length) create()
-}
-
-function move(step) {
-  if (!choices.value) return
-  highlighted.value = (highlighted.value + step + choices.value) % choices.value
-}
-
-function close() {
-  setTimeout(() => {
-    shown.value = false
-    if (!text.value.trim() && props.modelValue) emit('update:modelValue', '')
-    else if (text.value !== (props.modelValue || '')) text.value = props.modelValue || ''
-  }, 120)
 }
 </script>

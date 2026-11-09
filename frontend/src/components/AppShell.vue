@@ -1,5 +1,5 @@
 <template>
-  <div class="flex h-full overflow-hidden bg-surface-gray-1 text-ink-gray-8">
+  <div class="flex h-full overflow-hidden bg-surface-base text-ink-gray-8">
     <!-- Backdrop for Mobile Drawer -->
     <div
       v-if="isMobile && drawerOpen"
@@ -7,158 +7,94 @@
       @click="drawerOpen = false"
     />
 
-    <!-- Aside Navigation: Sidebar on Desktop, Slide-over Drawer on Mobile -->
+    <!-- Sidebar on desktop and tablet, slide-over drawer on mobile -->
     <aside
-      class="z-50 flex shrink-0 flex-col border-r border-outline-gray-2 bg-surface-gray-1 transition-transform duration-200"
-      :class="[
-        rail ? 'w-[56px]' : 'w-[250px]',
-        isMobile ? 'fixed inset-y-0 left-0 shadow-2xl' : '',
-        isMobile && !drawerOpen ? '-translate-x-full' : '',
-      ]"
+      class="flex h-full shrink-0 border-r border-outline-gray-1 transition-transform duration-200"
+      :class="[isMobile ? 'fixed inset-y-0 left-0 z-50 shadow-2xl' : '', isMobile && !drawerOpen ? '-translate-x-full' : '']"
     >
-      <div class="flex items-center gap-2.5 border-b border-outline-gray-2 p-3.5" :class="rail ? 'justify-center' : ''">
-        <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-surface-gray-9 text-[11px] font-bold text-ink-white">RM</span>
-        <div v-if="!rail" class="min-w-0 leading-tight">
-          <div class="truncate text-sm font-semibold text-ink-gray-9">Rental Management</div>
-          <div class="text-[10px] uppercase tracking-widest text-ink-gray-5">Warehouse operations</div>
-        </div>
-        <button
-          v-if="isMobile || !rail"
-          class="ml-auto flex h-7 w-7 items-center justify-center rounded border border-outline-gray-2 text-ink-gray-6 hover:bg-surface-gray-2 active:bg-surface-gray-3"
-          :title="isMobile ? 'Close menu' : 'Back to Desk'"
-          @click="isMobile ? (drawerOpen = false) : goToDesk()"
-        >
-          <Icon name="close" :size="13" />
-        </button>
-      </div>
-
-      <div v-if="!rail" class="px-4 pb-2 pt-4 text-[10px] font-semibold uppercase tracking-widest text-ink-gray-5">Workspace</div>
-      <nav class="flex flex-col gap-0.5 px-2" :class="rail ? 'pt-3' : ''">
-        <router-link v-for="item in NAV" :key="item.name" :to="item.path" custom v-slot="{ navigate }">
-          <button
-            class="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm transition-colors"
-            :class="[
-              isActive(item) ? 'bg-surface-white font-medium text-ink-gray-9 shadow-xs ring-1 ring-outline-gray-2' : 'text-ink-gray-7 hover:bg-surface-gray-2',
-              rail ? 'justify-center' : '',
-            ]"
-            :title="rail ? item.label : undefined"
-            @click="navigate(); drawerOpen = false"
-          >
-            <Icon :name="item.icon" :size="16" />
-            <span v-if="!rail" class="flex-1 text-left">{{ item.label }}</span>
-            <span
-              v-if="!rail && badge(item)"
-              class="rounded-full px-1.5 py-0.2 text-[10px] font-medium"
-              :class="item.name === 'maintenance' ? 'bg-surface-red-2 text-ink-red-6' : 'bg-surface-gray-3 text-ink-gray-6'"
-            >{{ badge(item) }}</span>
-          </button>
-        </router-link>
-      </nav>
-
-      <template v-if="!rail">
-        <div class="px-4 pb-2 pt-4 text-[10px] font-semibold uppercase tracking-widest text-ink-gray-5">Quick actions</div>
-        <div class="flex flex-col gap-1.5 px-2.5">
-          <button
-            class="flex items-center gap-2 rounded-lg border border-outline-blue-3 bg-surface-blue-2 px-3 py-2 text-sm font-medium text-ink-blue-8 hover:bg-surface-blue-3 active:scale-98"
-            @click="mobileScannerOpen = true; drawerOpen = false"
-          >
-            <Icon name="scan" :size="15" class="text-ink-blue-6" /> Open Scanner
-          </button>
-          <router-link
-            :to="{ name: 'movement-new', query: { type: 'CHECK_OUT' } }"
-            class="flex items-center gap-2 rounded-lg border border-outline-gray-2 bg-surface-white px-3 py-2 text-sm hover:border-outline-gray-4 active:bg-surface-gray-1"
-            @click="drawerOpen = false"
-          >
-            <Icon name="out" :size="14" class="text-ink-blue-6" /> Check out equipment
-          </router-link>
-          <router-link
-            :to="{ name: 'movement-new', query: { type: 'CHECK_IN' } }"
-            class="flex items-center gap-2 rounded-lg border border-outline-gray-2 bg-surface-white px-3 py-2 text-sm hover:border-outline-gray-4 active:bg-surface-gray-1"
-            @click="drawerOpen = false"
-          >
-            <Icon name="in" :size="14" class="text-ink-green-6" /> Check in equipment
-          </router-link>
-          <router-link
-            :to="{ name: 'maintenance', query: { flag: '1' } }"
-            class="flex items-center gap-2 rounded-lg border border-outline-gray-2 bg-surface-white px-3 py-2 text-sm hover:border-outline-gray-4 active:bg-surface-gray-1"
-            @click="drawerOpen = false"
-          >
-            <Icon name="alert" :size="14" class="text-ink-amber-6" /> Report a problem
-          </router-link>
+      <Sidebar v-model:collapsed="collapsed" :disable-collapse="isMobile">
+        <div class="px-2">
+          <SidebarHeader
+            :title="currentWorkspace?.name || 'Rental'"
+            :subtitle="userLabel"
+            :logo="LOGO"
+            :menu-items="appMenu"
+          />
         </div>
 
-        <div class="px-4 pb-2 pt-4 text-[10px] font-semibold uppercase tracking-widest text-ink-gray-5">Right now</div>
-        <div v-if="summary" class="mx-2.5 grid grid-cols-2 gap-1.5">
-          <router-link
-            v-for="stat in stats"
-            :key="stat.label"
-            :to="{ name: 'units', query: stat.query }"
-            class="rounded-lg border border-outline-gray-2 bg-surface-white px-3 py-2 hover:border-outline-gray-4 active:bg-surface-gray-1"
-            @click="drawerOpen = false"
-          >
-            <div class="text-lg font-semibold leading-tight tabular text-ink-gray-9">{{ stat.value }}</div>
-            <div class="text-[11px] text-ink-gray-5">{{ stat.label }}</div>
-          </router-link>
-        </div>
-      </template>
+        <div class="flex-1 overflow-y-auto overflow-x-hidden px-2 pt-1">
+          <nav class="flex flex-col gap-0.5">
+            <SidebarItem
+              v-for="item in navItems"
+              :key="item.name"
+              :label="item.label"
+              :to="item.path"
+              :active="isActive(item)"
+              @click="drawerOpen = false"
+            >
+              <template #prefix><Icon :name="item.icon" :size="16" class="text-ink-gray-6" /></template>
+              <template v-if="badge(item)" #suffix>
+                <span class="mr-2 text-xs-medium text-ink-red-6">{{ badge(item) }}</span>
+              </template>
+            </SidebarItem>
+          </nav>
 
-      <div class="mt-auto flex items-center justify-between border-t border-outline-gray-2 px-3 py-2.5" :class="rail ? 'justify-center' : ''">
-        <div class="flex items-center gap-2 min-w-0">
-          <Avatar :label="userLabel" size="sm" />
-          <div v-if="!rail" class="min-w-0">
-            <div class="truncate text-xs font-medium text-ink-gray-8">{{ userLabel }}</div>
-            <div class="text-[11px] text-ink-gray-5">Signed in</div>
+          <div class="mt-4 flex flex-col gap-0.5">
+            <SidebarLabel divider>Quick actions</SidebarLabel>
+            <SidebarItem v-if="!bulkFirst" label="Open scanner" icon="lucide-scan-line" @click="mobileScannerOpen = true; drawerOpen = false" />
+            <SidebarItem
+              label="Check out"
+              icon="lucide-log-out"
+              :to="{ name: 'movement-new', query: { type: 'CHECK_OUT' } }"
+              :active="false"
+              @click="drawerOpen = false"
+            />
+            <SidebarItem
+              label="Check in"
+              icon="lucide-log-in"
+              :to="{ name: 'movement-new', query: { type: 'CHECK_IN' } }"
+              :active="false"
+              @click="drawerOpen = false"
+            />
+            <SidebarItem
+              v-if="!bulkFirst"
+              label="Report a problem"
+              icon="lucide-triangle-alert"
+              :to="{ name: 'maintenance', query: { flag: '1' } }"
+              :active="false"
+              @click="drawerOpen = false"
+            />
           </div>
         </div>
-        <button
-          v-if="!rail"
-          class="flex h-7 items-center gap-1 rounded border border-outline-gray-2 bg-surface-white px-2 text-xs text-ink-gray-6 hover:bg-surface-gray-2"
-          title="Open ERPNext Desk"
-          @click="goToDesk"
-        >
-          <Icon name="external" :size="11" /> Desk
-        </button>
-      </div>
+
+        <div class="mt-auto flex flex-col gap-0.5 px-2 pb-2">
+          <SidebarItem label="Getting Started" icon="lucide-user-check" @click="gettingStartedOpen = true; drawerOpen = false" />
+          <SidebarCollapseToggle v-if="!isMobile" />
+        </div>
+      </Sidebar>
     </aside>
 
     <!-- Main Content Container -->
     <div class="flex min-w-0 flex-1 flex-col">
-      <!-- Top App Bar -->
-      <header class="flex h-[52px] shrink-0 items-center gap-2.5 border-b border-outline-gray-2 bg-surface-white px-3 sm:px-4">
+      <!-- Top bar: 48px to line up with the sidebar header, as in Frappe CRM -->
+      <header class="flex h-12 shrink-0 items-center gap-2 border-b border-outline-gray-1 bg-surface-base px-3 sm:px-5">
         <!-- Back button on mobile when navigated into a subpage -->
         <button
           v-if="isMobile && canGoBack"
-          class="flex h-8 w-8 items-center justify-center rounded-md border border-outline-gray-2 text-ink-gray-7 active:bg-surface-gray-2"
+          class="flex h-8 w-8 items-center justify-center rounded-md text-ink-gray-7 active:bg-surface-gray-2"
           title="Back"
           @click="goBack"
         >
           <Icon name="back" :size="15" />
         </button>
-        <span
-          v-else-if="isMobile"
-          class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-surface-gray-9 text-[11px] font-bold text-ink-white"
-        >
-          RM
-        </span>
 
-        <button
-          v-if="!isMobile"
-          class="flex h-7 items-center gap-1.5 rounded-md border border-outline-gray-2 bg-surface-white px-2.5 text-xs font-medium text-ink-gray-7 hover:bg-surface-gray-1"
-          @click="goToDesk"
-        >
-          <Icon name="back" :size="12" /> Desk
-        </button>
-        <Icon v-if="!isMobile" name="chevright" :size="12" class="text-ink-gray-4" />
-
-        <div class="min-w-0 truncate text-sm font-semibold text-ink-gray-9">
-          {{ route.meta.title || 'Rental Management' }}
-        </div>
+        <Breadcrumbs :items="crumbs" class="min-w-0" />
 
         <div class="ml-auto flex items-center gap-2">
           <!-- Mobile dedicated scan button in header -->
           <button
-            v-if="isMobile"
-            class="flex h-8 items-center gap-1.5 rounded-lg border border-outline-blue-3 bg-surface-blue-2 px-2.5 text-xs font-semibold text-ink-blue-8 active:scale-95"
+            v-if="isMobile && !bulkFirst"
+            class="flex h-8 items-center gap-1.5 rounded-lg border border-outline-blue-4 bg-surface-blue-2 px-2.5 text-xs-semibold text-ink-blue-8 active:scale-95"
             @click="mobileScannerOpen = true"
           >
             <Icon name="scan" :size="14" />
@@ -166,10 +102,10 @@
           </button>
 
           <!-- Desktop ScanBox -->
-          <ScanBox v-if="!isMobile" />
+          <ScanBox v-if="!isMobile && !bulkFirst" />
 
           <!-- New Movement Button -->
-          <Button size="sm" variant="solid" @click="router.push({ name: 'movement-new' })">
+          <Button variant="solid" @click="router.push({ name: 'movement-new' })">
             <template #prefix><Icon name="plus" :size="13" /></template>
             <span class="hidden sm:inline">New movement</span>
           </Button>
@@ -183,7 +119,7 @@
 
       <!-- Mobile Dedicated Bottom Tab Bar -->
       <nav
-        class="fixed bottom-0 inset-x-0 z-30 flex h-16 items-center justify-around border-t border-outline-gray-2 bg-surface-white/95 px-2 backdrop-blur-md pb-[env(safe-area-inset-bottom)] md:hidden shadow-[0_-2px_8px_rgba(0,0,0,0.04)]"
+        class="fixed bottom-0 inset-x-0 z-30 flex h-16 items-center justify-around border-t border-outline-gray-2 bg-surface-base/95 px-2 backdrop-blur-md pb-[env(safe-area-inset-bottom)] md:hidden shadow-[0_-2px_8px_rgba(0,0,0,0.04)]"
       >
         <!-- Tab 1: Dashboard (Home) -->
         <router-link
@@ -206,9 +142,9 @@
         </router-link>
 
         <!-- Tab 3: Prominent Center Raised SCAN Button -->
-        <div class="relative flex flex-1 items-center justify-center">
+        <div v-if="!bulkFirst" class="relative flex flex-1 items-center justify-center">
           <button
-            class="relative -top-3.5 flex h-14 w-14 flex-col items-center justify-center rounded-full bg-gradient-to-tr from-surface-blue-7 to-surface-blue-5 text-white shadow-lg ring-4 ring-surface-white active:scale-90 transition-transform"
+            class="relative -top-3.5 flex h-14 w-14 flex-col items-center justify-center rounded-full bg-gradient-to-tr from-surface-blue-9 to-surface-blue-7 text-white shadow-lg ring-4 ring-surface-base active:scale-90 transition-transform"
             title="Open Mobile Scanner"
             @click="mobileScannerOpen = true"
           >
@@ -219,6 +155,7 @@
 
         <!-- Tab 4: Units -->
         <router-link
+          v-if="!bulkFirst"
           to="/units"
           class="flex flex-1 flex-col items-center justify-center py-1 text-[11px] transition-colors"
           :class="isUnitsActive ? 'text-ink-blue-6 font-semibold' : 'text-ink-gray-6 active:text-ink-gray-9'"
@@ -237,11 +174,39 @@
           <span class="mt-0.5">More</span>
           <span
             v-if="summary?.tickets?.length"
-            class="absolute top-1 right-5 h-2 w-2 rounded-full bg-surface-red-5 ring-1 ring-surface-white"
+            class="absolute top-1 right-5 h-2 w-2 rounded-full bg-surface-red-7 ring-1 ring-surface-base"
           />
         </button>
       </nav>
     </div>
+
+    <Dialog v-model="gettingStartedOpen" title="Getting Started">
+      <div class="flex flex-col gap-1">
+        <router-link
+          v-for="step in GETTING_STARTED"
+          :key="step.label"
+          :to="step.to"
+          class="flex items-start gap-3 rounded px-2 py-2 hover:bg-surface-gray-2"
+          @click="gettingStartedOpen = false"
+        >
+          <span :class="step.icon" class="mt-0.5 size-4 shrink-0 text-ink-gray-6" />
+          <span>
+            <span class="block text-sm-medium text-ink-gray-8">{{ step.label }}</span>
+            <span class="block text-sm text-ink-gray-5">{{ step.hint }}</span>
+          </span>
+        </router-link>
+      </div>
+    </Dialog>
+
+    <Dialog v-model="aboutOpen" title="About">
+        <div class="flex items-center gap-3">
+          <img :src="LOGO" class="size-10 rounded-md" alt="" />
+          <div>
+            <div class="text-base-medium text-ink-gray-9">Rental Management</div>
+            <div class="text-sm text-ink-gray-5">Equipment, units, movements and maintenance for event rental.</div>
+          </div>
+        </div>
+    </Dialog>
 
     <!-- Mobile Scanner Modal -->
     <MobileScannerModal v-model="mobileScannerOpen" />
@@ -249,28 +214,43 @@
 </template>
 
 <script setup>
-import { computed, inject, onBeforeUnmount, onMounted, provide, ref } from 'vue'
+import { computed, h, inject, onBeforeUnmount, onMounted, provide, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Avatar, Button } from 'frappe-ui'
+import {
+  Breadcrumbs,
+  Button,
+  Dialog,
+  Sidebar,
+  SidebarCollapseToggle,
+  SidebarHeader,
+  SidebarItem,
+  SidebarLabel,
+  call,
+  createResource,
+  useTheme,
+} from 'frappe-ui'
 import Icon from './Icon.vue'
 import MobileScannerModal from './MobileScannerModal.vue'
 import ScanBox from './ScanBox.vue'
 import { NAV } from '../router'
+import { bulkFirst, currentWorkspace, workspaces } from '../workspace'
 
-const { summary } = inject('rental')
+const { summary, chooseWorkspace } = inject('rental')
 const route = useRoute()
 const router = useRouter()
 
+const LOGO = '/assets/rental_management/images/rental.svg'
 const userLabel = window.user_fullname || window.user || 'You'
 const drawerOpen = ref(false)
 const mobileScannerOpen = ref(false)
+const aboutOpen = ref(false)
+const gettingStartedOpen = ref(false)
 const isMobile = ref(false)
-const isTablet = ref(false)
-const rail = computed(() => isTablet.value && !isMobile.value)
+// Tablets start on the icon rail; the collapse toggle changes it after that.
+const collapsed = ref(window.innerWidth < 1100)
 
 function check() {
   isMobile.value = window.innerWidth < 768
-  isTablet.value = window.innerWidth >= 768 && window.innerWidth < 1100
 }
 onMounted(() => {
   check()
@@ -278,6 +258,13 @@ onMounted(() => {
 })
 onBeforeUnmount(() => window.removeEventListener('resize', check))
 
+// Quantity-first workspaces have no serial units to browse.
+const BULK_FIRST_HIDDEN = ['units', 'maintenance']
+const navItems = computed(() =>
+  bulkFirst.value
+    ? NAV.filter((item) => !BULK_FIRST_HIDDEN.includes(item.name)).map((item) => (item.name === 'catalog' ? { ...item, label: 'Items' } : item))
+    : NAV,
+)
 const isActive = (item) => route.name === item.name || route.meta.parent === item.name
 const isMovementActive = computed(() => ['movements', 'movement', 'movement-new'].includes(route.name))
 const isUnitsActive = computed(() => ['units', 'unit'].includes(route.name))
@@ -292,26 +279,112 @@ function goBack() {
   }
 }
 
-const stats = computed(() => {
-  const totals = summary.value?.totals
-  if (!totals) return []
+const pageTitle = ref('')
+provide('pageTitle', pageTitle)
+
+const crumbs = computed(() => {
+  const parent = NAV.find((item) => item.name === route.meta.parent)
+  if (!parent) return [{ label: route.meta.title || 'Rental', route: route.fullPath }]
+  const leaf = route.name === 'movement-new' ? 'New movement' : pageTitle.value || route.params.name
   return [
-    { label: 'In warehouse', value: totals.Warehouse, query: { status: 'Warehouse' } },
-    { label: 'At events', value: totals['At Event'], query: { status: 'At Event' } },
-    { label: 'In repair', value: totals['In Maintenance'], query: { status: 'In Maintenance' } },
-    { label: 'Need attention', value: totals.needs_attention, query: {} },
+    { label: parent.label, route: parent.path },
+    { label: leaf, route: route.fullPath },
   ]
 })
 
 function badge(item) {
-  const totals = summary.value?.totals
-  if (!totals) return ''
-  if (item.name === 'maintenance') return summary.value.tickets.length || ''
+  if (item.name === 'maintenance') return summary.value?.tickets?.length || ''
   return ''
 }
 
-function goToDesk() {
-  window.location.href = '/desk'
+// Theme is shared with Desk: start from the user's Desk theme and save changes back to it.
+const DESK_THEME = { light: 'Light', dark: 'Dark', system: 'Automatic' }
+const { currentTheme, setTheme } = useTheme()
+setTheme({ Light: 'light', Dark: 'dark', Automatic: 'system' }[window.desk_theme] || currentTheme.value)
+const theme = computed({
+  get: () => currentTheme.value,
+  set: (value) => {
+    setTheme(value)
+    call('frappe.core.doctype.user.user.switch_theme', { theme: DESK_THEME[value] })
+  },
+})
+
+const GETTING_STARTED = [
+  { label: 'Add equipment to the catalog', hint: 'Create the item your team rents out.', icon: 'lucide-package-plus', to: { name: 'catalog' } },
+  { label: 'Create units', hint: 'Give every physical piece its own barcode.', icon: 'lucide-barcode', to: { name: 'units' } },
+  { label: 'Check out for an event', hint: 'Scan what leaves the warehouse.', icon: 'lucide-log-out', to: { name: 'movement-new', query: { type: 'CHECK_OUT' } } },
+  { label: 'Check in after the event', hint: 'Scan what comes back.', icon: 'lucide-log-in', to: { name: 'movement-new', query: { type: 'CHECK_IN' } } },
+  { label: 'Report a problem', hint: 'Send broken equipment to maintenance.', icon: 'lucide-wrench', to: { name: 'maintenance', query: { flag: '1' } } },
+]
+
+// Same source as the Frappe apps screen, so the switcher lists what this user can open.
+const apps = createResource({ url: 'frappe.apps.get_apps', auto: true, initialData: [] })
+const appIcon = (src) => () => h('img', { src, class: 'size-4 rounded-sm object-cover', alt: '' })
+
+const appMenu = computed(() => [
+  {
+    group: 'App',
+    hideLabel: true,
+    options: [
+      {
+        label: 'Apps',
+        icon: 'lucide-layout-grid',
+        submenu: [
+          { label: 'Desk', icon: 'lucide-box', onClick: () => (window.location.href = '/desk') },
+          ...apps.data.map((app) => ({
+            label: app.title,
+            icon: app.logo ? appIcon(app.logo) : 'lucide-box',
+            onClick: () => (window.location.href = app.route),
+          })),
+        ],
+      },
+      // Only users with more than one workspace (usually managers) see the switcher.
+      ...(workspaces.value.length > 1
+        ? [
+            {
+              label: 'Switch workspace',
+              icon: 'lucide-building-2',
+              submenu: workspaces.value.map((w) => ({
+                label: w.name,
+                icon: w.name === currentWorkspace.value?.name ? 'lucide-check' : 'lucide-building',
+                onClick: () => chooseWorkspace(w.name),
+              })),
+            },
+          ]
+        : []),
+      { label: 'Toggle Theme', icon: currentTheme.value === 'dark' ? 'lucide-sun' : 'lucide-moon', onClick: () => (theme.value = currentTheme.value === 'dark' ? 'light' : 'dark') },
+      // Placeholder until the app has settings of its own.
+      { label: 'Settings', icon: 'lucide-settings', disabled: true },
+    ],
+  },
+  {
+    group: 'Help',
+    hideLabel: true,
+    options: [
+      {
+        label: 'Help',
+        icon: 'lucide-circle-help',
+        submenu: [
+          { label: 'About', icon: 'lucide-info', onClick: () => (aboutOpen.value = true) },
+          ...(window.help_links || []).map((link) => ({
+            label: link.label,
+            icon: 'lucide-external-link',
+            onClick: () => window.open(link.route, '_blank'),
+          })),
+        ],
+      },
+    ],
+  },
+  {
+    group: 'Account',
+    hideLabel: true,
+    options: [{ label: 'Log out', icon: 'lucide-log-out', onClick: logout }],
+  },
+])
+
+async function logout() {
+  await call('logout')
+  window.location.href = '/login'
 }
 
 provide('scanner', {

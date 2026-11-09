@@ -7,7 +7,15 @@ from frappe.utils import cint, flt
 
 from rental_management.rental.item import get_serial_prefix
 from rental_management.rental.setup.install import RENTAL_ITEM_GROUP
-from rental_management.rental.stock import STATUSES, get_bulk_quantities, get_place, get_warehouse_statuses, post_movement
+from rental_management.rental.stock import (
+    STATUSES,
+    get_bulk_quantities,
+    get_item_scope,
+    get_place,
+    get_settings,
+    get_warehouse_statuses,
+    post_movement,
+)
 from rental_management.ui.common import CONDITIONS, ITEM_FIELDS, describe_item, like, paging
 
 KINDS = ("Unit", "Box", "Bulk")
@@ -72,7 +80,7 @@ def with_counts(items):
 @frappe.whitelist()
 def list_items(search=None, category=None, kind=None, page=1, page_length=24):
     start, length = paging(page, page_length)
-    filters = {"is_rental_item": 1, "disabled": 0}
+    filters = {**get_item_scope(), "disabled": 0}
     if category:
         filters["item_group"] = category
     if kind:
@@ -95,6 +103,11 @@ def list_items(search=None, category=None, kind=None, page=1, page_length=24):
 
 
 def get_categories():
+    root = get_settings().get("item_group")
+    if root:
+        return frappe.get_all(
+            "Item Group", filters={"name": ["descendants of (inclusive)", root], "is_group": 0}, pluck="name", order_by="name asc"
+        )
     return frappe.get_all("Item Group", filters={"parent_item_group": RENTAL_ITEM_GROUP}, pluck="name", order_by="name asc")
 
 

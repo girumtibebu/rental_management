@@ -4,8 +4,8 @@ import frappe
 from frappe.tests import IntegrationTestCase
 
 from rental_management.rental.setup.install import RENTAL_ITEM_GROUP, setup
-from rental_management.rental.stock import get_warehouse
-from rental_management.ui import catalog, dashboard, links, maintenance, movements, units
+from rental_management.rental.stock import WORKSPACE, get_settings, get_warehouse
+from rental_management.ui import catalog, dashboard, links, maintenance, movements, units, workspaces
 
 
 def ensure(doctype, name, **values):
@@ -33,6 +33,32 @@ class TestRentalUI(IntegrationTestCase):
 
     def status(self, serial):
         return units.find_unit(serial)["status"]
+
+    # ---------------------------------------------------------- workspaces
+    def test_default_workspace_is_created_and_listed(self):
+        default = get_settings()
+        self.assertTrue(default.is_default)
+        self.assertIn(default.name, [row.name for row in workspaces.list_workspaces()])
+
+    def test_unknown_workspace_is_refused(self):
+        frappe.flags.rental_workspace = "No Such Workspace"
+        self.addCleanup(frappe.flags.pop, "rental_workspace", None)
+        with self.assertRaises(frappe.DoesNotExistError):
+            get_settings()
+
+    def test_workspace_access_follows_the_users_list(self):
+        default = get_settings().name
+        user = "workspace-user@example.com"
+        if not frappe.db.exists("User", user):
+            frappe.get_doc({"doctype": "User", "email": user, "first_name": "Workspace", "roles": [{"role": "Stock User"}]}).insert(ignore_permissions=True)
+        self.assertIn(default, [row.name for row in workspaces.allowed_workspaces(user)])  # no users listed: open
+        workspace = frappe.get_doc(WORKSPACE, default)
+        workspace.append("users", {"user": "Administrator"})
+        workspace.save()
+        self.assertNotIn(default, [row.name for row in workspaces.allowed_workspaces(user)])
+        with self.assertRaises(frappe.PermissionError):
+            workspaces.resolve_workspace(default, user)
+        self.assertIn(default, [row.name for row in workspaces.allowed_workspaces("Administrator")])
 
     # ------------------------------------------------------------ catalog
     def test_item_code_and_serials_follow_the_model(self):
@@ -193,6 +219,39 @@ class TestRentalUI(IntegrationTestCase):
         self.assertFalse(movements.check_scan(serials[0], "CHECK_OUT")["ok"])
 
     # ---------------------------------------------------------- dashboard
+    def test_bulk_first_dashboard_counts_pieces(self):
+        chairs = self.make_item("Dashboard Chair", kind="Bulk")
+        catalog.receive_stock(chairs, 30)
+        movements.create_movement("CHECK_OUT", bulk=[{"item_code": chairs, "qty": 10}], to_location="Hall")
+        name = get_settings().name
+        before = frappe.db.get_value(WORKSPACE, name, "mode")
+        frappe.db.set_value(WORKSPACE, name, "mode", "Bulk First")
+        frappe.clear_document_cache(WORKSPACE, name)
+        self.addCleanup(frappe.clear_document_cache, WORKSPACE, name)
+        self.addCleanup(frappe.db.set_value, WORKSPACE, name, "mode", before)
+        data = dashboard.get_dashboard()
+        self.assertEqual(data["mode"], "Bulk First")
+        row = next(row for row in data["stock"] if row["name"] == chairs)
+        self.assertEqual((row["Warehouse"], row["At Event"], row["total"]), (20, 10, 30))
+        self.assertGreaterEqual(data["totals"]["total"], 30)
+
+    def test_workspace_item_group_scopes_the_catalog(self):
+        item_code = self.make_item("Scoped Chair", kind="Bulk")
+        other = ensure("Item Group", "UI Test Other", item_group_name="UI Test Other", parent_item_group=RENTAL_ITEM_GROUP)
+        name = get_settings().name
+        self.addCleanup(frappe.clear_document_cache, WORKSPACE, name)
+        self.addCleanup(frappe.db.set_value, WORKSPACE, name, "item_group", None)
+
+        def listed():
+            frappe.clear_document_cache(WORKSPACE, name)
+            return [row["item_code"] for row in catalog.list_items(search=item_code)["rows"]]
+
+        frappe.db.set_value(WORKSPACE, name, "item_group", self.category)
+        self.assertIn(item_code, listed())
+        self.assertEqual(catalog.get_categories(), [self.category])
+        frappe.db.set_value(WORKSPACE, name, "item_group", other)
+        self.assertNotIn(item_code, listed())
+
     def test_dashboard_totals_add_up(self):
         item_code, serials = self.make_units(4)
         movements.create_movement("CHECK_OUT", units=serials[:3], to_location="Expo")

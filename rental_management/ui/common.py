@@ -2,7 +2,7 @@
 
 import frappe
 
-from rental_management.rental.stock import get_place, get_status, get_venues
+from rental_management.rental.stock import WORKSPACE, get_place, get_status, get_venues
 
 MAINTENANCE = "Rental Item Maintenance"
 STOCK_ENTRY = "Stock Entry"
@@ -23,6 +23,28 @@ ITEM_FIELDS = [
     "disabled",
     "modified",
 ]
+
+
+WORKSPACE_HEADER = "X-Rental-Workspace"
+API_PREFIX = "/api/method/rental_management.ui."
+
+
+def set_request_workspace():
+    """before_request hook: run every rental API call inside the workspace the screen asked for.
+
+    The screen sends the workspace name in the X-Rental-Workspace header (or a
+    `workspace` argument). Without one, the user's first allowed workspace is
+    used. A workspace the user may not open is refused. All
+    stock helpers read the choice through get_settings(), so no API needs a
+    workspace argument of its own.
+    """
+    request = getattr(frappe.local, "request", None)
+    if not request or not (request.path or "").startswith(API_PREFIX):
+        return
+    # Checked on first use (get_workspace_name), once the user is fully logged in, token logins included.
+    frappe.flags.rental_workspace_requested = (
+        request.headers.get(WORKSPACE_HEADER) or frappe.form_dict.pop("workspace", None) or ""
+    )
 
 
 def has_app_permission():

@@ -96,6 +96,8 @@ doctype_list_js = {
 # ------------
 
 # before_install = "rental_management.install.before_install"
+before_request = ["rental_management.ui.common.set_request_workspace"]
+
 after_install = "rental_management.rental.setup.install.after_install"
 after_migrate = "rental_management.rental.setup.install.after_migrate"
 

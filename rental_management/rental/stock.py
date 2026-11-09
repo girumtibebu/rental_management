@@ -8,7 +8,7 @@ import frappe
 from frappe import _
 from frappe.utils import add_to_date, cint, flt, now_datetime
 
-SETTINGS = "Rental Settings"
+WORKSPACE = "Rental Workspace"
 NOT_IN_STOCK = "Not In Stock"
 
 WAREHOUSE_FIELDS = {
@@ -34,11 +34,31 @@ BULK_SOURCE_STATUS = {"CHECK_OUT": "Warehouse", "CHECK_IN": "At Event", "DISPOSE
 PLACE_LABELS = {"Warehouse": "Warehouse", "At Event": "At event", "In Maintenance": "Repair Shop", "Missing": "Missing"}
 
 
-def get_settings():
-    settings = frappe.get_cached_doc(SETTINGS)
+def get_workspace_name(name=None):
+    """The workspace to work in: the one asked for, the one set for this request, else the default."""
+    name = name or frappe.flags.get("rental_workspace")
+    if name:
+        return name
+    if "rental_workspace_requested" in frappe.flags:
+        # A rental screen call: use the workspace the screen chose, if this user may open it.
+        from rental_management.ui.workspaces import resolve_workspace
+
+        frappe.flags.rental_workspace = resolve_workspace(frappe.flags.rental_workspace_requested or None)
+        return frappe.flags.rental_workspace
+    default = frappe.db.get_value(WORKSPACE, {"is_default": 1, "enabled": 1}, "name")
+    if not default:
+        frappe.throw(_("Create a Rental Workspace and mark it as the default first"))
+    return default
+
+
+def get_settings(workspace=None):
+    """The Rental Workspace in use. Callers read company and the four warehouses from it."""
+    settings = frappe.get_cached_doc(WORKSPACE, get_workspace_name(workspace))
+    if not settings.enabled:
+        frappe.throw(_("Rental Workspace {0} is disabled").format(settings.name))
     missing = [field for field in ("company", *WAREHOUSE_FIELDS.values()) if not settings.get(field)]
     if missing:
-        frappe.throw(_("Complete Rental Settings first: {0} is not set").format(", ".join(missing)))
+        frappe.throw(_("Complete Rental Workspace {0} first: {1} is not set").format(settings.name, ", ".join(missing)))
     return settings
 
 
@@ -50,6 +70,19 @@ def get_warehouse_statuses():
     """{warehouse: rental status} for the four rental warehouses."""
     settings = get_settings()
     return {settings.get(field): status for status, field in WAREHOUSE_FIELDS.items()}
+
+
+def get_item_scope(workspace=None):
+    """Item filters for this workspace.
+
+    A workspace with an item group (Alter Decor) works on every item in that
+    group tree, flagged as a rental item or not. Without one, it works on the
+    items flagged as rental items.
+    """
+    root = get_settings(workspace).get("item_group")
+    if root:
+        return {"item_group": ["descendants of (inclusive)", root]}
+    return {"is_rental_item": 1}
 
 
 def get_status(warehouse):
@@ -108,12 +141,15 @@ def get_purpose(movement_type):
     return {"PURCHASE": "Material Receipt", "DISPOSE": "Material Issue"}.get(movement_type, "Material Transfer")
 
 
-def build_serial_rows(movement_type, serials):
-    """One Stock Entry row per item and source warehouse, carrying its serial numbers."""
+def build_serial_rows(movement_type, serials, sources=None):
+    """One Stock Entry row per item and source warehouse, carrying its serial numbers.
+
+    `sources` ({serial: warehouse}) overrides where a serial is taken from.
+    """
     target = TARGET_STATUS[movement_type]
     groups = {}
     for serial in frappe.get_all("Serial No", filters={"name": ["in", serials]}, fields=["name", "item_code", "warehouse"]):
-        source = None if movement_type == "PURCHASE" else serial.warehouse
+        source = None if movement_type == "PURCHASE" else (sources or {}).get(serial.name, serial.warehouse)
         groups.setdefault((serial.item_code, source), []).append(serial.name)
     rows = []
     for (item_code, source), names in groups.items():
@@ -158,11 +194,21 @@ def build_bulk_rows(movement_type, bulk):
     return rows
 
 
-def post_movement(movement_type, serials=(), bulk=(), venue=None, issued_to=None, received_by=None, remarks=None, posting_datetime=None):
+def post_movement(
+    movement_type,
+    serials=(),
+    bulk=(),
+    venue=None,
+    issued_to=None,
+    received_by=None,
+    remarks=None,
+    posting_datetime=None,
+    sources=None,
+):
     """Submit one Stock Entry for a rental movement and return its name."""
     if movement_type not in MOVEMENT_TYPES:
         frappe.throw(_("Unknown movement type {0}").format(movement_type))
-    rows = build_serial_rows(movement_type, list(serials)) if serials else []
+    rows = build_serial_rows(movement_type, list(serials), sources) if serials else []
     rows += build_bulk_rows(movement_type, list(bulk)) if bulk else []
     if not rows:
         frappe.throw(_("Add at least one unit or bulk item"))

@@ -15,8 +15,8 @@
         <button
           v-for="state in board.states"
           :key="state"
-          class="flex flex-1 items-center justify-center gap-1.5 rounded-md py-1.5 text-xs font-semibold transition-all"
-          :class="activeMobileState === state ? 'bg-surface-white text-ink-gray-9 shadow-xs' : 'text-ink-gray-6'"
+          class="flex flex-1 items-center justify-center gap-1.5 rounded-md py-1.5 text-xs-semibold transition-all"
+          :class="activeMobileState === state ? 'bg-surface-base text-ink-gray-9 shadow-xs' : 'text-ink-gray-6'"
           @click="activeMobileState = state"
         >
           <span class="h-1.5 w-1.5 rounded-full" :class="DOT[state]" />
@@ -37,19 +37,19 @@
         >
           <header class="flex items-center gap-2 px-3.5 py-2.5">
             <span class="h-2 w-2 rounded-full" :class="DOT[state]" />
-            <span class="text-sm font-semibold text-ink-gray-9">{{ state }}</span>
-            <span class="rounded-full bg-surface-white px-2 text-xs tabular text-ink-gray-6 ring-1 ring-outline-gray-2">{{ board.columns[state].length }}</span>
+            <span class="text-sm-semibold text-ink-gray-9">{{ state }}</span>
+            <span class="rounded-full bg-surface-base px-2 text-xs tabular text-ink-gray-6 ring-1 ring-outline-gray-2">{{ board.columns[state].length }}</span>
           </header>
           <ul class="flex flex-1 flex-col gap-2 overflow-y-auto px-2.5 pb-2.5">
             <li v-for="ticket in board.columns[state]" :key="ticket.name">
               <button
-                class="w-full rounded-xl border border-outline-gray-2 bg-surface-white p-3 text-left hover:border-outline-gray-4 active:bg-surface-gray-1 transition-colors shadow-2xs"
+                class="w-full rounded-xl border border-outline-gray-2 bg-surface-base p-3 text-left hover:border-outline-gray-4 active:bg-surface-gray-1 transition-colors shadow-2xs"
                 @click="openTicket(ticket.name)"
               >
                 <div class="flex items-start justify-between gap-2">
                   <div class="min-w-0">
-                    <div class="truncate text-sm font-semibold text-ink-gray-9">{{ ticket.item_name }}</div>
-                    <div class="font-mono text-xs font-medium text-ink-gray-5">{{ ticket.serial_no }}</div>
+                    <div class="truncate text-sm-semibold text-ink-gray-9">{{ ticket.item_name }}</div>
+                    <div class="font-mono text-xs-medium text-ink-gray-5">{{ ticket.serial_no }}</div>
                   </div>
                   <StatusBadge :value="state === 'Complete' ? ticket.final_condition : ticket.unit_condition" kind="condition" />
                 </div>
@@ -60,7 +60,7 @@
                 </div>
               </button>
             </li>
-            <li v-if="!board.columns[state].length" class="rounded-xl border border-dashed border-outline-gray-3 px-3 py-8 text-center text-xs text-ink-gray-5 bg-surface-white/40">
+            <li v-if="!board.columns[state].length" class="rounded-xl border border-dashed border-outline-gray-3 px-3 py-8 text-center text-xs text-ink-gray-5 bg-surface-base/40">
               {{ EMPTY[state] }}
             </li>
           </ul>
@@ -75,17 +75,21 @@
         <div v-if="detail" class="grid gap-3 text-sm">
           <div class="flex flex-wrap items-center gap-2">
             <StatusBadge :value="detail.ticket.workflow_state" kind="ticket" size="md" />
-            <router-link v-if="detail.unit" :to="{ name: 'unit', params: { name: detail.unit.name } }" class="font-mono text-xs text-ink-blue-6 hover:underline" @click="ticketOpen = false">
-              {{ detail.unit.serial_no }}
-            </router-link>
-            <span class="text-ink-gray-7">{{ detail.unit?.item_name }}</span>
-            <StatusBadge v-if="detail.unit" :value="detail.unit.condition" kind="condition" />
+            <StatusBadge v-if="detail.unit" :value="detail.unit.condition" kind="condition" size="md" />
           </div>
 
-          <div class="rounded-md bg-surface-gray-1 px-3 py-2">
-            <div class="text-xs text-ink-gray-5">Reported problem · {{ detail.ticket.unit_condition }}</div>
-            <div class="text-ink-gray-8">{{ detail.ticket.issue_description || 'No description' }}</div>
+          <div v-if="detail.unit" class="grid gap-0.5">
+            <router-link
+              :to="{ name: 'unit', params: { name: detail.unit.name } }"
+              class="font-mono text-base-medium text-ink-blue-7 hover:underline"
+              @click="ticketOpen = false"
+            >
+              {{ detail.unit.serial_no }}
+            </router-link>
+            <span class="text-base text-ink-gray-7">{{ detail.unit.item_name }}</span>
           </div>
+
+          <div class="whitespace-pre-line rounded-md bg-surface-gray-1 px-3 py-2 text-ink-gray-8">{{ detail.ticket.issue_description || 'No description' }}</div>
 
           <div v-if="detail.ticket.workflow_state === 'Complete'" class="rounded-md bg-surface-green-2 px-3 py-2">
             <div class="text-xs text-ink-green-8">Finished — {{ detail.ticket.final_condition }} · {{ detail.ticket.maintained_by }}</div>
@@ -96,16 +100,13 @@
             <div class="grid gap-1">
               <span class="text-ink-gray-6">Result of the repair</span>
               <div class="grid grid-cols-2 gap-2">
-                <button v-for="option in FINALS" :key="option.value" class="rounded-lg border px-3 py-2 text-left" :class="final === option.value ? 'border-outline-blue-3 bg-surface-blue-2' : 'border-outline-gray-2 hover:border-outline-gray-4'" @click="final = option.value">
+                <button v-for="option in FINALS" :key="option.value" class="rounded-lg border px-3 py-2 text-left" :class="final === option.value ? 'border-outline-blue-4 bg-surface-blue-2' : 'border-outline-gray-2 hover:border-outline-gray-4'" @click="final = option.value">
                   <div class="font-medium text-ink-gray-9">{{ option.label }}</div>
                   <div class="text-xs text-ink-gray-5">{{ option.hint }}</div>
                 </button>
               </div>
             </div>
-            <label class="grid gap-1">
-              <span class="text-ink-gray-6">What was done</span>
-              <textarea v-model="result" rows="3" class="rounded-md border border-outline-gray-3 p-2.5 outline-none focus:border-outline-blue-3" placeholder="Parts replaced, cleaning done…" />
-            </label>
+            <FormControl v-model="result" type="textarea" :rows="3" label="What was done" placeholder="Parts replaced, cleaning done…" />
           </template>
 
           <div class="mt-1 flex justify-end gap-2">
@@ -122,7 +123,7 @@
 <script setup>
 import { inject, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { Button, Dialog, toast } from 'frappe-ui'
+import { Button, Dialog, FormControl, toast } from 'frappe-ui'
 import FlagProblemDialog from '../components/FlagProblemDialog.vue'
 import Icon from '../components/Icon.vue'
 import PageFrame from '../components/PageFrame.vue'
@@ -130,7 +131,7 @@ import StatusBadge from '../components/StatusBadge.vue'
 import { api, readError } from '../api'
 import { fullDate, timeAgo } from '../format'
 
-const DOT = { 'Attention Required': 'bg-surface-red-7', 'In Repair': 'bg-surface-blue-7', Complete: 'bg-surface-green-7' }
+const DOT = { 'Attention Required': 'bg-surface-red-9', 'In Repair': 'bg-surface-blue-9', Complete: 'bg-surface-green-9' }
 const EMPTY = {
   'Attention Required': 'No new problems.',
   'In Repair': 'Nothing being repaired right now.',

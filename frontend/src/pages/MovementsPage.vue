@@ -7,33 +7,20 @@
       </Button>
     </template>
 
-    <div class="flex flex-col overflow-hidden rounded-xl border border-outline-gray-2 bg-surface-white shadow-xs">
+    <div class="flex flex-col overflow-hidden rounded-xl border border-outline-gray-2 bg-surface-base shadow-xs">
       <!-- Search & Filters -->
       <div class="flex flex-col gap-2.5 border-b border-outline-gray-2 p-3 sm:p-3.5">
-        <div class="relative w-full">
-          <Icon name="search" :size="15" class="pointer-events-none absolute left-3 top-2.5 text-ink-gray-5" />
-          <input
-            v-model="search"
-            class="h-9 w-full rounded-lg border border-outline-gray-3 bg-surface-white pl-9 pr-8 text-sm outline-none focus:border-outline-blue-4"
-            placeholder="Search movement, location or person…"
-            @input="reload(true)"
-          />
-          <button
-            v-if="search"
-            class="absolute right-2.5 top-2 text-ink-gray-4 hover:text-ink-gray-7"
-            @click="search = ''; reload(true)"
-          >
-            <Icon name="close" :size="14" />
-          </button>
-        </div>
+        <TextInput v-model="search" type="search" class="w-full" placeholder="Search movement, location or person…" @update:model-value="reload(true)">
+          <template #prefix><Icon name="search" :size="14" class="text-ink-gray-5" /></template>
+        </TextInput>
 
         <!-- Horizontal Scrolling Type Filters on Mobile -->
         <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
           <button
             v-for="option in TYPE_FILTERS"
             :key="option.value"
-            class="shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
-            :class="type === option.value ? 'bg-surface-gray-9 text-white font-semibold shadow-2xs' : 'bg-surface-gray-1 text-ink-gray-7 hover:bg-surface-gray-2 border border-outline-gray-2'"
+            class="shrink-0 rounded-lg px-3 py-1.5 text-xs-medium transition-colors"
+            :class="type === option.value ? 'bg-surface-gray-9 text-ink-base font-semibold shadow-2xs' : 'bg-surface-gray-1 text-ink-gray-7 hover:bg-surface-gray-2 border border-outline-gray-2'"
             @click="type = option.value; reload(true)"
           >
             {{ option.label }}
@@ -51,11 +38,11 @@
         >
           <div class="min-w-0 flex-1">
             <div class="flex items-center justify-between gap-2">
-              <span class="font-mono text-xs font-bold text-ink-gray-9">{{ move.name }}</span>
+              <span class="font-mono text-xs-bold text-ink-gray-9">{{ move.name }}</span>
               <StatusBadge :value="move.transaction_type" kind="type" size="sm" />
             </div>
 
-            <div class="mt-1.5 flex items-center gap-1.5 text-xs font-medium text-ink-gray-8">
+            <div class="mt-1.5 flex items-center gap-1.5 text-xs-medium text-ink-gray-8">
               <span class="truncate">{{ move.from_location || 'Warehouse' }}</span>
               <Icon name="arrow" :size="11" class="text-ink-gray-4 shrink-0" />
               <span class="truncate font-semibold text-ink-blue-8">{{ move.to_location || 'Warehouse' }}</span>
@@ -98,7 +85,7 @@
             class="cursor-pointer border-b border-outline-gray-1 last:border-0 hover:bg-surface-gray-1"
             @click="router.push({ name: 'movement', params: { name: move.name } })"
           >
-            <td class="px-4 py-2.5 font-mono text-xs font-medium text-ink-gray-9">{{ move.name }}</td>
+            <td class="px-4 py-2.5 font-mono text-xs-medium text-ink-gray-9">{{ move.name }}</td>
             <td class="px-3 py-2.5"><StatusBadge :value="move.transaction_type" kind="type" /></td>
             <td class="px-3 py-2.5 text-ink-gray-7">{{ move.from_location || '—' }} → {{ move.to_location || '—' }}</td>
             <td class="px-3 py-2.5 text-right tabular text-ink-gray-8">{{ move.units }}<span v-if="move.bulk" class="text-xs text-ink-gray-5"> + {{ move.bulk }} bulk</span></td>
@@ -117,7 +104,7 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { Button, toast } from 'frappe-ui'
+import { Button, TextInput, toast } from 'frappe-ui'
 import Icon from '../components/Icon.vue'
 import PageFrame from '../components/PageFrame.vue'
 import Pagination from '../components/Pagination.vue'

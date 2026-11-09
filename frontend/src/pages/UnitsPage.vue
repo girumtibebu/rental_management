@@ -1,31 +1,20 @@
 <template>
   <PageFrame title="Units" :subtitle="`${number(total)} serial-numbered units${filtered ? ' match your filters' : ''}`">
-    <div class="flex flex-col overflow-hidden rounded-xl border border-outline-gray-2 bg-surface-white shadow-xs">
+    <div class="flex flex-col overflow-hidden rounded-xl border border-outline-gray-2 bg-surface-base shadow-xs">
       <!-- Filter Toolbar -->
       <div class="flex flex-col gap-2.5 border-b border-outline-gray-2 p-3 sm:p-3.5">
         <!-- Top Row: Search & Mobile Filter Toggle -->
         <div class="flex items-center gap-2">
-          <div class="relative flex-1">
-            <Icon name="search" :size="15" class="pointer-events-none absolute left-3 top-2.5 text-ink-gray-5" />
-            <input
-              v-model="filters.search"
-              class="h-9 w-full rounded-lg border border-outline-gray-3 bg-surface-white pl-9 pr-8 text-sm outline-none focus:border-outline-blue-4"
-              placeholder="Search serial, name or location…"
-              @input="reload(true)"
-            />
-            <button
-              v-if="filters.search"
-              class="absolute right-2.5 top-2 text-ink-gray-4 hover:text-ink-gray-7"
-              @click="filters.search = ''; reload(true)"
-            >
-              <Icon name="close" :size="14" />
-            </button>
+          <div class="flex-1">
+            <TextInput v-model="filters.search" type="search" class="w-full" placeholder="Search serial, name or location…" @update:model-value="reload(true)">
+          <template #prefix><Icon name="search" :size="14" class="text-ink-gray-5" /></template>
+        </TextInput>
           </div>
 
           <!-- Mobile Filters Toggle -->
           <button
-            class="flex h-9 items-center gap-1.5 rounded-lg border px-3 text-xs font-semibold sm:hidden"
-            :class="hasExtraFilters ? 'border-outline-blue-4 bg-surface-blue-2 text-ink-blue-8' : 'border-outline-gray-3 bg-surface-white text-ink-gray-7'"
+            class="flex h-9 items-center gap-1.5 rounded-lg border px-3 text-xs-semibold sm:hidden"
+            :class="hasExtraFilters ? 'border-outline-blue-5 bg-surface-blue-2 text-ink-blue-8' : 'border-outline-gray-3 bg-surface-base text-ink-gray-7'"
             @click="showMobileFilters = !showMobileFilters"
           >
             <Icon name="filter" :size="13" />
@@ -38,8 +27,8 @@
           <button
             v-for="status in STATUS_FILTERS"
             :key="status.value"
-            class="shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
-            :class="filters.status === status.value ? 'bg-surface-gray-9 text-white font-semibold shadow-2xs' : 'bg-surface-gray-1 text-ink-gray-7 hover:bg-surface-gray-2 border border-outline-gray-2'"
+            class="shrink-0 rounded-lg px-3 py-1.5 text-xs-medium transition-colors"
+            :class="filters.status === status.value ? 'bg-surface-gray-9 text-ink-base font-semibold shadow-2xs' : 'bg-surface-gray-1 text-ink-gray-7 hover:bg-surface-gray-2 border border-outline-gray-2'"
             @click="setStatus(status.value)"
           >
             {{ status.label }}
@@ -51,37 +40,15 @@
           class="flex flex-wrap items-center gap-2 pt-1 border-t border-outline-gray-1 sm:border-0 sm:pt-0"
           :class="showMobileFilters ? 'flex' : 'hidden sm:flex'"
         >
-          <select
-            v-model="filters.condition"
-            class="h-8 rounded-lg border border-outline-gray-3 bg-surface-white px-2.5 text-xs text-ink-gray-8 outline-none"
-            @change="reload(true)"
-          >
-            <option value="">Any condition</option>
-            <option v-for="item in CONDITIONS" :key="item" :value="item">{{ item }}</option>
-          </select>
+          <Select v-model="filters.condition" class="w-40" :options="[{ label: 'Any condition', value: '' }, ...CONDITIONS]" @update:model-value="reload(true)" />
 
-          <select
-            v-model="filters.category"
-            class="h-8 rounded-lg border border-outline-gray-3 bg-surface-white px-2.5 text-xs text-ink-gray-8 outline-none"
-            @change="reload(true)"
-          >
-            <option value="">All categories</option>
-            <option v-for="item in facets.categories" :key="item" :value="item">{{ item }}</option>
-          </select>
+          <Select v-model="filters.category" class="w-44" :options="[{ label: 'All categories', value: '' }, ...facets.categories]" @update:model-value="reload(true)" />
 
-          <select
-            v-model="filters.kind"
-            class="h-8 rounded-lg border border-outline-gray-3 bg-surface-white px-2.5 text-xs text-ink-gray-8 outline-none"
-            @change="reload(true)"
-          >
-            <option value="">Units and boxes</option>
-            <option value="Unit">Units</option>
-            <option value="Box">Boxes</option>
-          </select>
+          <Select v-model="filters.kind" class="w-40" :options="KIND_OPTIONS" @update:model-value="reload(true)" />
 
           <button
             v-if="filters.item_code || filters.location"
-            class="flex items-center gap-1 rounded-full bg-surface-blue-2 px-2.5 py-1 text-xs font-medium text-ink-blue-8"
+            class="flex items-center gap-1 rounded-full bg-surface-blue-2 px-2.5 py-1 text-xs-medium text-ink-blue-8"
             @click="clearExtra"
           >
             {{ filters.item_code || filters.location }} <Icon name="close" :size="10" />
@@ -107,14 +74,14 @@
         >
           <div class="min-w-0 flex-1">
             <div class="flex items-center justify-between gap-2">
-              <span class="font-mono text-sm font-bold text-ink-gray-9">{{ unit.serial_no }}</span>
+              <span class="font-mono text-sm-bold text-ink-gray-9">{{ unit.serial_no }}</span>
               <div class="flex items-center gap-1.5">
                 <StatusBadge :value="unit.status" size="sm" />
                 <StatusBadge :value="unit.condition" kind="condition" size="sm" />
               </div>
             </div>
 
-            <div class="mt-1 font-medium text-sm text-ink-gray-8 truncate">{{ unit.item_name }}</div>
+            <div class="mt-1 text-sm-medium text-ink-gray-8 truncate">{{ unit.item_name }}</div>
             <div class="text-xs text-ink-gray-5">{{ unit.category }} · {{ unit.kind }}</div>
 
             <div class="mt-1.5 flex items-center justify-between text-xs text-ink-gray-6">
@@ -159,7 +126,7 @@
               class="cursor-pointer border-b border-outline-gray-1 last:border-0 hover:bg-surface-gray-1"
               @click="open(unit)"
             >
-              <td class="px-4 py-2.5 font-mono text-xs font-medium text-ink-gray-9">{{ unit.serial_no }}</td>
+              <td class="px-4 py-2.5 font-mono text-xs-medium text-ink-gray-9">{{ unit.serial_no }}</td>
               <td class="px-3 py-2.5">
                 <div class="font-medium text-ink-gray-8">{{ unit.item_name }}</div>
                 <div class="text-xs text-ink-gray-5">{{ unit.category }} · {{ unit.kind }}</div>
@@ -191,7 +158,7 @@
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { toast } from 'frappe-ui'
+import { Select, TextInput, toast } from 'frappe-ui'
 import Icon from '../components/Icon.vue'
 import PageFrame from '../components/PageFrame.vue'
 import Pagination from '../components/Pagination.vue'
@@ -209,6 +176,11 @@ const STATUS_FILTERS = [
   { value: 'Not In Stock', label: 'Not in stock' },
 ]
 const CONDITIONS = ['OK', 'Need Cleaning', 'Damaged', 'Partially Ok', 'Scrapped']
+const KIND_OPTIONS = [
+  { label: 'Units and boxes', value: '' },
+  { label: 'Units', value: 'Unit' },
+  { label: 'Boxes', value: 'Box' },
+]
 
 const route = useRoute()
 const router = useRouter()
