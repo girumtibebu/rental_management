@@ -219,6 +219,22 @@ class TestRentalUI(IntegrationTestCase):
         self.assertFalse(movements.check_scan(serials[0], "CHECK_OUT")["ok"])
 
     # ---------------------------------------------------------- dashboard
+    def test_bulk_first_dashboard_counts_pieces(self):
+        chairs = self.make_item("Dashboard Chair", kind="Bulk")
+        catalog.receive_stock(chairs, 30)
+        movements.create_movement("CHECK_OUT", bulk=[{"item_code": chairs, "qty": 10}], to_location="Hall")
+        name = get_settings().name
+        before = frappe.db.get_value(WORKSPACE, name, "mode")
+        frappe.db.set_value(WORKSPACE, name, "mode", "Bulk First")
+        frappe.clear_document_cache(WORKSPACE, name)
+        self.addCleanup(frappe.clear_document_cache, WORKSPACE, name)
+        self.addCleanup(frappe.db.set_value, WORKSPACE, name, "mode", before)
+        data = dashboard.get_dashboard()
+        self.assertEqual(data["mode"], "Bulk First")
+        row = next(row for row in data["stock"] if row["name"] == chairs)
+        self.assertEqual((row["Warehouse"], row["At Event"], row["total"]), (20, 10, 30))
+        self.assertGreaterEqual(data["totals"]["total"], 30)
+
     def test_dashboard_totals_add_up(self):
         item_code, serials = self.make_units(4)
         movements.create_movement("CHECK_OUT", units=serials[:3], to_location="Expo")

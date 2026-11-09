@@ -25,7 +25,7 @@
         <div class="flex-1 overflow-y-auto overflow-x-hidden px-2 pt-1">
           <nav class="flex flex-col gap-0.5">
             <SidebarItem
-              v-for="item in NAV"
+              v-for="item in navItems"
               :key="item.name"
               :label="item.label"
               :to="item.path"
@@ -41,7 +41,7 @@
 
           <div class="mt-4 flex flex-col gap-0.5">
             <SidebarLabel divider>Quick actions</SidebarLabel>
-            <SidebarItem label="Open scanner" icon="lucide-scan-line" @click="mobileScannerOpen = true; drawerOpen = false" />
+            <SidebarItem v-if="!bulkFirst" label="Open scanner" icon="lucide-scan-line" @click="mobileScannerOpen = true; drawerOpen = false" />
             <SidebarItem
               label="Check out"
               icon="lucide-log-out"
@@ -92,7 +92,7 @@
         <div class="ml-auto flex items-center gap-2">
           <!-- Mobile dedicated scan button in header -->
           <button
-            v-if="isMobile"
+            v-if="isMobile && !bulkFirst"
             class="flex h-8 items-center gap-1.5 rounded-lg border border-outline-blue-4 bg-surface-blue-2 px-2.5 text-xs-semibold text-ink-blue-8 active:scale-95"
             @click="mobileScannerOpen = true"
           >
@@ -101,7 +101,7 @@
           </button>
 
           <!-- Desktop ScanBox -->
-          <ScanBox v-if="!isMobile" />
+          <ScanBox v-if="!isMobile && !bulkFirst" />
 
           <!-- New Movement Button -->
           <Button variant="solid" @click="router.push({ name: 'movement-new' })">
@@ -141,7 +141,7 @@
         </router-link>
 
         <!-- Tab 3: Prominent Center Raised SCAN Button -->
-        <div class="relative flex flex-1 items-center justify-center">
+        <div v-if="!bulkFirst" class="relative flex flex-1 items-center justify-center">
           <button
             class="relative -top-3.5 flex h-14 w-14 flex-col items-center justify-center rounded-full bg-gradient-to-tr from-surface-blue-9 to-surface-blue-7 text-white shadow-lg ring-4 ring-surface-base active:scale-90 transition-transform"
             title="Open Mobile Scanner"
@@ -154,6 +154,7 @@
 
         <!-- Tab 4: Units -->
         <router-link
+          v-if="!bulkFirst"
           to="/units"
           class="flex flex-1 flex-col items-center justify-center py-1 text-[11px] transition-colors"
           :class="isUnitsActive ? 'text-ink-blue-6 font-semibold' : 'text-ink-gray-6 active:text-ink-gray-9'"
@@ -231,7 +232,7 @@ import Icon from './Icon.vue'
 import MobileScannerModal from './MobileScannerModal.vue'
 import ScanBox from './ScanBox.vue'
 import { NAV } from '../router'
-import { currentWorkspace, workspaces } from '../workspace'
+import { bulkFirst, currentWorkspace, workspaces } from '../workspace'
 
 const { summary, chooseWorkspace } = inject('rental')
 const route = useRoute()
@@ -256,6 +257,8 @@ onMounted(() => {
 })
 onBeforeUnmount(() => window.removeEventListener('resize', check))
 
+// Quantity-first workspaces have no serial units to browse.
+const navItems = computed(() => NAV.filter((item) => !(bulkFirst.value && item.name === 'units')))
 const isActive = (item) => route.name === item.name || route.meta.parent === item.name
 const isMovementActive = computed(() => ['movements', 'movement', 'movement-new'].includes(route.name))
 const isUnitsActive = computed(() => ['units', 'unit'].includes(route.name))

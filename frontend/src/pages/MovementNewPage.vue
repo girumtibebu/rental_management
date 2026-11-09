@@ -1,5 +1,5 @@
 <template>
-  <PageFrame title="New movement" subtitle="Pick movement type, then scan equipment." :back-to="{ name: 'movements' }" back-label="Movements">
+  <PageFrame title="New movement" :subtitle="qtyFirst ? 'Pick movement type, then add items and quantities.' : 'Pick movement type, then scan equipment.'" :back-to="{ name: 'movements' }" back-label="Movements">
     <!-- Movement Type Picker: Horizontal Scrolling Pills on Mobile, Grid on Desktop -->
     <div class="flex gap-2 overflow-x-auto pb-1 sm:grid sm:grid-cols-3 xl:grid-cols-5 sm:overflow-visible">
       <button
@@ -29,7 +29,7 @@
         :class="mobileTab === 'scan' ? 'bg-surface-base text-ink-gray-9 shadow-xs' : 'text-ink-gray-6'"
         @click="mobileTab = 'scan'"
       >
-        Scanned Items ({{ items.length + bulk.length }})
+        {{ qtyFirst ? 'Items' : 'Scanned Items' }} ({{ items.length + bulk.length }})
       </button>
       <button
         class="flex-1 rounded-md py-1.5 text-xs-semibold transition-all"
@@ -48,7 +48,10 @@
         :class="mobileTab === 'details' ? 'hidden lg:flex' : 'flex'"
       >
         <!-- Barcode Scan Input Bar -->
-        <div class="border-b border-outline-gray-1 bg-surface-gray-1/40 p-3.5 sm:p-4">
+        <div class="border-b border-outline-gray-1 bg-surface-gray-1/40 p-3.5 sm:p-4" :class="qtyFirst ? 'order-2' : ''">
+          <div v-if="qtyFirst" class="mb-2 text-xs-semibold uppercase tracking-wider text-ink-gray-6">
+            Or scan units <span class="font-normal lowercase text-ink-gray-5">(optional)</span>
+          </div>
           <div class="flex items-center gap-2">
             <TextInput
               ref="scanInput"
@@ -91,7 +94,7 @@
         </div>
 
         <!-- Scanned Items List -->
-        <div class="max-h-[380px] sm:max-h-[460px] overflow-y-auto">
+        <div v-if="!qtyFirst || items.length" class="max-h-[380px] sm:max-h-[460px] overflow-y-auto" :class="qtyFirst ? 'order-3' : ''">
           <ul v-if="items.length" class="divide-y divide-outline-gray-1">
             <li
               v-for="item in items"
@@ -137,9 +140,10 @@
         </div>
 
         <!-- Bulk Items Section -->
-        <div v-if="canBulk" class="border-t border-outline-gray-1 bg-surface-gray-1/30 p-3.5 sm:p-4">
+        <div v-if="canBulk" class="border-outline-gray-1 bg-surface-gray-1/30 p-3.5 sm:p-4" :class="qtyFirst ? 'order-1 border-b' : 'border-t'">
           <div class="mb-2 text-xs-semibold uppercase tracking-wider text-ink-gray-6">
-            Bulk items <span class="font-normal lowercase text-ink-gray-5">(counted, not serialized)</span>
+            {{ qtyFirst ? 'Items and quantities' : 'Bulk items' }}
+            <span v-if="!qtyFirst" class="font-normal lowercase text-ink-gray-5">(counted, not serialized)</span>
           </div>
           <ul v-if="bulk.length" class="mb-2 flex flex-col gap-1.5">
             <li
@@ -156,7 +160,7 @@
           </ul>
           <div class="flex items-end gap-2">
             <div class="flex-1">
-              <LinkPicker v-model="bulkDraft.item_code" doctype="Item" :filters="BULK_FILTERS" placeholder="Select bulk item…" />
+              <LinkPicker v-model="bulkDraft.item_code" doctype="Item" :filters="BULK_FILTERS" placeholder="Select item…" />
             </div>
             <TextInput v-model="bulkDraft.qty" type="number" min="1" class="w-16 sm:w-20" />
             <Button size="sm" :disabled="!bulkDraft.item_code || !(Number(bulkDraft.qty) > 0)" @click="addBulk">Add</Button>
@@ -256,6 +260,7 @@ import PageFrame from '../components/PageFrame.vue'
 import StatusBadge from '../components/StatusBadge.vue'
 import { api, readError } from '../api'
 import { MOVEMENT_TYPES, SCAN_TYPES } from '../theme'
+import { bulkFirst } from '../workspace'
 import {
   playScanErrorBeep,
   playScanSuccessBeep,
@@ -274,7 +279,10 @@ const busy = ref(false)
 const items = ref([])
 const bulk = ref([])
 const bulkDraft = reactive({ item_code: '', qty: 1 })
-const BULK_FILTERS = { is_rental_item: 1, rental_tracking: 'Bulk', disabled: 0 }
+// Quantity-first workspaces can move any counted stock item, flagged as rental or not.
+const BULK_FILTERS = computed(() =>
+  bulkFirst.value ? { is_stock_item: 1, has_serial_no: 0, disabled: 0 } : { is_rental_item: 1, rental_tracking: 'Bulk', disabled: 0 },
+)
 const to = ref(type.value === 'MAINTENANCE_OUT' ? 'Repair Shop' : '')
 const issuedTo = ref('')
 const receivedBy = ref('')
@@ -285,12 +293,13 @@ const cameraOpen = ref(false)
 
 const goesOut = computed(() => ['CHECK_OUT', 'MAINTENANCE_OUT', 'LOST'].includes(type.value) && type.value !== 'LOST')
 const canBulk = computed(() => ['CHECK_OUT', 'CHECK_IN'].includes(type.value))
+const qtyFirst = computed(() => bulkFirst.value && canBulk.value)
 const validCodes = computed(() => items.value.filter((item) => item.ok).map((item) => item.unit.serial_no))
 const blocked = computed(() => items.value.filter((item) => !item.ok).length)
 const needsDestination = computed(() => type.value === 'CHECK_OUT' && !to.value.trim())
 const canSubmit = computed(() => (validCodes.value.length || bulk.value.length) && !needsDestination.value)
 const why = computed(() => {
-  if (!validCodes.value.length && !bulk.value.length) return 'Scan at least one unit to continue.'
+  if (!validCodes.value.length && !bulk.value.length) return qtyFirst.value ? 'Add at least one item to continue.' : 'Scan at least one unit to continue.'
   if (needsDestination.value) return 'Please set destination before checkout.'
   return ''
 })

@@ -2,7 +2,7 @@
 
 import frappe
 
-from rental_management.rental.stock import STATUSES, get_venues, get_warehouse_statuses
+from rental_management.rental.stock import STATUSES, get_bulk_quantities, get_settings, get_venues, get_warehouse_statuses
 from rental_management.ui.catalog import serial_counts
 from rental_management.ui.common import MAINTENANCE, item_index
 from rental_management.ui.movements import recent_movements
@@ -87,23 +87,60 @@ def open_tickets():
     )
 
 
+def bulk_stock():
+    """Counted (not serialised) stock in the workspace's rental warehouses, one row per item."""
+    quantities = get_bulk_quantities()
+    if not quantities:
+        return []
+    items = frappe.get_all(
+        "Item",
+        filters={"name": ["in", list(quantities)], "has_serial_no": 0, "disabled": 0},
+        fields=["name", "item_name", "item_group", "stock_uom"],
+    )
+    rows = []
+    for item in items:
+        entry = quantities[item.name]
+        rows.append(
+            {
+                "name": item.name,
+                "item_name": item.item_name,
+                "category": item.item_group,
+                "uom": item.stock_uom,
+                **entry,
+                "total": sum(entry.values()),
+            }
+        )
+    return sorted(rows, key=lambda row: (-row["total"], row["item_name"] or ""))
+
+
 @frappe.whitelist()
 def get_dashboard():
     for doctype in ("Serial No", "Item"):
         frappe.has_permission(doctype, "read", throw=True)
+    workspace = get_settings()
     serials = get_rental_serials()
     totals = status_totals(serials)
     conditions = condition_totals(serials)
+    stock = bulk_stock()
+    summary = {
+        **totals,
+        "total": len(serials),
+        "needs_attention": sum(item["count"] for item in conditions if item["condition"] != "OK"),
+        "items": frappe.db.count("Item", {"is_rental_item": 1, "disabled": 0}),
+    }
+    if workspace.mode == "Bulk First":
+        # Quantity-first workspaces count pieces, not serial numbers.
+        for status in STATUSES:
+            summary[status] = sum(row[status] for row in stock)
+        summary.update(total=sum(row["total"] for row in stock), items=len(stock))
     return {
-        "totals": {
-            **totals,
-            "total": len(serials),
-            "needs_attention": sum(item["count"] for item in conditions if item["condition"] != "OK"),
-            "items": frappe.db.count("Item", {"is_rental_item": 1, "disabled": 0}),
-        },
+        "workspace": workspace.name,
+        "mode": workspace.mode,
+        "totals": summary,
         "conditions": conditions,
         "locations": events_out(serials),
         "tight": tight_items(serials),
+        "stock": stock[:100],
         "movements": recent_movements(),
         "tickets": open_tickets(),
     }

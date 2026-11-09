@@ -16,10 +16,11 @@
             </span>
             <div>
               <div class="text-xs-bold text-ink-blue-9">Warehouse Operations</div>
-              <div class="text-[10px] text-ink-blue-7">Fast mobile scanner & equipment movement</div>
+              <div class="text-[10px] text-ink-blue-7">{{ bulkFirst ? 'Check out and check in by quantity' : 'Fast mobile scanner & equipment movement' }}</div>
             </div>
           </div>
           <button
+            v-if="!bulkFirst"
             class="flex items-center gap-1.5 rounded-lg bg-surface-blue-8 px-3 py-1.5 text-xs-semibold text-ink-base shadow-xs active:scale-95"
             @click="scanner?.openScanner"
           >
@@ -54,7 +55,7 @@
         <router-link
           v-for="card in cards"
           :key="card.label"
-          :to="{ name: 'units', query: card.query }"
+          :to="bulkFirst ? { name: 'movements' } : { name: 'units', query: card.query }"
           class="rounded-xl border bg-surface-base p-3 sm:p-4 hover:border-outline-gray-4 active:bg-surface-gray-1 transition-colors shadow-2xs"
           :class="card.alert && card.value ? 'border-outline-red-4 bg-surface-red-1/30' : 'border-outline-gray-2'"
         >
@@ -64,7 +65,42 @@
         </router-link>
       </div>
 
-      <div class="grid gap-4 lg:grid-cols-2">
+      <section v-if="bulkFirst" class="rounded-xl border border-outline-gray-2 bg-surface-base shadow-xs overflow-hidden">
+        <header class="flex items-center justify-between border-b border-outline-gray-1 px-4 py-2.5">
+          <span class="text-sm-bold text-ink-gray-9">Stock by item</span>
+          <span class="text-xs text-ink-gray-5">Pieces in each rental status</span>
+        </header>
+        <div v-if="data.stock?.length" class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-outline-gray-1 text-left text-xs uppercase tracking-wider text-ink-gray-5">
+                <th class="px-4 py-2 font-semibold">Item</th>
+                <th class="px-2 py-2 text-right font-semibold">In store</th>
+                <th class="px-2 py-2 text-right font-semibold">At event</th>
+                <th class="px-2 py-2 text-right font-semibold">Repair</th>
+                <th class="px-4 py-2 text-right font-semibold">Missing</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-outline-gray-1">
+              <tr v-for="row in data.stock" :key="row.name">
+                <td class="px-4 py-2.5">
+                  <div class="truncate font-medium text-ink-gray-8">{{ row.item_name }}</div>
+                  <div class="text-xs text-ink-gray-5">{{ row.category }}</div>
+                </td>
+                <td class="px-2 py-2.5 text-right font-bold tabular text-ink-gray-9">{{ number(row.Warehouse) }}</td>
+                <td class="px-2 py-2.5 text-right tabular text-ink-gray-7">{{ number(row['At Event']) }}</td>
+                <td class="px-2 py-2.5 text-right tabular text-ink-gray-7">{{ number(row['In Maintenance']) }}</td>
+                <td class="px-4 py-2.5 text-right tabular" :class="row.Missing ? 'font-semibold text-ink-red-6' : 'text-ink-gray-7'">{{ number(row.Missing) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div v-else class="p-6 text-center text-sm text-ink-gray-5">
+          No stock in this workspace's rental warehouses yet. Receive items into the rental store to see them here.
+        </div>
+      </section>
+
+      <div v-if="!bulkFirst" class="grid gap-4 lg:grid-cols-2">
         <section class="rounded-xl border border-outline-gray-2 bg-surface-base shadow-xs overflow-hidden">
           <header class="border-b border-outline-gray-1 px-4 py-2.5 text-sm-bold text-ink-gray-9">Where equipment is</header>
           <ul v-if="data.locations.length" class="divide-y divide-outline-gray-1">
@@ -98,7 +134,7 @@
       </div>
 
       <div class="grid gap-4 lg:grid-cols-2">
-        <section class="rounded-xl border border-outline-gray-2 bg-surface-base shadow-xs overflow-hidden">
+        <section v-if="!bulkFirst" class="rounded-xl border border-outline-gray-2 bg-surface-base shadow-xs overflow-hidden">
           <header class="flex items-center justify-between border-b border-outline-gray-1 px-4 py-2.5">
             <span class="text-sm-bold text-ink-gray-9">Running low</span>
             <span class="text-xs text-ink-gray-5">Available now</span>
@@ -169,6 +205,7 @@ import Icon from '../components/Icon.vue'
 import PageFrame from '../components/PageFrame.vue'
 import StatusBadge from '../components/StatusBadge.vue'
 import { number, timeAgo, userName } from '../format'
+import { bulkFirst } from '../workspace'
 
 const { summary: data, refreshSummary } = inject('rental')
 const scanner = inject('scanner', null)
@@ -178,7 +215,7 @@ onMounted(refreshSummary)
 const cards = computed(() => {
   const t = data.value.totals
   return [
-    { label: 'Total units', value: t.total, note: `${t.items} catalog items`, query: {} },
+    { label: bulkFirst.value ? 'Total pieces' : 'Total units', value: t.total, note: `${t.items} catalog items`, query: {} },
     { label: 'In warehouse', value: t.Warehouse, note: 'ready to go out', query: { status: 'Warehouse' } },
     { label: 'At events', value: t['At Event'], note: 'out with crews', query: { status: 'At Event' } },
     { label: 'In repair', value: t['In Maintenance'], note: 'at the repair shop', query: { status: 'In Maintenance' } },

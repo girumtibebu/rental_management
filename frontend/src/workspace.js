@@ -8,6 +8,8 @@ export const current = ref(readStored())
 export const loaded = ref(false)
 
 export const currentWorkspace = computed(() => workspaces.value.find((w) => w.name === current.value) || null)
+/** Alter-style workspace: quantities first, scanning optional. */
+export const bulkFirst = computed(() => currentWorkspace.value?.mode === 'Bulk First')
 /** True when the user has several workspaces and has not picked one yet: show the picker. */
 export const needsChoice = computed(() => loaded.value && workspaces.value.length > 1 && !currentWorkspace.value)
 
