@@ -106,7 +106,7 @@ def get_categories():
     root = get_settings().get("item_group")
     if root:
         return frappe.get_all(
-            "Item Group", filters={"name": ["descendants of", root], "is_group": 0}, pluck="name", order_by="name asc"
+            "Item Group", filters={"name": ["descendants of (inclusive)", root], "is_group": 0}, pluck="name", order_by="name asc"
         )
     return frappe.get_all("Item Group", filters={"parent_item_group": RENTAL_ITEM_GROUP}, pluck="name", order_by="name asc")
 
