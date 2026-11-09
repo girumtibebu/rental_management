@@ -106,9 +106,13 @@ def list_items(search=None, category=None, kind=None, page=1, page_length=24):
 def get_categories():
     root = get_settings().get("item_group")
     if root:
-        return frappe.get_all(
+        groups = frappe.get_all(
             "Item Group", filters={"name": ["descendants of (inclusive)", root], "is_group": 0}, pluck="name", order_by="name asc"
         )
+        # Leave out groups that only hold services (decor design and the like).
+        stocked = set(frappe.get_all("Item", filters={"item_group": ["in", groups], "is_stock_item": 1, "disabled": 0}, pluck="item_group"))
+        unstocked = set(frappe.get_all("Item", filters={"item_group": ["in", groups], "disabled": 0}, pluck="item_group")) - stocked
+        return [group for group in groups if group not in unstocked]
     return frappe.get_all("Item Group", filters={"parent_item_group": RENTAL_ITEM_GROUP}, pluck="name", order_by="name asc")
 
 
@@ -241,7 +245,7 @@ def create_decor_item(item_name, item_group, stock_uom=None, image=None):
     name = (item_name or "").strip()
     if not name:
         frappe.throw(_("Give the item a name"))
-    scope = frappe.get_all("Item Group", filters={"name": ["descendants of (inclusive)", workspace.item_group]}, pluck="name") if workspace.item_group else []
+    scope = get_categories() if workspace.item_group else []
     if scope and item_group not in scope:
         frappe.throw(_("Choose a category under {0}").format(workspace.item_group))
     doc = frappe.get_doc(
