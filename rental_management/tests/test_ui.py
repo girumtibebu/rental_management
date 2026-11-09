@@ -4,7 +4,7 @@ import frappe
 from frappe.tests import IntegrationTestCase
 
 from rental_management.rental.setup.install import RENTAL_ITEM_GROUP, setup
-from rental_management.rental.stock import get_settings, get_warehouse
+from rental_management.rental.stock import WORKSPACE, get_settings, get_warehouse
 from rental_management.ui import catalog, dashboard, links, maintenance, movements, units, workspaces
 
 
@@ -45,6 +45,20 @@ class TestRentalUI(IntegrationTestCase):
         self.addCleanup(frappe.flags.pop, "rental_workspace", None)
         with self.assertRaises(frappe.DoesNotExistError):
             get_settings()
+
+    def test_workspace_access_follows_the_users_list(self):
+        default = get_settings().name
+        user = "workspace-user@example.com"
+        if not frappe.db.exists("User", user):
+            frappe.get_doc({"doctype": "User", "email": user, "first_name": "Workspace", "roles": [{"role": "Stock User"}]}).insert(ignore_permissions=True)
+        self.assertIn(default, [row.name for row in workspaces.allowed_workspaces(user)])  # no users listed: open
+        workspace = frappe.get_doc(WORKSPACE, default)
+        workspace.append("users", {"user": "Administrator"})
+        workspace.save()
+        self.assertNotIn(default, [row.name for row in workspaces.allowed_workspaces(user)])
+        with self.assertRaises(frappe.PermissionError):
+            workspaces.resolve_workspace(default, user)
+        self.assertIn(default, [row.name for row in workspaces.allowed_workspaces("Administrator")])
 
     # ------------------------------------------------------------ catalog
     def test_item_code_and_serials_follow_the_model(self):

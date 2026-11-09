@@ -15,7 +15,7 @@
       <Sidebar v-model:collapsed="collapsed" :disable-collapse="isMobile">
         <div class="px-2">
           <SidebarHeader
-            title="Rental"
+            :title="currentWorkspace?.name || 'Rental'"
             :subtitle="userLabel"
             :logo="LOGO"
             :menu-items="appMenu"
@@ -231,8 +231,9 @@ import Icon from './Icon.vue'
 import MobileScannerModal from './MobileScannerModal.vue'
 import ScanBox from './ScanBox.vue'
 import { NAV } from '../router'
+import { currentWorkspace, workspaces } from '../workspace'
 
-const { summary } = inject('rental')
+const { summary, chooseWorkspace } = inject('rental')
 const route = useRoute()
 const router = useRouter()
 
@@ -328,6 +329,20 @@ const appMenu = computed(() => [
           })),
         ],
       },
+      // Only users with more than one workspace (usually managers) see the switcher.
+      ...(workspaces.value.length > 1
+        ? [
+            {
+              label: 'Switch workspace',
+              icon: 'lucide-building-2',
+              submenu: workspaces.value.map((w) => ({
+                label: w.name,
+                icon: w.name === currentWorkspace.value?.name ? 'lucide-check' : 'lucide-building',
+                onClick: () => chooseWorkspace(w.name),
+              })),
+            },
+          ]
+        : []),
       { label: 'Toggle Theme', icon: currentTheme.value === 'dark' ? 'lucide-sun' : 'lucide-moon', onClick: () => (theme.value = currentTheme.value === 'dark' ? 'light' : 'dark') },
       // Placeholder until the app has settings of its own.
       { label: 'Settings', icon: 'lucide-settings', disabled: true },

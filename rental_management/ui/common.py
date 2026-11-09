@@ -33,19 +33,18 @@ def set_request_workspace():
     """before_request hook: run every rental API call inside the workspace the screen asked for.
 
     The screen sends the workspace name in the X-Rental-Workspace header (or a
-    `workspace` argument). Without one, the default workspace is used. All
+    `workspace` argument). Without one, the user's first allowed workspace is
+    used. A workspace the user may not open is refused. All
     stock helpers read the choice through get_settings(), so no API needs a
     workspace argument of its own.
     """
     request = getattr(frappe.local, "request", None)
     if not request or not (request.path or "").startswith(API_PREFIX):
         return
-    name = request.headers.get(WORKSPACE_HEADER) or frappe.form_dict.pop("workspace", None)
-    if not name:
-        return
-    if not frappe.db.get_value(WORKSPACE, name, "enabled"):
-        frappe.throw(frappe._("Rental workspace {0} does not exist or is disabled").format(name), frappe.PermissionError)
-    frappe.flags.rental_workspace = name
+    # Checked on first use (get_workspace_name), once the user is fully logged in, token logins included.
+    frappe.flags.rental_workspace_requested = (
+        request.headers.get(WORKSPACE_HEADER) or frappe.form_dict.pop("workspace", None) or ""
+    )
 
 
 def has_app_permission():

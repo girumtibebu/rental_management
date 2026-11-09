@@ -1,6 +1,9 @@
-import { call } from 'frappe-ui'
+import { call as frappeCall } from 'frappe-ui'
+import { workspaceHeaders } from './workspace'
 
 const P = 'rental_management.ui.'
+// Rental calls run in the chosen workspace (see workspace.js and ui/common.py).
+const call = (method, args) => frappeCall(method, args, { headers: workspaceHeaders() })
 const json = (value) => (value == null ? undefined : JSON.stringify(value))
 
 export const api = {

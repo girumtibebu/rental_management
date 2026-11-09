@@ -18,7 +18,9 @@
   "event_warehouse",
   "column_break_warehouses",
   "repair_warehouse",
-  "missing_warehouse"
+  "missing_warehouse",
+  "access_section",
+  "users"
  ],
  "fields": [
   {
@@ -107,11 +109,23 @@
    "label": "Missing",
    "options": "Warehouse",
    "reqd": 1
+  },
+  {
+   "fieldname": "access_section",
+   "fieldtype": "Section Break",
+   "label": "Access",
+   "description": "Leave empty to let every rental user work here. System and Stock Managers can always open every workspace."
+  },
+  {
+   "fieldname": "users",
+   "fieldtype": "Table MultiSelect",
+   "label": "Users",
+   "options": "Rental Workspace User"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-09 12:00:00.000000",
+ "modified": "2026-11-09 20:00:00.000000",
  "modified_by": "Administrator",
  "module": "Rental",
  "name": "Rental Workspace",

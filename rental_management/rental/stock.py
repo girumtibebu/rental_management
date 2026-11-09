@@ -39,6 +39,12 @@ def get_workspace_name(name=None):
     name = name or frappe.flags.get("rental_workspace")
     if name:
         return name
+    if "rental_workspace_requested" in frappe.flags:
+        # A rental screen call: use the workspace the screen chose, if this user may open it.
+        from rental_management.ui.workspaces import resolve_workspace
+
+        frappe.flags.rental_workspace = resolve_workspace(frappe.flags.rental_workspace_requested or None)
+        return frappe.flags.rental_workspace
     default = frappe.db.get_value(WORKSPACE, {"is_default": 1, "enabled": 1}, "name")
     if not default:
         frappe.throw(_("Create a Rental Workspace and mark it as the default first"))
