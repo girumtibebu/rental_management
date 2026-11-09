@@ -72,6 +72,19 @@ def get_warehouse_statuses():
     return {settings.get(field): status for status, field in WAREHOUSE_FIELDS.items()}
 
 
+def get_item_scope(workspace=None):
+    """Item filters for this workspace.
+
+    A workspace with an item group (Alter Decor) works on every item in that
+    group tree, flagged as a rental item or not. Without one, it works on the
+    items flagged as rental items.
+    """
+    root = get_settings(workspace).get("item_group")
+    if root:
+        return {"item_group": ["descendants of (inclusive)", root]}
+    return {"is_rental_item": 1}
+
+
 def get_status(warehouse):
     return get_warehouse_statuses().get(warehouse) or NOT_IN_STOCK
 

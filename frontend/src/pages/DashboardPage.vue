@@ -133,8 +133,8 @@
         </section>
       </div>
 
-      <div class="grid gap-4 lg:grid-cols-2">
-        <section v-if="!bulkFirst" class="rounded-xl border border-outline-gray-2 bg-surface-base shadow-xs overflow-hidden">
+      <div v-if="!bulkFirst" class="grid gap-4 lg:grid-cols-2">
+        <section class="rounded-xl border border-outline-gray-2 bg-surface-base shadow-xs overflow-hidden">
           <header class="flex items-center justify-between border-b border-outline-gray-1 px-4 py-2.5">
             <span class="text-sm-bold text-ink-gray-9">Running low</span>
             <span class="text-xs text-ink-gray-5">Available now</span>
@@ -158,7 +158,7 @@
           <div v-else class="p-6 text-center text-sm text-ink-gray-5">No serialised equipment yet.</div>
         </section>
 
-        <section class="rounded-xl border border-outline-gray-2 bg-surface-base shadow-xs overflow-hidden">
+        <section v-if="!bulkFirst" class="rounded-xl border border-outline-gray-2 bg-surface-base shadow-xs overflow-hidden">
           <header class="flex items-center justify-between border-b border-outline-gray-1 px-4 py-2.5">
             <span class="text-sm-bold text-ink-gray-9">Open maintenance</span>
             <router-link :to="{ name: 'maintenance' }" class="text-xs-semibold text-ink-blue-6 hover:underline">Open board</router-link>

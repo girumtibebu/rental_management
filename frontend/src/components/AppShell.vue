@@ -57,6 +57,7 @@
               @click="drawerOpen = false"
             />
             <SidebarItem
+              v-if="!bulkFirst"
               label="Report a problem"
               icon="lucide-triangle-alert"
               :to="{ name: 'maintenance', query: { flag: '1' } }"
@@ -258,7 +259,12 @@ onMounted(() => {
 onBeforeUnmount(() => window.removeEventListener('resize', check))
 
 // Quantity-first workspaces have no serial units to browse.
-const navItems = computed(() => NAV.filter((item) => !(bulkFirst.value && item.name === 'units')))
+const BULK_FIRST_HIDDEN = ['units', 'maintenance']
+const navItems = computed(() =>
+  bulkFirst.value
+    ? NAV.filter((item) => !BULK_FIRST_HIDDEN.includes(item.name)).map((item) => (item.name === 'catalog' ? { ...item, label: 'Items' } : item))
+    : NAV,
+)
 const isActive = (item) => route.name === item.name || route.meta.parent === item.name
 const isMovementActive = computed(() => ['movements', 'movement', 'movement-new'].includes(route.name))
 const isUnitsActive = computed(() => ['units', 'unit'].includes(route.name))

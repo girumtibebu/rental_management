@@ -260,7 +260,7 @@ import PageFrame from '../components/PageFrame.vue'
 import StatusBadge from '../components/StatusBadge.vue'
 import { api, readError } from '../api'
 import { MOVEMENT_TYPES, SCAN_TYPES } from '../theme'
-import { bulkFirst } from '../workspace'
+import { bulkFirst, currentWorkspace } from '../workspace'
 import {
   playScanErrorBeep,
   playScanSuccessBeep,
@@ -281,7 +281,14 @@ const bulk = ref([])
 const bulkDraft = reactive({ item_code: '', qty: 1 })
 // Quantity-first workspaces can move any counted stock item, flagged as rental or not.
 const BULK_FILTERS = computed(() =>
-  bulkFirst.value ? { is_stock_item: 1, has_serial_no: 0, disabled: 0 } : { is_rental_item: 1, rental_tracking: 'Bulk', disabled: 0 },
+  bulkFirst.value
+    ? {
+        is_stock_item: 1,
+        has_serial_no: 0,
+        disabled: 0,
+        ...(currentWorkspace.value?.item_group ? { item_group: ['descendants of (inclusive)', currentWorkspace.value.item_group] } : {}),
+      }
+    : { is_rental_item: 1, rental_tracking: 'Bulk', disabled: 0 },
 )
 const to = ref(type.value === 'MAINTENANCE_OUT' ? 'Repair Shop' : '')
 const issuedTo = ref('')

@@ -235,6 +235,23 @@ class TestRentalUI(IntegrationTestCase):
         self.assertEqual((row["Warehouse"], row["At Event"], row["total"]), (20, 10, 30))
         self.assertGreaterEqual(data["totals"]["total"], 30)
 
+    def test_workspace_item_group_scopes_the_catalog(self):
+        item_code = self.make_item("Scoped Chair", kind="Bulk")
+        other = ensure("Item Group", "UI Test Other", item_group_name="UI Test Other", parent_item_group=RENTAL_ITEM_GROUP)
+        name = get_settings().name
+        self.addCleanup(frappe.clear_document_cache, WORKSPACE, name)
+        self.addCleanup(frappe.db.set_value, WORKSPACE, name, "item_group", None)
+
+        def listed():
+            frappe.clear_document_cache(WORKSPACE, name)
+            return [row["item_code"] for row in catalog.list_items(search=item_code)["rows"]]
+
+        frappe.db.set_value(WORKSPACE, name, "item_group", self.category)
+        self.assertIn(item_code, listed())
+        self.assertEqual(catalog.get_categories(), [self.category])
+        frappe.db.set_value(WORKSPACE, name, "item_group", other)
+        self.assertNotIn(item_code, listed())
+
     def test_dashboard_totals_add_up(self):
         item_code, serials = self.make_units(4)
         movements.create_movement("CHECK_OUT", units=serials[:3], to_location="Expo")

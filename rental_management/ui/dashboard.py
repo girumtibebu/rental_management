@@ -2,7 +2,7 @@
 
 import frappe
 
-from rental_management.rental.stock import STATUSES, get_bulk_quantities, get_settings, get_venues, get_warehouse_statuses
+from rental_management.rental.stock import STATUSES, get_bulk_quantities, get_item_scope, get_settings, get_venues, get_warehouse_statuses
 from rental_management.ui.catalog import serial_counts
 from rental_management.ui.common import MAINTENANCE, item_index
 from rental_management.ui.movements import recent_movements
@@ -94,7 +94,7 @@ def bulk_stock():
         return []
     items = frappe.get_all(
         "Item",
-        filters={"name": ["in", list(quantities)], "has_serial_no": 0, "disabled": 0},
+        filters={**get_item_scope(), "name": ["in", list(quantities)], "has_serial_no": 0, "disabled": 0},
         fields=["name", "item_name", "item_group", "stock_uom"],
     )
     rows = []
