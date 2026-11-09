@@ -79,18 +79,18 @@
         </tbody>
       </table>
     </div>
-    <div v-else-if="rows.length" class="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+    <div v-else-if="rows.length" class="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
       <router-link
         v-for="item in rows"
         :key="item.name"
         :to="{ name: 'item', params: { name: item.name } }"
-        class="group overflow-hidden rounded-lg border border-outline-gray-2 bg-surface-base hover:border-outline-gray-4"
+        class="group flex aspect-square flex-col overflow-hidden rounded-lg border border-outline-gray-2 bg-surface-base hover:border-outline-gray-4"
       >
-        <div class="flex aspect-[4/5] items-center justify-center bg-surface-gray-2">
+        <div class="flex min-h-0 flex-1 items-center justify-center bg-surface-gray-2">
           <img v-if="item.image" :src="item.image" :alt="item.item_name" loading="lazy" class="h-full w-full object-contain" />
           <Icon v-else name="box" :size="30" class="text-ink-gray-4" />
         </div>
-        <div class="p-3.5">
+        <div class="shrink-0 p-3">
           <div class="flex items-start justify-between gap-2">
             <div class="min-w-0">
               <div class="truncate text-sm-semibold text-ink-gray-9">{{ item.item_name || item.rental_model }}</div>
@@ -99,7 +99,7 @@
             <Badge :label="item.kind" theme="gray" size="sm" />
           </div>
 
-          <div class="mt-3 flex items-baseline justify-between text-sm">
+          <div class="mt-2 flex items-baseline justify-between text-sm">
             <span class="font-semibold tabular text-ink-gray-9">{{ number(item.counts.available) }} <span class="font-normal text-ink-gray-5">available of {{ number(item.counts.total) }}</span></span>
           </div>
           <template v-if="item.kind !== 'Bulk'">
