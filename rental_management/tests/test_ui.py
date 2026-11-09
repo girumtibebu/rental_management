@@ -4,8 +4,8 @@ import frappe
 from frappe.tests import IntegrationTestCase
 
 from rental_management.rental.setup.install import RENTAL_ITEM_GROUP, setup
-from rental_management.rental.stock import get_warehouse
-from rental_management.ui import catalog, dashboard, links, maintenance, movements, units
+from rental_management.rental.stock import get_settings, get_warehouse
+from rental_management.ui import catalog, dashboard, links, maintenance, movements, units, workspaces
 
 
 def ensure(doctype, name, **values):
@@ -33,6 +33,18 @@ class TestRentalUI(IntegrationTestCase):
 
     def status(self, serial):
         return units.find_unit(serial)["status"]
+
+    # ---------------------------------------------------------- workspaces
+    def test_default_workspace_is_created_and_listed(self):
+        default = get_settings()
+        self.assertTrue(default.is_default)
+        self.assertIn(default.name, [row.name for row in workspaces.list_workspaces()])
+
+    def test_unknown_workspace_is_refused(self):
+        frappe.flags.rental_workspace = "No Such Workspace"
+        self.addCleanup(frappe.flags.pop, "rental_workspace", None)
+        with self.assertRaises(frappe.DoesNotExistError):
+            get_settings()
 
     # ------------------------------------------------------------ catalog
     def test_item_code_and_serials_follow_the_model(self):
