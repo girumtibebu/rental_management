@@ -252,6 +252,20 @@ class TestRentalUI(IntegrationTestCase):
         frappe.db.set_value(WORKSPACE, name, "item_group", other)
         self.assertNotIn(item_code, listed())
 
+    def test_decor_item_follows_the_workspace_company_and_cost_center(self):
+        name = get_settings().name
+        cost_center = frappe.db.get_value("Company", get_settings().company, "cost_center")
+        self.addCleanup(frappe.clear_document_cache, WORKSPACE, name)
+        item_code = catalog.create_decor_item(f"Decor Vase {self.tag}", self.category)
+        item = frappe.get_doc("Item", item_code)
+        self.assertEqual((item.is_stock_item, item.has_serial_no), (1, 0))
+        default = item.item_defaults[0]
+        self.assertEqual(default.company, get_settings().company)
+        self.assertEqual(default.default_warehouse, get_settings().store_warehouse)
+        self.assertEqual(default.buying_cost_center, cost_center)
+        entry = frappe.get_doc("Stock Entry", catalog.receive_stock(item_code, 5))
+        self.assertEqual(entry.items[0].cost_center, cost_center)
+
     def test_dashboard_totals_add_up(self):
         item_code, serials = self.make_units(4)
         movements.create_movement("CHECK_OUT", units=serials[:3], to_location="Expo")

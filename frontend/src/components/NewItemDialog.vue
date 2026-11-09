@@ -1,7 +1,26 @@
 <template>
-  <Dialog v-model="open" :options="{ title: 'New catalog item', size: 'lg' }">
+  <Dialog v-model="open" :options="{ title: bulkFirst ? 'New item' : 'New catalog item', size: 'lg' }">
     <template #body-content>
-      <div class="grid gap-3 text-sm">
+      <!-- Decor items: a name, a category and a unit. Company, store and cost center come from the workspace. -->
+      <div v-if="bulkFirst" class="grid gap-3 text-sm">
+        <FormControl v-model="form.model" label="Item name" placeholder="e.g. Gold Chiavari Chair" />
+        <div class="grid grid-cols-2 gap-3">
+          <LinkPicker v-model="form.category" label="Category" doctype="Item Group" :filters="DECOR_CATEGORY_FILTERS" />
+          <LinkPicker v-model="form.uom" label="Unit of measure (default Nos)" doctype="UOM" creatable />
+        </div>
+        <FormControl v-model="form.opening" type="number" min="0" label="Opening quantity in the store (optional)" />
+        <p class="rounded-md bg-surface-gray-1 px-3 py-2 text-xs text-ink-gray-6">
+          Filed under {{ currentWorkspace?.company }}
+          <template v-if="currentWorkspace?.cost_center"> with cost center {{ currentWorkspace.cost_center }}</template>
+          <template v-else> with the company's default cost center</template>.
+        </p>
+        <div class="mt-1 flex justify-end gap-2">
+          <Button label="Cancel" @click="open = false" />
+          <Button variant="solid" label="Create item" :disabled="!(form.model.trim() && form.category)" :loading="busy" @click="submitDecor" />
+        </div>
+      </div>
+
+      <div v-else class="grid gap-3 text-sm">
         <div class="grid gap-1">
           <span class="text-ink-gray-6">How is it tracked?</span>
           <div class="grid grid-cols-3 gap-2">
@@ -54,17 +73,23 @@ import { computed, reactive, ref, watch } from 'vue'
 import { Button, Dialog, FormControl, Select, toast } from 'frappe-ui'
 import LinkPicker from './LinkPicker.vue'
 import { api, readError } from '../api'
+import { bulkFirst, currentWorkspace } from '../workspace'
 
 const props = defineProps({ modelValue: Boolean })
 const emit = defineEmits(['update:modelValue', 'created'])
 
 const CATEGORY_FILTERS = { parent_item_group: 'Rental' }
+// Alter's categories: the groups below the workspace's item group.
+const DECOR_CATEGORY_FILTERS = computed(() => ({
+  is_group: 0,
+  ...(currentWorkspace.value?.item_group ? { name: ['descendants of', currentWorkspace.value.item_group] } : {}),
+}))
 const KINDS = [
   { value: 'Unit', hint: 'One serial number each' },
   { value: 'Box', hint: 'A case holding units' },
   { value: 'Bulk', hint: 'Counted, no serials' },
 ]
-const BLANK = { kind: 'Unit', model: '', category: '', type: '', brand: '', uom: '', digits: '3' }
+const BLANK = { kind: 'Unit', model: '', category: '', type: '', brand: '', uom: '', digits: '3', opening: '' }
 
 const open = computed({ get: () => props.modelValue, set: (value) => emit('update:modelValue', value) })
 const form = reactive({ ...BLANK })
@@ -82,6 +107,22 @@ const example = (digits) => `${preview.value || '…'}-${'0'.repeat(Number(digit
 watch(open, (value) => {
   if (value) Object.assign(form, BLANK)
 })
+
+async function submitDecor() {
+  busy.value = true
+  try {
+    const name = await api.createDecorItem({ item_name: form.model, item_group: form.category, stock_uom: form.uom || undefined })
+    const qty = Number(form.opening)
+    if (qty > 0) await api.receiveStock(name, qty)
+    toast.success(qty > 0 ? `Item created with ${qty} in store` : 'Item created')
+    open.value = false
+    emit('created', name)
+  } catch (err) {
+    toast.error(readError(err))
+  } finally {
+    busy.value = false
+  }
+}
 
 async function submit() {
   busy.value = true
