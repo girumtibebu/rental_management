@@ -14,6 +14,8 @@
   "mode",
   "hold_days",
   "item_group",
+  "cost_center",
+  "item_code_series",
   "warehouses_section",
   "store_warehouse",
   "event_warehouse",
@@ -81,6 +83,19 @@
    "description": "Items shown in this workspace: this group and everything below it. Leave empty to show the items flagged as rental items."
   },
   {
+   "fieldname": "cost_center",
+   "fieldtype": "Link",
+   "label": "Cost Center",
+   "options": "Cost Center",
+   "description": "Used on this workspace's stock movements and new items. Leave empty to use the company's default cost center."
+  },
+  {
+   "fieldname": "item_code_series",
+   "fieldtype": "Data",
+   "label": "New Item Code Series",
+   "description": "For items added in a Bulk First workspace, e.g. ALT-RNT-.#### . Leave empty to use the item name as its code."
+  },
+  {
    "description": "A rental status is the warehouse the stock is in. Movements in the Rental app post Stock Entries between these warehouses.",
    "fieldname": "warehouses_section",
    "fieldtype": "Section Break",
@@ -133,7 +148,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-09 21:00:00.000000",
+ "modified": "2026-11-09 22:00:00.000000",
  "modified_by": "Administrator",
  "module": "Rental",
  "name": "Rental Workspace",

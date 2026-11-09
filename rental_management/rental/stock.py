@@ -72,6 +72,12 @@ def get_warehouse_statuses():
     return {settings.get(field): status for status, field in WAREHOUSE_FIELDS.items()}
 
 
+def get_cost_center(workspace=None):
+    """The workspace's cost center, else its company's default one."""
+    settings = get_settings(workspace)
+    return settings.get("cost_center") or frappe.get_cached_value("Company", settings.company, "cost_center")
+
+
 def get_item_scope(workspace=None):
     """Item filters for this workspace.
 
@@ -162,6 +168,7 @@ def build_serial_rows(movement_type, serials, sources=None):
                 "use_serial_batch_fields": 1,
                 "serial_no": "\n".join(sorted(names)),
                 "allow_zero_valuation_rate": 1,
+                "cost_center": get_cost_center(),
             }
         )
     return rows
@@ -189,6 +196,7 @@ def build_bulk_rows(movement_type, bulk):
                 "s_warehouse": source,
                 "t_warehouse": get_warehouse(target) if target else None,
                 "allow_zero_valuation_rate": 1,
+                "cost_center": get_cost_center(),
             }
         )
     return rows

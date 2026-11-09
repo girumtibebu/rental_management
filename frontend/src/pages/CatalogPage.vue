@@ -1,16 +1,16 @@
 <template>
-  <PageFrame title="Catalog" subtitle="What you own, and how much of it is ready to go out.">
+  <PageFrame :title="bulkFirst ? 'Items' : 'Catalog'" :subtitle="bulkFirst ? 'Your decor items, and how many are in store.' : 'What you own, and how much of it is ready to go out.'">
     <template #actions>
       <Button variant="solid" size="sm" @click="newOpen = true"><template #prefix><Icon name="plus" :size="13" /></template>New item</Button>
     </template>
 
     <div class="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2">
-      <TextInput v-model="filters.search" type="search" class="w-full sm:w-64" placeholder="Search equipment…" @update:model-value="reload(true)">
+      <TextInput v-model="filters.search" type="search" class="w-full sm:w-64" :placeholder="bulkFirst ? 'Search items…' : 'Search equipment…'" @update:model-value="reload(true)">
           <template #prefix><Icon name="search" :size="14" class="text-ink-gray-5" /></template>
         </TextInput>
       <div class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-0.5 sm:pb-0">
         <Select v-model="filters.category" class="w-44 shrink-0" :options="categoryOptions" @update:model-value="reload(true)" />
-        <TabButtons v-model="filters.kind" :buttons="KINDS" class="shrink-0" @update:model-value="reload(true)" />
+        <TabButtons v-if="!bulkFirst" v-model="filters.kind" :buttons="KINDS" class="shrink-0" @update:model-value="reload(true)" />
         <span class="ml-auto text-xs text-ink-gray-5 shrink-0 hidden sm:inline">{{ number(total) }} items</span>
         <div class="inline-flex shrink-0 overflow-hidden rounded-md border border-outline-gray-3" role="group" aria-label="View">
           <button
@@ -79,18 +79,18 @@
         </tbody>
       </table>
     </div>
-    <div v-else-if="rows.length" class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+    <div v-else-if="rows.length" class="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
       <router-link
         v-for="item in rows"
         :key="item.name"
         :to="{ name: 'item', params: { name: item.name } }"
-        class="group overflow-hidden rounded-lg border border-outline-gray-2 bg-surface-base hover:border-outline-gray-4"
+        class="group flex aspect-square flex-col overflow-hidden rounded-lg border border-outline-gray-2 bg-surface-base hover:border-outline-gray-4"
       >
-        <div class="flex h-28 items-center justify-center bg-surface-gray-2">
-          <img v-if="item.image" :src="item.image" class="h-full w-full object-cover" />
+        <div class="flex min-h-0 flex-1 items-center justify-center bg-surface-gray-2">
+          <img v-if="item.image" :src="item.image" :alt="item.item_name" loading="lazy" class="h-full w-full object-contain" />
           <Icon v-else name="box" :size="30" class="text-ink-gray-4" />
         </div>
-        <div class="p-3.5">
+        <div class="shrink-0 p-3">
           <div class="flex items-start justify-between gap-2">
             <div class="min-w-0">
               <div class="truncate text-sm-semibold text-ink-gray-9">{{ item.item_name || item.rental_model }}</div>
@@ -99,7 +99,7 @@
             <Badge :label="item.kind" theme="gray" size="sm" />
           </div>
 
-          <div class="mt-3 flex items-baseline justify-between text-sm">
+          <div class="mt-2 flex items-baseline justify-between text-sm">
             <span class="font-semibold tabular text-ink-gray-9">{{ number(item.counts.available) }} <span class="font-normal text-ink-gray-5">available of {{ number(item.counts.total) }}</span></span>
           </div>
           <template v-if="item.kind !== 'Bulk'">
@@ -139,6 +139,7 @@ import PageFrame from '../components/PageFrame.vue'
 import Pagination from '../components/Pagination.vue'
 import { api, readError } from '../api'
 import { number } from '../format'
+import { bulkFirst } from '../workspace'
 
 const PAGE = 24
 const KINDS = [

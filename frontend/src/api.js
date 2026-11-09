@@ -19,6 +19,7 @@ export const api = {
   listItems: (params) => call(P + 'catalog.list_items', params),
   getItem: (name) => call(P + 'catalog.get_item', { name }),
   createItem: (values) => call(P + 'catalog.create_item', values),
+  createDecorItem: (values) => call(P + 'catalog.create_decor_item', values),
   generateUnits: (itemCode, count) => call(P + 'catalog.generate_units', { item_code: itemCode, count }),
   receiveStock: (itemCode, qty) => call(P + 'catalog.receive_stock', { item_code: itemCode, qty }),
 
