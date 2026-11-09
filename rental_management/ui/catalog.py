@@ -245,7 +245,12 @@ def create_decor_item(item_name, item_group, stock_uom=None, image=None):
     name = (item_name or "").strip()
     if not name:
         frappe.throw(_("Give the item a name"))
-    scope = get_categories() if workspace.item_group else []
+    # Any category under the workspace's group is fine, including one that holds only services so far.
+    scope = (
+        frappe.get_all("Item Group", filters={"name": ["descendants of (inclusive)", workspace.item_group], "is_group": 0}, pluck="name")
+        if workspace.item_group
+        else []
+    )
     if scope and item_group not in scope:
         frappe.throw(_("Choose a category under {0}").format(workspace.item_group))
     doc = frappe.get_doc(

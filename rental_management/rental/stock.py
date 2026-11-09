@@ -185,9 +185,13 @@ def build_bulk_rows(movement_type, bulk):
     source = get_warehouse(source_status) if source_status else None
     if movement_type == "PURCHASE":
         source = get_settings().get("main_store_warehouse")  # None: new stock is received
+        wanted = {}
         for item_code, qty in bulk:
-            if source and flt(qty) > flt(frappe.db.get_value("Bin", {"warehouse": source, "item_code": item_code}, "actual_qty")):
-                frappe.throw(_("Only {0} of {1} are in {2}").format(flt(frappe.db.get_value("Bin", {"warehouse": source, "item_code": item_code}, "actual_qty")), item_code, source))
+            wanted[item_code] = wanted.get(item_code, 0) + flt(qty)
+        for item_code, qty in wanted.items():
+            in_store = flt(frappe.db.get_value("Bin", {"warehouse": source, "item_code": item_code}, "actual_qty")) if source else 0
+            if source and qty > in_store:
+                frappe.throw(_("Only {0} of {1} are in {2}").format(in_store, item_code, source))
     on_hand = get_bulk_quantities([item_code for item_code, _qty in bulk])
     rows = []
     for item_code, qty in bulk:
@@ -224,6 +228,8 @@ def post_movement(
     """Submit one Stock Entry for a rental movement and return its name."""
     if movement_type not in MOVEMENT_TYPES:
         frappe.throw(_("Unknown movement type {0}").format(movement_type))
+    if movement_type == "PURCHASE" and serials and bulk and get_settings().get("main_store_warehouse"):
+        frappe.throw(_("Add serial units and counted stock in separate movements"))
     rows = build_serial_rows(movement_type, list(serials), sources) if serials else []
     rows += build_bulk_rows(movement_type, list(bulk)) if bulk else []
     if not rows:
