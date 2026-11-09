@@ -301,6 +301,18 @@ class TestRentalUI(IntegrationTestCase):
         self.assertEqual((entry.purpose, entry.items[0].s_warehouse), ("Material Transfer", main))
         self.assertEqual(get_bulk_quantities([stocked])[stocked]["Warehouse"], 5)
 
+    def test_create_workspace_makes_separate_warehouses(self):
+        from rental_management.rental.setup.workspace import create_workspace
+
+        company = get_settings().company
+        name = create_workspace(f"UI Extra {self.tag}", company, mode="Bulk First")
+        extra = frappe.get_doc(WORKSPACE, name)
+        default = get_settings()
+        self.assertFalse(extra.is_default)
+        self.assertTrue(extra.store_warehouse)
+        self.assertNotIn(extra.store_warehouse, (default.store_warehouse, default.event_warehouse, default.repair_warehouse, default.missing_warehouse))
+        self.assertEqual(create_workspace(name, company), name)  # running it again changes nothing
+
     def test_dashboard_totals_add_up(self):
         item_code, serials = self.make_units(4)
         movements.create_movement("CHECK_OUT", units=serials[:3], to_location="Expo")
