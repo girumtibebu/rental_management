@@ -18,6 +18,7 @@ ITEM_FIELDS = [
     "rental_size",
     "stock_uom",
     "image",
+    "has_serial_no",
     "serial_no_series",
     "rental_serial_preview",
     "disabled",
@@ -68,8 +69,13 @@ def item_index(names):
     return {row.name: row for row in frappe.get_all("Item", filters={"name": ["in", names]}, fields=ITEM_FIELDS)}
 
 
+def get_tracking(item):
+    """Unit, Box or Bulk. Items that were never set up as rental equipment (Alter's decor stock) are Bulk unless serialised."""
+    return item.get("rental_tracking") or ("Unit" if item.get("has_serial_no") else "Bulk")
+
+
 def describe_item(item):
-    return {**item, "item_code": item.name, "category": item.item_group, "kind": item.rental_tracking}
+    return {**item, "item_code": item.name, "category": item.item_group, "kind": get_tracking(item)}
 
 
 def describe_units(units):

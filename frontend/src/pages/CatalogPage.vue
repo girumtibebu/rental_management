@@ -1,16 +1,16 @@
 <template>
-  <PageFrame title="Catalog" subtitle="What you own, and how much of it is ready to go out.">
+  <PageFrame :title="bulkFirst ? 'Items' : 'Catalog'" :subtitle="bulkFirst ? 'Your decor items, and how many are in store.' : 'What you own, and how much of it is ready to go out.'">
     <template #actions>
       <Button variant="solid" size="sm" @click="newOpen = true"><template #prefix><Icon name="plus" :size="13" /></template>New item</Button>
     </template>
 
     <div class="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2">
-      <TextInput v-model="filters.search" type="search" class="w-full sm:w-64" placeholder="Search equipment…" @update:model-value="reload(true)">
+      <TextInput v-model="filters.search" type="search" class="w-full sm:w-64" :placeholder="bulkFirst ? 'Search items…' : 'Search equipment…'" @update:model-value="reload(true)">
           <template #prefix><Icon name="search" :size="14" class="text-ink-gray-5" /></template>
         </TextInput>
       <div class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-0.5 sm:pb-0">
         <Select v-model="filters.category" class="w-44 shrink-0" :options="categoryOptions" @update:model-value="reload(true)" />
-        <TabButtons v-model="filters.kind" :buttons="KINDS" class="shrink-0" @update:model-value="reload(true)" />
+        <TabButtons v-if="!bulkFirst" v-model="filters.kind" :buttons="KINDS" class="shrink-0" @update:model-value="reload(true)" />
         <span class="ml-auto text-xs text-ink-gray-5 shrink-0 hidden sm:inline">{{ number(total) }} items</span>
         <div class="inline-flex shrink-0 overflow-hidden rounded-md border border-outline-gray-3" role="group" aria-label="View">
           <button
@@ -139,6 +139,7 @@ import PageFrame from '../components/PageFrame.vue'
 import Pagination from '../components/Pagination.vue'
 import { api, readError } from '../api'
 import { number } from '../format'
+import { bulkFirst } from '../workspace'
 
 const PAGE = 24
 const KINDS = [

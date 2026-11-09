@@ -7,7 +7,7 @@ from rental_management.rental.stock import WORKSPACE
 
 # These roles can open every workspace, so managers can switch between companies.
 MANAGER_ROLES = {"System Manager", "Stock Manager"}
-FIELDS = ["name", "company", "mode", "hold_days", "is_default", "item_group"]
+FIELDS = ["name", "company", "mode", "hold_days", "is_default", "item_group", "cost_center"]
 
 
 def allowed_workspaces(user=None):
