@@ -4,7 +4,7 @@ import frappe
 from frappe.tests import IntegrationTestCase
 
 from rental_management.rental.setup.install import RENTAL_ITEM_GROUP, setup
-from rental_management.rental.stock import WORKSPACE, get_settings, get_warehouse
+from rental_management.rental.stock import WORKSPACE, get_bulk_quantities, get_settings, get_warehouse
 from rental_management.ui import catalog, dashboard, links, maintenance, movements, units, workspaces
 
 
@@ -265,6 +265,53 @@ class TestRentalUI(IntegrationTestCase):
         self.assertEqual(default.buying_cost_center, cost_center)
         entry = frappe.get_doc("Stock Entry", catalog.receive_stock(item_code, 5))
         self.assertEqual(entry.items[0].cost_center, cost_center)
+
+    def test_services_and_main_store(self):
+        name = get_settings().name
+        self.addCleanup(frappe.clear_document_cache, WORKSPACE, name)
+        self.addCleanup(frappe.db.set_value, WORKSPACE, name, "item_group", None)
+        self.addCleanup(frappe.db.set_value, WORKSPACE, name, "main_store_warehouse", None)
+        group = ensure("Item Group", "UI Test Services", item_group_name="UI Test Services", parent_item_group=RENTAL_ITEM_GROUP)
+        service = frappe.get_doc({"doctype": "Item", "item_code": f"UI-SVC-{self.tag}", "item_name": f"Design {self.tag}", "item_group": group, "stock_uom": "Nos", "is_stock_item": 0}).insert()
+        stocked = self.make_item("Scoped Lamp", kind="Bulk")
+        frappe.db.set_value(WORKSPACE, name, "item_group", RENTAL_ITEM_GROUP)
+        frappe.clear_document_cache(WORKSPACE, name)
+        listed = [row["item_code"] for row in catalog.list_items(search=self.tag)["rows"]]
+        self.assertIn(stocked, listed)
+        self.assertNotIn(service.name, listed)
+        self.assertNotIn(group, catalog.get_categories())
+
+        # With a main store, adding stock to the rental store is a transfer from it.
+        company = get_settings().company
+        main = frappe.get_doc({"doctype": "Warehouse", "warehouse_name": f"UI Main Store {self.tag}", "company": company}).insert().name
+        frappe.db.set_value(WORKSPACE, name, "main_store_warehouse", main)
+        frappe.clear_document_cache(WORKSPACE, name)
+        with self.assertRaises(frappe.ValidationError):
+            catalog.receive_stock(stocked, 5)  # nothing in the main store yet
+        frappe.get_doc(
+            {
+                "doctype": "Stock Entry",
+                "company": company,
+                "stock_entry_type": "Material Receipt",
+                "purpose": "Material Receipt",
+                "items": [{"item_code": stocked, "qty": 20, "t_warehouse": main, "allow_zero_valuation_rate": 1}],
+            }
+        ).insert().submit()
+        entry = frappe.get_doc("Stock Entry", catalog.receive_stock(stocked, 5))
+        self.assertEqual((entry.purpose, entry.items[0].s_warehouse), ("Material Transfer", main))
+        self.assertEqual(get_bulk_quantities([stocked])[stocked]["Warehouse"], 5)
+
+    def test_create_workspace_makes_separate_warehouses(self):
+        from rental_management.rental.setup.workspace import create_workspace
+
+        company = get_settings().company
+        name = create_workspace(f"UI Extra {self.tag}", company, mode="Bulk First")
+        extra = frappe.get_doc(WORKSPACE, name)
+        default = get_settings()
+        self.assertFalse(extra.is_default)
+        self.assertTrue(extra.store_warehouse)
+        self.assertNotIn(extra.store_warehouse, (default.store_warehouse, default.event_warehouse, default.repair_warehouse, default.missing_warehouse))
+        self.assertEqual(create_workspace(name, company), name)  # running it again changes nothing
 
     def test_dashboard_totals_add_up(self):
         item_code, serials = self.make_units(4)

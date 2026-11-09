@@ -24,6 +24,11 @@ class RentalWorkspace(Document):
             )
             if owner:
                 frappe.throw(_("{0} is already used by workspace {1}").format(warehouse, owner[0]))
+        if self.main_store_warehouse:
+            if self.main_store_warehouse in warehouses:
+                frappe.throw(_("The main store must be different from the rental warehouses"))
+            if frappe.db.get_value("Warehouse", self.main_store_warehouse, "company") != self.company:
+                frappe.throw(_("{0} does not belong to {1}").format(self.main_store_warehouse, self.company))
         if self.hold_days is not None and self.hold_days < 0:
             frappe.throw(_("Quotation hold cannot be negative"))
         if self.is_default:

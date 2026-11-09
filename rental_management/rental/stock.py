@@ -87,7 +87,8 @@ def get_item_scope(workspace=None):
     """
     root = get_settings(workspace).get("item_group")
     if root:
-        return {"item_group": ["descendants of (inclusive)", root]}
+        # Services (decor design and the like) stay in ERPNext; only stock items are rented.
+        return {"item_group": ["descendants of (inclusive)", root], "is_stock_item": 1}
     return {"is_rental_item": 1}
 
 
@@ -143,7 +144,9 @@ def get_bulk_quantities(item_codes=None):
     return quantities
 
 
-def get_purpose(movement_type):
+def get_purpose(movement_type, from_main_store=False):
+    if movement_type == "PURCHASE" and from_main_store:
+        return "Material Transfer"
     return {"PURCHASE": "Material Receipt", "DISPOSE": "Material Issue"}.get(movement_type, "Material Transfer")
 
 
@@ -180,6 +183,15 @@ def build_bulk_rows(movement_type, bulk):
     if movement_type != "PURCHASE" and not source_status:
         frappe.throw(_("{0} movements cannot carry bulk items").format(movement_type))
     source = get_warehouse(source_status) if source_status else None
+    if movement_type == "PURCHASE":
+        source = get_settings().get("main_store_warehouse")  # None: new stock is received
+        wanted = {}
+        for item_code, qty in bulk:
+            wanted[item_code] = wanted.get(item_code, 0) + flt(qty)
+        for item_code, qty in wanted.items():
+            in_store = flt(frappe.db.get_value("Bin", {"warehouse": source, "item_code": item_code}, "actual_qty")) if source else 0
+            if source and qty > in_store:
+                frappe.throw(_("Only {0} of {1} are in {2}").format(in_store, item_code, source))
     on_hand = get_bulk_quantities([item_code for item_code, _qty in bulk])
     rows = []
     for item_code, qty in bulk:
@@ -216,11 +228,13 @@ def post_movement(
     """Submit one Stock Entry for a rental movement and return its name."""
     if movement_type not in MOVEMENT_TYPES:
         frappe.throw(_("Unknown movement type {0}").format(movement_type))
+    if movement_type == "PURCHASE" and serials and bulk and get_settings().get("main_store_warehouse"):
+        frappe.throw(_("Add serial units and counted stock in separate movements"))
     rows = build_serial_rows(movement_type, list(serials), sources) if serials else []
     rows += build_bulk_rows(movement_type, list(bulk)) if bulk else []
     if not rows:
         frappe.throw(_("Add at least one unit or bulk item"))
-    purpose = get_purpose(movement_type)
+    purpose = get_purpose(movement_type, from_main_store=bool(bulk) and not serials and bool(get_settings().get("main_store_warehouse")))
     stock_entry = frappe.get_doc(
         {
             "doctype": "Stock Entry",
