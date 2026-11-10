@@ -178,6 +178,7 @@ def create_item(rental_model, item_group, rental_item_type, brand, rental_tracki
             "rental_item_type": rental_item_type,
             "rental_serial_digits": str(rental_serial_digits or "3"),
             "rental_size": rental_size,
+            "item_defaults": [item_defaults(get_settings())],
         }
     )
     doc.insert()
