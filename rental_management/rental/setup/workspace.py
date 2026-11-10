@@ -1,10 +1,10 @@
-"""Create an extra Rental Workspace (for example Alter Decor) with its own rental warehouses.
+"""Create an extra Rental Workspace (for example one per company) with its own rental warehouses.
 
 Run it from a bench, once per workspace:
 
     bench --site <site> execute rental_management.rental.setup.workspace.create_workspace \\
-        --kwargs "{'workspace_name': 'Alter Decor', 'company': 'Alter Event Styling & Decor', \\
-        'item_group': 'ALT - Alter Decor', 'main_store': 'Stores - AS'}"
+        --kwargs "{'workspace_name': '<name>', 'company': '<company>', \\
+        'item_group': '<item group>', 'main_store': '<store>'}"
 
 It is safe to run again: an existing workspace is left as it is.
 """

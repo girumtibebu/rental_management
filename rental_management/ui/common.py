@@ -70,7 +70,7 @@ def item_index(names):
 
 
 def get_tracking(item):
-    """Unit, Box or Bulk. Items that were never set up as rental equipment (Alter's decor stock) are Bulk unless serialised."""
+    """Unit, Box or Bulk. Items that were never set up as rental equipment (decor stock that is not serialised) are Bulk unless serialised."""
     return item.get("rental_tracking") or ("Unit" if item.get("has_serial_no") else "Bulk")
 
 

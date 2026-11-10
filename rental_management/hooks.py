@@ -27,7 +27,10 @@ add_to_apps_screen = [
 # include js, css files in header of desk.html
 # app_include_css = "/assets/rental_management/css/rental_management.css"
 # app_include_js = "/assets/rental_management/js/rental_management.js"
-app_include_js = "/assets/rental_management/js/rental_launcher.js"
+app_include_js = [
+    "/assets/rental_management/js/rental_launcher.js",
+    "/assets/rental_management/js/rental_settings_dialog.js",
+]
 
 website_route_rules = [
 	{"from_route": "/rental/<path:app_path>", "to_route": "rental"},
