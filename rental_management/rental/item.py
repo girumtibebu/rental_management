@@ -37,6 +37,13 @@ def validate_item(doc, method=None):
     if not doc.is_rental_item:
         return
 
+    if not any(row.company for row in doc.get("item_defaults") or []):
+        # Imported from the active rental workspace: its company and cost center.
+        from rental_management.rental.stock import get_settings
+        from rental_management.ui.catalog import item_defaults
+
+        doc.append("item_defaults", item_defaults(get_settings()))
+
     doc.is_stock_item = 1
 
     if doc.rental_tracking == "Bulk":
