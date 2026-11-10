@@ -171,7 +171,41 @@ def get_custom_fields():
         },
     ]
 
-    return {"Item": item_fields, "Serial No": serial_no_fields, "Stock Entry": stock_entry_fields}
+    return {
+        "Item": item_fields,
+        "Serial No": serial_no_fields,
+        "Stock Entry": stock_entry_fields,
+        "Company": get_company_print_format_fields(),
+    }
+
+
+def get_company_print_format_fields():
+    """Per-company default print formats, so each company's documents print with its own brand."""
+    from rental_management.group.constants import PRINT_FORMAT_DOCTYPES
+
+    fields = [
+        {
+            "fieldname": "rental_print_formats_section",
+            "fieldtype": "Section Break",
+            "label": "Print Formats",
+            "insert_after": "default_letter_head",
+            "collapsible": 1,
+            "description": "Used instead of the site-wide default when printing or emailing this company's documents.",
+        }
+    ]
+    previous = "rental_print_formats_section"
+    for doctype, fieldname in PRINT_FORMAT_DOCTYPES.items():
+        fields.append(
+            {
+                "fieldname": fieldname,
+                "fieldtype": "Link",
+                "label": f"{doctype} Print Format",
+                "options": "Print Format",
+                "insert_after": previous,
+            }
+        )
+        previous = fieldname
+    return fields
 
 
 def setup_custom_fields():

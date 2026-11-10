@@ -1,3 +1,5 @@
+from rental_management.group.constants import SCOPED_DOCTYPES
+
 app_name = "rental_management"
 app_title = "Rental Management"
 app_publisher = "emc"
@@ -27,7 +29,18 @@ add_to_apps_screen = [
 # include js, css files in header of desk.html
 # app_include_css = "/assets/rental_management/css/rental_management.css"
 # app_include_js = "/assets/rental_management/js/rental_management.js"
-app_include_js = "/assets/rental_management/js/rental_launcher.js"
+app_include_js = [
+	"/assets/rental_management/js/rental_launcher.js",
+	"/assets/rental_management/js/company_switcher.js",
+]
+app_include_css = "/assets/rental_management/css/company_switcher.css"
+
+boot_session = "rental_management.group.company_scope.boot_session"
+
+# Company switcher: narrows company-owned lists to the companies the user picked
+permission_query_conditions = {
+	doctype: "rental_management.group.company_scope.get_permission_query_conditions" for doctype in SCOPED_DOCTYPES
+}
 
 website_route_rules = [
 	{"from_route": "/rental/<path:app_path>", "to_route": "rental"},
