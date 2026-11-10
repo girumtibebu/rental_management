@@ -81,7 +81,7 @@ def get_cost_center(workspace=None):
 def get_item_scope(workspace=None):
     """Item filters for this workspace.
 
-    A workspace with an item group (Alter Decor) works on every item in that
+    A workspace with an item group works on every item in that
     group tree, flagged as a rental item or not. Without one, it works on the
     items flagged as rental items.
     """

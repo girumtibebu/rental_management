@@ -7,7 +7,6 @@ APP = "rental_management"
 RENTAL_ITEM_GROUP = "Rental"
 # Desk pages the app shipped before v2.0.2; they point at doctypes that no longer exist
 LEGACY_WORKSPACES = ("Rental", "Rental Home", "Rental Management")
-DEFAULT_WORKSPACE = "Eternal Events"
 WAREHOUSE_NAMES = {
     "store_warehouse": "Rental Store",
     "event_warehouse": "Rental At Event",
@@ -57,6 +56,9 @@ def setup_settings():
     if frappe.db.exists(WORKSPACE, {"is_default": 1}):
         return
     old = frappe.get_single("Rental Settings") if frappe.db.table_exists("Rental Settings") else None
+    name = (old and old.workspace_name or "").strip()
+    if not name:
+        return
     company = (old and old.company) or frappe.defaults.get_global_default("company")
     if not company:
         return
@@ -64,7 +66,6 @@ def setup_settings():
     values = {}
     for field in WAREHOUSE_FIELDS.values():
         values[field] = (old and old.get(field)) or get_or_create_warehouse(WAREHOUSE_NAMES[field], company, parent)
-    name = DEFAULT_WORKSPACE
     if frappe.db.exists(WORKSPACE, name):
         frappe.db.set_value(WORKSPACE, name, "is_default", 1)
         return

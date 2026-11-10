@@ -21,6 +21,12 @@
    "reqd": 1
   },
   {
+   "fieldname": "workspace_name",
+   "fieldtype": "Data",
+   "label": "Default Workspace Name",
+   "description": "Name given to the default Rental Workspace created on install or migrate. Leave empty to create none."
+  },
+  {
    "description": "A serial's rental status is the warehouse it is in. Movements in the Rental app post Stock Entries between these warehouses.",
    "fieldname": "warehouses_section",
    "fieldtype": "Section Break",
