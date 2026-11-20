@@ -4,6 +4,7 @@ export const NAV = [
   { name: 'dashboard', path: '/', label: 'Dashboard', icon: 'home' },
   { name: 'catalog', path: '/catalog', label: 'Catalog', icon: 'box' },
   { name: 'units', path: '/units', label: 'Units', icon: 'layers' },
+  { name: 'requests', path: '/requests', label: 'Requests', icon: 'tag' },
   { name: 'movements', path: '/movements', label: 'Movements', icon: 'truck' },
   { name: 'maintenance', path: '/maintenance', label: 'Maintenance', icon: 'wrench' },
 ]
@@ -16,6 +17,8 @@ export default createRouter({
     { path: '/catalog/:name', name: 'item', component: () => import('./pages/ItemPage.vue'), meta: { title: 'Catalog', parent: 'catalog' } },
     { path: '/units', name: 'units', component: () => import('./pages/UnitsPage.vue'), meta: { title: 'Units' } },
     { path: '/units/:name', name: 'unit', component: () => import('./pages/UnitPage.vue'), meta: { title: 'Units', parent: 'units' } },
+    { path: '/requests', name: 'requests', component: () => import('./pages/RequestsPage.vue'), meta: { title: 'Requests' } },
+    { path: '/requests/:name', name: 'request', component: () => import('./pages/RequestPage.vue'), meta: { title: 'Requests', parent: 'requests' } },
     { path: '/movements', name: 'movements', component: () => import('./pages/MovementsPage.vue'), meta: { title: 'Movements' } },
     { path: '/movements/new', name: 'movement-new', component: () => import('./pages/MovementNewPage.vue'), meta: { title: 'New movement', parent: 'movements' } },
     { path: '/movements/:name', name: 'movement', component: () => import('./pages/MovementPage.vue'), meta: { title: 'Movements', parent: 'movements' } },

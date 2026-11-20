@@ -29,6 +29,10 @@ export const api = {
   listMovements: (params) => call(P + 'movements.list_movements', params),
   getMovement: (name) => call(P + 'movements.get_movement', { name }),
 
+  listRequests: (params) => call(P + 'requests.list_requests', params),
+  getRequest: (name) => call(P + 'requests.get_request', { name }),
+  setRequestStatus: (name, status, reason, note) => call(P + 'requests.set_status', { name, status, reason, note }),
+
   board: () => call(P + 'maintenance.board'),
   createTicket: (values) => call(P + 'maintenance.create_ticket', values),
   getTicket: (name) => call(P + 'maintenance.get_ticket', { name }),

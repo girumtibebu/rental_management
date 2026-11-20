@@ -19,9 +19,11 @@ declare module 'vue' {
     NewItemDialog: typeof import('./src/components/NewItemDialog.vue')['default']
     PageFrame: typeof import('./src/components/PageFrame.vue')['default']
     Pagination: typeof import('./src/components/Pagination.vue')['default']
+    RequestBadge: typeof import('./src/components/RequestBadge.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     ScanBox: typeof import('./src/components/ScanBox.vue')['default']
     StatusBadge: typeof import('./src/components/StatusBadge.vue')['default']
+    WorkspacePicker: typeof import('./src/components/WorkspacePicker.vue')['default']
   }
 }
