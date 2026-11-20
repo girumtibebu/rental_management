@@ -48,6 +48,7 @@
         <div v-if="s.status === 'Rejected'" class="mb-2 rounded-md bg-surface-red-1 px-3 py-2 text-sm text-ink-red-4">
           <b>Rejected:</b> {{ s.reject_reason }} <span class="text-ink-gray-6">The team can change the list and send it again.</span>
         </div>
+        <div class="overflow-x-auto">
         <table class="w-full border-separate border-spacing-0 text-base">
           <thead>
             <tr class="text-left text-sm text-ink-gray-5">
@@ -55,7 +56,15 @@
               <th class="h-8 bg-surface-gray-2 px-2 font-normal">Item</th>
               <th class="h-8 w-24 bg-surface-gray-2 px-2 text-right font-normal">Qty</th>
               <th class="h-8 w-20 bg-surface-gray-2 px-2 font-normal">Unit</th>
-              <th class="h-8 rounded-r-md bg-surface-gray-2 px-2 font-normal">Note</th>
+              <th class="h-8 bg-surface-gray-2 px-2 font-normal" :class="!s.columns.length && 'rounded-r-md'">Note</th>
+              <th
+                v-for="(c, ci) in s.columns"
+                :key="c.key"
+                class="h-8 whitespace-nowrap bg-surface-gray-2 px-2 font-normal"
+                :class="[c.field_type === 'Number' && 'text-right', ci === s.columns.length - 1 && 'rounded-r-md']"
+              >
+                {{ c.label }}
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -68,14 +77,18 @@
               <td class="h-10 border-b border-outline-gray-1 px-2 text-right tabular text-ink-gray-9">{{ number(line.qty) }}</td>
               <td class="h-10 border-b border-outline-gray-1 px-2 text-ink-gray-6">{{ line.unit }}</td>
               <td class="h-10 border-b border-outline-gray-1 px-2 text-ink-gray-6">{{ line.note }}</td>
+              <td v-for="c in s.columns" :key="c.key" class="h-10 border-b border-outline-gray-1 px-2 text-ink-gray-7" :class="c.field_type === 'Number' && 'text-right tabular'">
+                {{ cell(c, line.extra[c.key]) }}
+              </td>
             </tr>
             <tr v-for="r in s.removed" :key="r" class="text-ink-gray-4">
               <td class="h-10 border-b border-outline-gray-1 pl-3"><span class="lucide-minus block size-3.5" /></td>
-              <td colspan="4" class="h-10 border-b border-outline-gray-1 px-2 line-through">{{ r }} <span class="ml-1.5 no-underline">removed</span></td>
+              <td :colspan="4 + s.columns.length" class="h-10 border-b border-outline-gray-1 px-2 line-through">{{ r }} <span class="ml-1.5 no-underline">removed</span></td>
             </tr>
-            <tr v-if="!s.lines.length && !s.removed.length"><td colspan="5" class="py-6 text-center text-sm text-ink-gray-5">No lines.</td></tr>
+            <tr v-if="!s.lines.length && !s.removed.length"><td :colspan="5 + s.columns.length" class="py-6 text-center text-sm text-ink-gray-5">No lines.</td></tr>
           </tbody>
         </table>
+        </div>
       </section>
       <div v-if="!data.sections.length" class="p-8 text-center text-sm text-ink-gray-5">No lists on this request.</div>
 
@@ -185,6 +198,9 @@ function openReject(s) {
 async function reject() {
   if (await answer(rejecting.value, 'Rejected', reason.value.trim())) rejectOpen.value = false
 }
+
+// an extra column's value as text: a tick for checks, numbers as numbers
+const cell = (c, v) => (v == null || v === '' ? '' : c.field_type === 'Check' ? (v ? '✓' : '') : c.field_type === 'Number' ? number(v) : c.field_type === 'Date' ? shortDate(v) : v)
 
 const movement = (type) => router.push({ name: 'movement-new', query: { type, request: req.value.name } })
 

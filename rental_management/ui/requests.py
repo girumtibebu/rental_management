@@ -48,12 +48,14 @@ def get_request(name):
 	doc.check_permission("read")
 	lines = {}
 	for line in doc.lines:
-		lines.setdefault(line.section, []).append({k: line.get(k) for k in ("name", "item", "item_code", "qty", "unit", "note", "changed")})
+		lines.setdefault(line.section, []).append(
+			{**{k: line.get(k) for k in ("name", "item", "item_code", "qty", "unit", "note", "changed")}, "extra": frappe.parse_json(line.extra) if line.extra else {}}
+		)
 	return {
 		"request": {**{k: doc.get(k) for k in FIELDS}, "accepted_by": doc.accepted_by, "accepted_at": doc.accepted_at, "reject_reason": doc.reject_reason, "warehouse_note": doc.warehouse_note, "requested_by": doc.requested_by},
 		"sections": [
 			{k: s.get(k) for k in ("source", "title", "department", "icon", "status", "reject_reason", "answered_by", "answered_at", "changed", "lines_removed")}
-			| {"removed": [r for r in (s.removed or "").split("\n") if r], "lines": lines.get(s.source, [])}
+			| {"removed": [r for r in (s.removed or "").split("\n") if r], "columns": frappe.parse_json(s.columns) if s.columns else [], "lines": lines.get(s.source, [])}
 			for s in doc.sections
 		],
 		"versions": [{k: v.get(k) for k in ("version", "section", "summary", "sent_by", "sent_at")} for v in reversed(doc.versions)],

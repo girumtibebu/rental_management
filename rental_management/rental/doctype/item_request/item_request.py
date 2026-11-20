@@ -4,6 +4,13 @@ from frappe.model.document import Document
 from frappe.utils import now_datetime
 
 LINE_KEYS = ("item", "qty", "unit", "note")
+
+
+def line_values(line):
+	"""What a line asks for, extra columns included: compared to find what changed."""
+	extra = line.get("extra")
+	extra = frappe.parse_json(extra) if isinstance(extra, str) else extra
+	return [*(line.get(k) for k in LINE_KEYS), extra or None]
 CLOSED = ("Returned", "Cancelled")
 AFTER_ANSWER = ("Checked out", "Returned", "Cancelled")  # set by hand or by movements; the lists' answers no longer drive it
 
@@ -49,7 +56,7 @@ class ItemRequest(Document):
 		row.update({"status": status, "answered_by": frappe.session.user, "answered_at": now_datetime(), "reject_reason": (reason or "").strip() or None})
 		if status == "Accepted":
 			lines = [l for l in self.lines if l.section == source]
-			row.accepted_lines = frappe.as_json({l.source: [l.get(k) for k in LINE_KEYS] for l in lines}, indent=None)
+			row.accepted_lines = frappe.as_json({l.source: line_values(l) for l in lines}, indent=None)
 			row.reject_reason = None
 			row.changed, row.lines_removed, row.removed = 0, 0, None
 			for l in lines:
@@ -70,7 +77,8 @@ def send_section(reference_doctype, reference_name, header, section, lines, user
 	"""Called by the requesting app when someone sends a list: add or replace its section as a new version.
 
 	header: title, customer, location, start_date, end_date. section: source (the app's id
-	for the list), title, department, icon. lines: source, item, qty, unit, note.
+	for the list), title, department, icon, columns (extra: key, label, field_type).
+	lines: source, item, qty, unit, note, extra ({column key: value}).
 	Runs as the sender, who may not be a warehouse user: permissions are the caller's to check.
 	"""
 	user = user or frappe.session.user
@@ -86,9 +94,12 @@ def send_section(reference_doctype, reference_name, header, section, lines, user
 	accepted = frappe.parse_json(row.accepted_lines) if row and row.accepted_lines else None
 	new_lines = []
 	for line in lines:
-		values = [line.get(k) for k in LINE_KEYS]
-		changed = accepted is not None and accepted.get(line["source"]) != values
-		new_lines.append({**{k: line.get(k) for k in LINE_KEYS}, "source": line["source"], "section": source, "changed": int(changed)})
+		was = accepted.get(line["source"]) if accepted is not None else None
+		changed = accepted is not None and (was is None or (was + [None])[:5] != line_values(line))  # lines accepted before extra columns had 4 values
+		extra = line.get("extra") or None
+		new_lines.append(
+			{**{k: line.get(k) for k in LINE_KEYS}, "extra": frappe.as_json(extra, indent=None) if extra else None, "source": line["source"], "section": source, "changed": int(changed)}
+		)
 	sent = {l["source"] for l in lines}
 	removed = [f"{v[0]} × {v[1]:g}" if v[1] is not None else v[0] for k, v in (accepted or {}).items() if k not in sent]
 
@@ -99,6 +110,7 @@ def send_section(reference_doctype, reference_name, header, section, lines, user
 			"title": section.get("title"),
 			"department": section.get("department"),
 			"icon": section.get("icon"),
+			"columns": frappe.as_json(section.get("columns"), indent=None) if section.get("columns") else None,
 			"status": "Pending",  # every send waits for the warehouse's answer again
 			"reject_reason": None,
 			"changed": int(any(l["changed"] for l in new_lines) or bool(removed)),
@@ -135,8 +147,8 @@ def summary(before, lines, first=False):
 	"""What this send changed in the section, against the version sent before it."""
 	if first or not before:
 		return _("{0} lines").format(len(lines)) if len(lines) != 1 else _("1 line")
-	old = {l.source: [l.get(k) for k in LINE_KEYS] for l in before}
-	new = {l["source"]: [l.get(k) for k in LINE_KEYS] for l in lines}
+	old = {l.source: line_values(l) for l in before}
+	new = {l["source"]: line_values(l) for l in lines}
 	added = len(set(new) - set(old))
 	removed = len(set(old) - set(new))
 	changed = sum(1 for k in set(new) & set(old) if new[k] != old[k])
