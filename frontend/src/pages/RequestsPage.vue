@@ -1,7 +1,7 @@
 <template>
   <!-- What other teams ask the warehouse for, one request per event, soonest first -->
   <PageFrame title="Requests" :subtitle="todo ? `${number(todo)} waiting for the warehouse` : 'Nothing waiting'">
-    <div class="flex flex-col overflow-hidden rounded-xl border border-outline-gray-2 bg-surface-base shadow-xs">
+    <div class="flex flex-col overflow-hidden rounded-lg border border-outline-gray-2 bg-surface-base">
       <div class="flex flex-col gap-2.5 border-b border-outline-gray-2 p-3 sm:p-3.5">
         <TextInput v-model="search" type="search" class="w-full" placeholder="Search event, client or venue…" @update:model-value="reload(true)">
           <template #prefix><Icon name="search" :size="14" class="text-ink-gray-5" /></template>
@@ -10,8 +10,8 @@
           <button
             v-for="option in FILTERS"
             :key="option.value"
-            class="shrink-0 rounded-lg px-3 py-1.5 text-xs-medium transition-colors"
-            :class="status === option.value ? 'bg-surface-gray-9 font-semibold text-ink-base shadow-2xs' : 'border border-outline-gray-2 bg-surface-gray-1 text-ink-gray-7 hover:bg-surface-gray-2'"
+            class="shrink-0 rounded px-2.5 py-1 text-sm transition-colors"
+            :class="status === option.value ? 'bg-surface-gray-3 text-ink-gray-9' : 'text-ink-gray-6 hover:bg-surface-gray-2'"
             @click="(status = option.value), reload(true)"
           >
             {{ option.label }}

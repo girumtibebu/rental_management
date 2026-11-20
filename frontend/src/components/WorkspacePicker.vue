@@ -1,6 +1,6 @@
 <template>
   <div class="flex h-full items-center justify-center bg-surface-gray-1 p-4">
-    <div class="w-full max-w-sm rounded-xl border border-outline-gray-1 bg-surface-base p-5 shadow-sm">
+    <div class="w-full max-w-sm rounded-lg border border-outline-gray-1 bg-surface-base p-5">
       <h1 class="text-lg-semibold text-ink-gray-9">Choose a workspace</h1>
       <p class="mt-1 text-p-sm text-ink-gray-6">You can switch later from the menu at the top left.</p>
       <div class="mt-4 flex flex-col gap-2">

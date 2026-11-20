@@ -8,6 +8,7 @@
   "title",
   "status",
   "needs_review",
+  "version",
   "column_break_1",
   "reference_doctype",
   "reference_name",
@@ -24,56 +25,251 @@
   "column_break_3",
   "reject_reason",
   "warehouse_note",
+  "accepted_snapshot",
   "section_lists",
   "sections",
-  "lines"
+  "lines",
+  "section_versions",
+  "versions"
  ],
  "fields": [
-  {"fieldname": "title", "fieldtype": "Data", "label": "Title", "reqd": 1, "in_list_view": 1, "description": "The event or project the items are for."},
-  {"fieldname": "status", "fieldtype": "Select", "label": "Status", "options": "Pending\nAccepted\nRejected\nChecked out\nReturned\nCancelled", "default": "Pending", "in_list_view": 1, "in_standard_filter": 1},
-  {"fieldname": "needs_review", "fieldtype": "Check", "label": "Changed Since Accepted", "read_only": 1, "in_standard_filter": 1, "description": "Lines changed after the warehouse accepted or rejected the request. Accepting again clears it."},
-  {"fieldname": "column_break_1", "fieldtype": "Column Break"},
-  {"fieldname": "reference_doctype", "fieldtype": "Link", "label": "Requested From", "options": "DocType", "read_only": 1},
-  {"fieldname": "reference_name", "fieldtype": "Dynamic Link", "label": "Reference", "options": "reference_doctype", "read_only": 1, "in_standard_filter": 1},
-  {"fieldname": "customer", "fieldtype": "Link", "label": "Client", "options": "Customer"},
-  {"fieldname": "section_event", "fieldtype": "Section Break", "label": "Event"},
-  {"fieldname": "location", "fieldtype": "Data", "label": "Venue"},
-  {"fieldname": "start_date", "fieldtype": "Date", "label": "Start", "in_list_view": 1},
-  {"fieldname": "column_break_2", "fieldtype": "Column Break"},
-  {"fieldname": "end_date", "fieldtype": "Date", "label": "End"},
-  {"fieldname": "requested_by", "fieldtype": "Link", "label": "Requested By", "options": "User", "read_only": 1},
-  {"fieldname": "section_warehouse", "fieldtype": "Section Break", "label": "Warehouse"},
-  {"fieldname": "accepted_by", "fieldtype": "Link", "label": "Accepted By", "options": "User", "read_only": 1},
-  {"fieldname": "accepted_at", "fieldtype": "Datetime", "label": "Accepted At", "read_only": 1},
-  {"fieldname": "column_break_3", "fieldtype": "Column Break"},
-  {"fieldname": "reject_reason", "fieldtype": "Small Text", "label": "Reason for Rejecting", "depends_on": "eval:doc.status=='Rejected'"},
-  {"fieldname": "warehouse_note", "fieldtype": "Small Text", "label": "Warehouse Note"},
-  {"fieldname": "section_lists", "fieldtype": "Section Break", "label": "Lists"},
-  {"fieldname": "sections", "fieldtype": "Table", "label": "Sections", "options": "Item Request Section", "description": "One per list sent, e.g. Audio BOM."},
-  {"fieldname": "lines", "fieldtype": "Table", "label": "Lines", "options": "Item Request Line"}
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "label": "Title",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "The event or project the items are for."
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Pending\nAccepted\nRejected\nChecked out\nReturned\nCancelled",
+   "default": "Pending",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "needs_review",
+   "fieldtype": "Check",
+   "label": "Changed Since Accepted",
+   "read_only": 1,
+   "in_standard_filter": 1,
+   "description": "Something was sent or withdrawn after the warehouse answered. Accepting again clears it."
+  },
+  {
+   "fieldname": "version",
+   "fieldtype": "Int",
+   "label": "Version",
+   "read_only": 1,
+   "default": "0",
+   "description": "Goes up with every list sent or withdrawn."
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "reference_doctype",
+   "fieldtype": "Link",
+   "label": "Requested From",
+   "options": "DocType",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reference_name",
+   "fieldtype": "Dynamic Link",
+   "label": "Reference",
+   "options": "reference_doctype",
+   "read_only": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "label": "Client",
+   "options": "Customer"
+  },
+  {
+   "fieldname": "section_event",
+   "fieldtype": "Section Break",
+   "label": "Event"
+  },
+  {
+   "fieldname": "location",
+   "fieldtype": "Data",
+   "label": "Venue"
+  },
+  {
+   "fieldname": "start_date",
+   "fieldtype": "Date",
+   "label": "Start",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "end_date",
+   "fieldtype": "Date",
+   "label": "End"
+  },
+  {
+   "fieldname": "requested_by",
+   "fieldtype": "Link",
+   "label": "Requested By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_warehouse",
+   "fieldtype": "Section Break",
+   "label": "Warehouse"
+  },
+  {
+   "fieldname": "accepted_by",
+   "fieldtype": "Link",
+   "label": "Accepted By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "accepted_at",
+   "fieldtype": "Datetime",
+   "label": "Accepted At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "reject_reason",
+   "fieldtype": "Small Text",
+   "label": "Reason for Rejecting",
+   "depends_on": "eval:doc.status=='Rejected'"
+  },
+  {
+   "fieldname": "warehouse_note",
+   "fieldtype": "Small Text",
+   "label": "Warehouse Note"
+  },
+  {
+   "fieldname": "accepted_snapshot",
+   "fieldtype": "JSON",
+   "label": "Accepted Snapshot",
+   "read_only": 1,
+   "hidden": 1,
+   "description": "The lists and lines as last accepted; later sends are marked against it."
+  },
+  {
+   "fieldname": "section_lists",
+   "fieldtype": "Section Break",
+   "label": "Lists"
+  },
+  {
+   "fieldname": "sections",
+   "fieldtype": "Table",
+   "label": "Sections",
+   "options": "Item Request Section",
+   "description": "One per list sent, e.g. Audio BOM."
+  },
+  {
+   "fieldname": "lines",
+   "fieldtype": "Table",
+   "label": "Lines",
+   "options": "Item Request Line"
+  },
+  {
+   "fieldname": "section_versions",
+   "fieldtype": "Section Break",
+   "label": "Versions",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "versions",
+   "fieldtype": "Table",
+   "label": "Versions",
+   "options": "Item Request Version",
+   "read_only": 1
+  }
  ],
  "links": [],
- "modified": "2026-11-20 12:00:00.000000",
+ "modified": "2026-11-20 16:00:00.000000",
  "modified_by": "Administrator",
  "module": "Rental",
  "name": "Item Request",
  "owner": "Administrator",
  "permissions": [
-  {"role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1, "report": 1, "export": 1, "print": 1, "email": 1, "share": 1},
-  {"role": "Stock Manager", "read": 1, "write": 1, "create": 1, "delete": 1, "report": 1, "export": 1, "print": 1, "email": 1, "share": 1},
-  {"role": "Stock User", "read": 1, "write": 1, "report": 1, "print": 1, "email": 1},
-  {"role": "Projects User", "read": 1, "report": 1, "print": 1}
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1
+  },
+  {
+   "role": "Stock Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1
+  },
+  {
+   "role": "Stock User",
+   "read": 1,
+   "write": 1,
+   "report": 1,
+   "print": 1,
+   "email": 1
+  },
+  {
+   "role": "Projects User",
+   "read": 1,
+   "report": 1,
+   "print": 1
+  }
  ],
  "search_fields": "reference_name,customer",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [
-  {"title": "Pending", "color": "Orange"},
-  {"title": "Accepted", "color": "Green"},
-  {"title": "Rejected", "color": "Red"},
-  {"title": "Checked out", "color": "Blue"},
-  {"title": "Returned", "color": "Gray"},
-  {"title": "Cancelled", "color": "Gray"}
+  {
+   "title": "Pending",
+   "color": "Orange"
+  },
+  {
+   "title": "Accepted",
+   "color": "Green"
+  },
+  {
+   "title": "Rejected",
+   "color": "Red"
+  },
+  {
+   "title": "Checked out",
+   "color": "Blue"
+  },
+  {
+   "title": "Returned",
+   "color": "Gray"
+  },
+  {
+   "title": "Cancelled",
+   "color": "Gray"
+  }
  ],
  "title_field": "title",
  "track_changes": 1

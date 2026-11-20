@@ -6,7 +6,7 @@ from frappe import _
 from rental_management.ui.common import like, paging
 
 REQUEST = "Item Request"
-FIELDS = ["name", "title", "status", "needs_review", "reference_doctype", "reference_name", "customer", "location", "start_date", "end_date", "modified"]
+FIELDS = ["name", "title", "status", "needs_review", "version", "reference_doctype", "reference_name", "customer", "location", "start_date", "end_date", "modified"]
 # the statuses the warehouse sets; Pending is where the requesting app puts it
 WAREHOUSE_STATUSES = ("Accepted", "Rejected", "Checked out", "Returned")
 
@@ -52,10 +52,30 @@ def get_request(name):
 	return {
 		"request": {**{k: doc.get(k) for k in FIELDS}, "accepted_by": doc.accepted_by, "accepted_at": doc.accepted_at, "reject_reason": doc.reject_reason, "warehouse_note": doc.warehouse_note, "requested_by": doc.requested_by},
 		"sections": [
-			{k: s.get(k) for k in ("source", "title", "department", "icon", "changed", "lines_removed")} | {"lines": lines.get(s.source, [])} for s in doc.sections
+			{k: s.get(k) for k in ("source", "title", "department", "icon", "changed", "lines_removed")}
+			| {"removed": [r for r in (s.removed or "").split("\n") if r], "lines": lines.get(s.source, [])}
+			for s in doc.sections
 		],
+		"versions": [{k: v.get(k) for k in ("version", "section", "summary", "sent_by", "sent_at")} for v in reversed(doc.versions)],
+		"movements": frappe.get_all(
+			"Stock Entry",
+			filters={"rental_item_request": name, "docstatus": 1},
+			fields=["name", "rental_movement_type as transaction_type", "posting_date", "rental_venue as venue", "rental_issued_to as issued_to", "rental_received_by as received_by"],
+			order_by="posting_date desc, posting_time desc",
+		),
 		"can_write": doc.has_permission("write"),
 	}
+
+
+@frappe.whitelist()
+def requests_for_movement(transaction_type):
+	"""The requests a check-out (accepted ones) or a check-in (checked-out ones) can be linked to, soonest event first."""
+	from rental_management.ui.movements import REQUEST_STATUSES
+
+	statuses = REQUEST_STATUSES.get(transaction_type)
+	if not statuses:
+		return []
+	return frappe.get_list(REQUEST, filters={"status": ["in", statuses]}, fields=["name", "title", "status", "start_date", "location"], order_by="start_date asc", limit_page_length=100)
 
 
 @frappe.whitelist(methods=["POST"])

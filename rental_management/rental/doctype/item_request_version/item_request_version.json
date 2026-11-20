@@ -1,0 +1,58 @@
+{
+ "actions": [],
+ "creation": "2026-11-20 16:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 0,
+ "engine": "InnoDB",
+ "field_order": [
+  "version",
+  "section",
+  "summary",
+  "sent_by",
+  "sent_at"
+ ],
+ "fields": [
+  {
+   "fieldname": "version",
+   "fieldtype": "Int",
+   "label": "Version",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "section",
+   "fieldtype": "Data",
+   "label": "List",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "summary",
+   "fieldtype": "Data",
+   "label": "What Changed",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "sent_by",
+   "fieldtype": "Link",
+   "label": "Sent By",
+   "options": "User",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "sent_at",
+   "fieldtype": "Datetime",
+   "label": "Sent At",
+   "in_list_view": 1
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "module": "Rental",
+ "name": "Item Request Version",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "modified": "2026-11-20 16:00:00.000000"
+}

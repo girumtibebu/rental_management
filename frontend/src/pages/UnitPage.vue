@@ -28,7 +28,7 @@
         <button
           v-for="action in moveActions"
           :key="action.type"
-          class="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-outline-blue-4 bg-surface-blue-2 py-2.5 px-3 text-xs-bold text-ink-blue-8 active:scale-95 shadow-2xs disabled:opacity-50"
+          class="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-outline-blue-4 bg-surface-blue-2 py-2.5 px-3 text-xs-bold text-ink-blue-8 active:scale-95 disabled:opacity-50"
           :disabled="!data.can.move"
           @click="move(action.type)"
         >
@@ -36,7 +36,7 @@
           <span>{{ action.label }}</span>
         </button>
         <button
-          class="flex items-center justify-center gap-1.5 rounded-xl border border-outline-gray-2 bg-surface-base py-2.5 px-3 text-xs-semibold text-ink-amber-8 active:scale-95 shadow-2xs disabled:opacity-50"
+          class="flex items-center justify-center gap-1.5 rounded-lg border border-outline-gray-2 bg-surface-base py-2.5 px-3 text-xs-semibold text-ink-amber-8 active:scale-95 disabled:opacity-50"
           :disabled="!data.can.maintain || Boolean(data.open_ticket)"
           @click="flagOpen = true"
         >
