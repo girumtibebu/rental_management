@@ -5,9 +5,8 @@
       <template v-if="req">
         <RequestBadge :request="req" size="md" />
         <template v-if="data.can_write">
-          <Button v-if="req.status === 'Pending'" theme="red" label="Reject" @click="rejectOpen = true" />
-          <Button v-if="req.status === 'Pending'" variant="solid" :label="req.needs_review ? 'Accept changes' : 'Accept'" :loading="busy" @click="setStatus('Accepted')" />
-          <Button v-if="req.status === 'Accepted'" variant="solid" label="Check out items" icon-left="lucide-log-out" @click="movement('CHECK_OUT')" />
+          <Button v-if="waiting > 1" variant="solid" :label="`Accept all ${waiting}`" icon-left="lucide-check-check" :loading="busy" @click="acceptAll" />
+          <Button v-if="req.status === 'Accepted' && !waiting" variant="solid" label="Check out items" icon-left="lucide-log-out" @click="movement('CHECK_OUT')" />
           <Button v-if="req.status === 'Checked out'" label="Check in items" icon-left="lucide-log-in" @click="movement('CHECK_IN')" />
           <Button v-if="req.status === 'Checked out'" variant="solid" label="Mark returned" :loading="busy" @click="setStatus('Returned')" />
         </template>
@@ -19,9 +18,8 @@
     <template v-else>
       <div v-if="req.needs_review && req.status === 'Pending'" class="flex items-start gap-2 rounded-md bg-surface-amber-1 px-3 py-2 text-sm text-ink-amber-8">
         <span class="lucide-triangle-alert mt-0.5 size-4 shrink-0" />
-        <span>Changed since you last accepted it. Changed lines and lists are marked; accepting again clears the marks.</span>
+        <span>Lists changed since you last accepted them. Changed lines are marked; accepting a list again clears its marks.</span>
       </div>
-      <div v-if="req.status === 'Rejected'" class="rounded-md bg-surface-red-1 px-3 py-2 text-sm text-ink-red-4"><b>Rejected:</b> {{ req.reject_reason }}</div>
 
       <dl class="grid gap-x-6 gap-y-3 rounded-lg border border-outline-gray-2 p-4 text-base sm:grid-cols-2 lg:grid-cols-4">
         <div><dt class="text-sm text-ink-gray-5">Client</dt><dd class="text-ink-gray-9">{{ req.customer || '—' }}</dd></div>
@@ -38,9 +36,18 @@
           <span>{{ s.icon || '📦' }}</span>
           <h2 class="text-lg font-semibold text-ink-gray-9">{{ s.title }}</h2>
           <span v-if="s.department" class="text-sm text-ink-gray-5">{{ s.department }}</span>
-          <Badge v-if="s.changed" label="Changed" theme="orange" />
-          <span class="ml-auto text-sm text-ink-gray-5">{{ s.lines.length }} line{{ s.lines.length === 1 ? '' : 's' }}</span>
+          <Badge :label="SECTION_BADGE[s.status].label" :theme="SECTION_BADGE[s.status].theme" />
+          <Badge v-if="s.changed && s.status === 'Pending'" label="Changed" theme="orange" />
+          <span class="text-sm text-ink-gray-5">{{ s.lines.length }} line{{ s.lines.length === 1 ? '' : 's' }}</span>
+          <span v-if="data.can_write && s.status === 'Pending'" class="ml-auto flex gap-1.5">
+            <Button theme="red" label="Reject" @click="openReject(s)" />
+            <Button variant="solid" :label="s.changed ? 'Accept changes' : 'Accept'" :loading="busy === s.source" @click="answer(s, 'Accepted')" />
+          </span>
+          <span v-else-if="s.answered_by" class="ml-auto text-sm text-ink-gray-5">{{ s.status === 'Accepted' ? 'Accepted' : 'Rejected' }} by {{ userName(s.answered_by) }} · {{ timeAgo(s.answered_at) }}</span>
         </header>
+        <div v-if="s.status === 'Rejected'" class="mb-2 rounded-md bg-surface-red-1 px-3 py-2 text-sm text-ink-red-4">
+          <b>Rejected:</b> {{ s.reject_reason }} <span class="text-ink-gray-6">The team can change the list and send it again.</span>
+        </div>
         <table class="w-full border-separate border-spacing-0 text-base">
           <thead>
             <tr class="text-left text-sm text-ink-gray-5">
@@ -97,7 +104,7 @@
       </section>
     </template>
 
-    <Dialog v-model="rejectOpen" :options="{ title: 'Reject request' }">
+    <Dialog v-model="rejectOpen" :options="{ title: `Reject ${rejecting?.title || 'list'}` }">
       <template #body-content>
         <FormControl v-model="reason" type="textarea" label="Why?" placeholder="e.g. The LED screens are booked that week." />
         <p class="mt-2 text-sm text-ink-gray-5">The team that sent it sees the reason on their lists.</p>
@@ -105,7 +112,7 @@
       <template #actions>
         <div class="flex justify-end gap-2">
           <Button label="Cancel" @click="rejectOpen = false" />
-          <Button variant="solid" theme="red" label="Reject" :disabled="!reason.trim()" :loading="busy" @click="reject" />
+          <Button variant="solid" theme="red" label="Reject" :disabled="!reason.trim()" :loading="Boolean(busy)" @click="reject" />
         </div>
       </template>
     </Dialog>
@@ -126,9 +133,16 @@ const route = useRoute()
 const router = useRouter()
 const data = ref(null)
 const failure = ref('')
-const busy = ref(false)
+const busy = ref(false) // true, or the list being answered
 const rejectOpen = ref(false)
+const rejecting = ref(null)
 const reason = ref('')
+const SECTION_BADGE = {
+  Pending: { label: 'Waiting', theme: 'orange' },
+  Accepted: { label: 'Accepted', theme: 'green' },
+  Rejected: { label: 'Rejected', theme: 'red' },
+}
+const waiting = computed(() => data.value?.sections.filter((s) => s.status === 'Pending').length || 0)
 const req = computed(() => data.value?.request)
 const subtitle = computed(() => `${req.value.name} · v${req.value.version || 1} · ${data.value.sections.length} list${data.value.sections.length === 1 ? '' : 's'}`)
 const dates = computed(() => {
@@ -147,21 +161,29 @@ async function load() {
   }
 }
 
-async function setStatus(status, why) {
-  busy.value = true
+async function run(key, call, done) {
+  busy.value = key
   try {
-    data.value = await api.setRequestStatus(req.value.name, status, why)
-    toast.success(`Request ${status.toLowerCase()}`)
+    data.value = await call()
+    toast.success(done)
+    return true
   } catch (err) {
     toast.error(readError(err))
   } finally {
     busy.value = false
   }
 }
+const setStatus = (status) => run(true, () => api.setRequestStatus(req.value.name, status), `Request ${status.toLowerCase()}`)
+const answer = (s, status, why) => run(s.source, () => api.answerList(req.value.name, s.source, status, why), `${s.title} ${status.toLowerCase()}`)
+const acceptAll = () => run(true, () => api.acceptAll(req.value.name), 'All waiting lists accepted')
 
+function openReject(s) {
+  rejecting.value = s
+  reason.value = ''
+  rejectOpen.value = true
+}
 async function reject() {
-  await setStatus('Rejected', reason.value.trim())
-  rejectOpen.value = false
+  if (await answer(rejecting.value, 'Rejected', reason.value.trim())) rejectOpen.value = false
 }
 
 const movement = (type) => router.push({ name: 'movement-new', query: { type, request: req.value.name } })

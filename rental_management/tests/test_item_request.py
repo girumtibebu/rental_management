@@ -1,4 +1,4 @@
-"""Item requests: sections sent as versions, marks against the accepted snapshot, and links to movements.
+"""Item requests: lists sent as versions, answered one by one, marks against each list's accepted lines, movement links.
 
 Run: bench --site <site> run-tests --module rental_management.tests.test_item_request
 """
@@ -23,45 +23,58 @@ class TestItemRequest(IntegrationTestCase):
 		section = {"source": source, "title": title or source.title(), "department": source.title()}
 		return send_section(*self.ref, HEADER, section, [{"source": f"{source}-{i}", **line} for i, line in enumerate(lines)])
 
-	def answer(self, status, reason=None):
-		doc = frappe.get_doc("Item Request", open_request(*self.ref))
-		doc.status, doc.reject_reason = status, reason
-		doc.save()
-		return doc
+	def name(self):
+		return open_request(*self.ref)
 
-	def test_versions_and_marks(self):
-		doc = self.send("audio", [{"item": "Mic", "qty": 6, "unit": "pcs"}])
-		self.assertEqual((doc.version, doc.status, doc.title, doc.location), (1, "Pending", "_Item request test", "Hall A"))
+	def answer(self, source, status, reason=None):
+		requests.answer(self.name(), source, status, reason)
+		return frappe.get_doc("Item Request", self.name())
+
+	def test_each_list_is_answered(self):
+		self.send("audio", [{"item": "Mic", "qty": 6, "unit": "pcs"}])
 		doc = self.send("video", [{"item": "LED", "qty": 30, "unit": "sqm"}])
-		self.assertEqual((doc.version, [s.source for s in doc.sections]), (2, ["audio", "video"]))
-		self.assertFalse(doc.needs_review)  # nothing accepted yet: nothing to mark
+		self.assertEqual((doc.version, doc.status, [s.status for s in doc.sections]), (2, "Pending", ["Pending", "Pending"]))
 
-		self.answer("Accepted")
-		doc = self.send("audio", [{"item": "Mic", "qty": 8, "unit": "pcs"}, {"item": "Stand", "qty": 6, "unit": "pcs"}])
-		self.assertEqual((doc.status, doc.needs_review), ("Pending", 1))
-		self.assertEqual({l.item: l.changed for l in doc.lines}, {"Mic": 1, "Stand": 1, "LED": 0})
-		self.assertEqual([v.summary for v in doc.versions][-1], "1 added, 1 changed")
+		doc = self.answer("audio", "Accepted")
+		self.assertEqual((doc.status, [s.status for s in doc.sections]), ("Pending", ["Accepted", "Pending"]))  # video still waits
+		self.assertRaises(frappe.ValidationError, self.answer, "video", "Rejected")  # a reason is needed
+		doc = self.answer("video", "Rejected", "LED wall is booked")
+		self.assertEqual((doc.status, doc.sections[1].reject_reason), ("Accepted", "LED wall is booked"))  # partly accepted
 
-		self.answer("Accepted")
+		doc = self.send("video", [{"item": "LED", "qty": 20, "unit": "sqm"}])  # changed and sent again after the rejection
+		self.assertEqual((doc.status, doc.sections[1].status, doc.sections[1].reject_reason), ("Pending", "Pending", None))
+		self.assertFalse(doc.sections[1].changed)  # never accepted: nothing to mark against
+
+		requests.accept_all(self.name())
+		doc = frappe.get_doc("Item Request", self.name())
+		self.assertEqual((doc.status, {s.status for s in doc.sections}), ("Accepted", {"Accepted"}))
+		self.assertRaises(frappe.ValidationError, requests.accept_all, self.name())  # nothing waiting
+
+	def test_marks_against_the_accepted_list(self):
+		self.send("audio", [{"item": "Mic", "qty": 6, "unit": "pcs"}, {"item": "Stand", "qty": 6, "unit": "pcs"}])
+		self.send("video", [{"item": "LED", "qty": 30, "unit": "sqm"}])
+		requests.accept_all(self.name())
+
 		doc = self.send("audio", [{"item": "Mic", "qty": 8, "unit": "pcs"}])
-		audio = doc.sections[0]
-		self.assertEqual((audio.changed, audio.lines_removed, audio.removed), (1, 1, "Stand × 6"))
+		audio, video = doc.sections
+		self.assertEqual((audio.status, audio.changed, audio.lines_removed, audio.removed), ("Pending", 1, 1, "Stand × 6"))
+		self.assertEqual((video.status, video.changed, doc.needs_review), ("Accepted", 0, 1))
+		self.assertEqual({l.item: l.changed for l in doc.lines}, {"Mic": 1, "LED": 0})
+		self.assertEqual(doc.versions[-1].summary, "1 changed, 1 removed")
+
+		doc = self.answer("audio", "Accepted")
+		self.assertFalse(doc.needs_review or doc.sections[0].changed or doc.sections[0].removed)
 
 		doc = withdraw_section(*self.ref, "video")
-		self.assertEqual(([s.source for s in doc.sections], doc.needs_review, doc.versions[-1].summary), (["audio"], 1, "withdrawn"))
+		self.assertEqual(([s.source for s in doc.sections], doc.versions[-1].summary), (["audio"], "withdrawn"))
 		doc = withdraw_section(*self.ref, "audio")
 		self.assertEqual(doc.status, "Cancelled")
-		self.assertIsNone(open_request(*self.ref))
-
-	def test_reject_needs_a_reason(self):
-		self.send("audio", [{"item": "Mic", "qty": 6, "unit": "pcs"}])
-		self.assertRaises(frappe.ValidationError, self.answer, "Rejected")
-		self.assertEqual(self.answer("Rejected", "Booked that week").status, "Rejected")
+		self.assertIsNone(self.name())
 
 	def test_movement_link_rules(self):
 		name = self.send("audio", [{"item": "Mic", "qty": 6, "unit": "pcs"}]).name
 		self.assertRaises(frappe.ValidationError, movements.linked_request, name, "CHECK_OUT")  # not accepted yet
-		self.answer("Accepted")
+		self.answer("audio", "Accepted")
 		self.assertEqual(movements.linked_request(name, "CHECK_OUT").name, name)
 		self.assertRaises(frappe.ValidationError, movements.linked_request, name, "CHECK_IN")  # nothing went out yet
 		self.assertRaises(frappe.ValidationError, movements.linked_request, name, "LOST")

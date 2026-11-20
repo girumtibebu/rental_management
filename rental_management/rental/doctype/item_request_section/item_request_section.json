@@ -8,10 +8,15 @@
   "source",
   "title",
   "department",
+  "status",
+  "reject_reason",
+  "answered_by",
+  "answered_at",
   "icon",
   "changed",
   "lines_removed",
-  "removed"
+  "removed",
+  "accepted_lines"
  ],
  "fields": [
   {
@@ -32,6 +37,34 @@
    "fieldtype": "Data",
    "label": "Department",
    "in_list_view": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Pending\nAccepted\nRejected",
+   "default": "Pending",
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "reject_reason",
+   "fieldtype": "Small Text",
+   "label": "Reason for Rejecting",
+   "read_only": 1
+  },
+  {
+   "fieldname": "answered_by",
+   "fieldtype": "Link",
+   "label": "Answered By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "answered_at",
+   "fieldtype": "Datetime",
+   "label": "Answered At",
+   "read_only": 1
   },
   {
    "fieldname": "icon",
@@ -57,11 +90,19 @@
    "label": "Removed Since Accepted",
    "read_only": 1,
    "description": "One removed line per row, e.g. Hazer × 1."
+  },
+  {
+   "fieldname": "accepted_lines",
+   "fieldtype": "JSON",
+   "label": "Accepted Lines",
+   "read_only": 1,
+   "hidden": 1,
+   "description": "The lines as last accepted; later sends are marked against them."
   }
  ],
  "istable": 1,
  "links": [],
- "modified": "2026-11-20 16:00:00.000000",
+ "modified": "2026-11-20 18:00:00.000000",
  "modified_by": "Administrator",
  "module": "Rental",
  "name": "Item Request Section",

@@ -9,6 +9,6 @@ import { Badge } from 'frappe-ui'
 
 const props = defineProps({ request: Object, size: { type: String, default: 'sm' } })
 const THEME = { Pending: 'orange', Accepted: 'green', Rejected: 'red', 'Checked out': 'blue', Returned: 'gray', Cancelled: 'gray' }
-const label = computed(() => (props.request.status === 'Pending' ? (props.request.needs_review ? 'Changed' : 'New') : props.request.status))
+const label = computed(() => (props.request.status === 'Pending' ? (props.request.needs_review ? 'Changed' : 'Waiting') : props.request.status))
 const theme = computed(() => THEME[props.request.status] || 'gray')
 </script>

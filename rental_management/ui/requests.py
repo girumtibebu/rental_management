@@ -7,8 +7,8 @@ from rental_management.ui.common import like, paging
 
 REQUEST = "Item Request"
 FIELDS = ["name", "title", "status", "needs_review", "version", "reference_doctype", "reference_name", "customer", "location", "start_date", "end_date", "modified"]
-# the statuses the warehouse sets; Pending is where the requesting app puts it
-WAREHOUSE_STATUSES = ("Accepted", "Rejected", "Checked out", "Returned")
+# the request statuses the warehouse sets by hand; lists are answered one by one (answer, accept_all)
+WAREHOUSE_STATUSES = ("Checked out", "Returned")
 
 
 @frappe.whitelist()
@@ -52,7 +52,7 @@ def get_request(name):
 	return {
 		"request": {**{k: doc.get(k) for k in FIELDS}, "accepted_by": doc.accepted_by, "accepted_at": doc.accepted_at, "reject_reason": doc.reject_reason, "warehouse_note": doc.warehouse_note, "requested_by": doc.requested_by},
 		"sections": [
-			{k: s.get(k) for k in ("source", "title", "department", "icon", "changed", "lines_removed")}
+			{k: s.get(k) for k in ("source", "title", "department", "icon", "status", "reject_reason", "answered_by", "answered_at", "changed", "lines_removed")}
 			| {"removed": [r for r in (s.removed or "").split("\n") if r], "lines": lines.get(s.source, [])}
 			for s in doc.sections
 		],
@@ -79,14 +79,37 @@ def requests_for_movement(transaction_type):
 
 
 @frappe.whitelist(methods=["POST"])
-def set_status(name, status, reason=None, note=None):
+def answer(name, section, status, reason=None):
+	"""Accept or reject one list of the request."""
+	doc = frappe.get_doc(REQUEST, name)
+	doc.check_permission("write")
+	doc.answer(section, status, reason)
+	doc.save()
+	return get_request(name)
+
+
+@frappe.whitelist(methods=["POST"])
+def accept_all(name):
+	"""Accept every list still waiting for an answer."""
+	doc = frappe.get_doc(REQUEST, name)
+	doc.check_permission("write")
+	waiting = [s.source for s in doc.sections if s.status == "Pending"]
+	if not waiting:
+		frappe.throw(_("No list is waiting for an answer."))
+	for source in waiting:
+		doc.answer(source, "Accepted")
+	doc.save()
+	return get_request(name)
+
+
+@frappe.whitelist(methods=["POST"])
+def set_status(name, status, note=None):
+	"""The steps after the answers: Checked out, Returned."""
 	if status not in WAREHOUSE_STATUSES:
 		frappe.throw(_("{0} is not a status the warehouse sets.").format(status))
 	doc = frappe.get_doc(REQUEST, name)
 	doc.check_permission("write")
 	doc.status = status
-	if reason is not None:
-		doc.reject_reason = reason
 	if note is not None:
 		doc.warehouse_note = note
 	doc.save()
