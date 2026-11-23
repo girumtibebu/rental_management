@@ -32,7 +32,7 @@
     <div v-if="rows.length && view === 'list'" class="overflow-x-auto rounded-lg border border-outline-gray-2 bg-surface-base">
       <table class="w-full text-sm">
         <thead>
-          <tr class="border-b border-outline-gray-1 bg-surface-gray-1 text-[11px] uppercase tracking-wide text-ink-gray-5">
+          <tr class="border-b border-outline-gray-1 bg-surface-gray-1 text-xs text-ink-gray-5">
             <th class="px-4 py-2 text-left font-medium">Equipment</th>
             <th class="px-3 py-2 text-left font-medium">Category</th>
             <th class="px-3 py-2 text-left font-medium">Type</th>

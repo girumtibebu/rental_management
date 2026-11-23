@@ -149,7 +149,7 @@
             @click="mobileScannerOpen = true"
           >
             <Icon name="scan" :size="22" :stroke-width="2.2" />
-            <span class="text-[9px] font-bold tracking-tight uppercase">Scan</span>
+            <span class="text-[9px] font-bold tracking-tight">Scan</span>
           </button>
         </div>
 

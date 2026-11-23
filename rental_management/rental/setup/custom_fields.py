@@ -169,6 +169,16 @@ def get_custom_fields():
             "read_only": 1,
             "depends_on": "rental_movement_type",
         },
+        {
+            "fieldname": "rental_item_request",
+            "fieldtype": "Link",
+            "label": "Item Request",
+            "options": "Item Request",
+            "insert_after": "rental_received_by",
+            "read_only": 1,
+            "depends_on": "rental_movement_type",
+            "description": "The request this movement prepared or brought back, if any.",
+        },
     ]
 
     return {"Item": item_fields, "Serial No": serial_no_fields, "Stock Entry": stock_entry_fields}

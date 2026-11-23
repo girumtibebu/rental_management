@@ -7,7 +7,7 @@
       </Button>
     </template>
 
-    <div class="flex flex-col overflow-hidden rounded-xl border border-outline-gray-2 bg-surface-base shadow-xs">
+    <div class="flex flex-col overflow-hidden rounded-lg border border-outline-gray-2 bg-surface-base">
       <!-- Search & Filters -->
       <div class="flex flex-col gap-2.5 border-b border-outline-gray-2 p-3 sm:p-3.5">
         <TextInput v-model="search" type="search" class="w-full" placeholder="Search movement, location or person…" @update:model-value="reload(true)">
@@ -19,8 +19,8 @@
           <button
             v-for="option in TYPE_FILTERS"
             :key="option.value"
-            class="shrink-0 rounded-lg px-3 py-1.5 text-xs-medium transition-colors"
-            :class="type === option.value ? 'bg-surface-gray-9 text-ink-base font-semibold shadow-2xs' : 'bg-surface-gray-1 text-ink-gray-7 hover:bg-surface-gray-2 border border-outline-gray-2'"
+            class="shrink-0 rounded px-2.5 py-1 text-sm transition-colors"
+            :class="type === option.value ? 'bg-surface-gray-3 text-ink-gray-9' : 'text-ink-gray-6 hover:bg-surface-gray-2'"
             @click="type = option.value; reload(true)"
           >
             {{ option.label }}
@@ -69,7 +69,7 @@
       <!-- Desktop Table (>= 768px) -->
       <table class="hidden md:table w-full text-sm">
         <thead>
-          <tr class="border-b border-outline-gray-1 bg-surface-gray-1 text-[11px] uppercase tracking-wide text-ink-gray-5">
+          <tr class="border-b border-outline-gray-1 bg-surface-gray-1 text-xs text-ink-gray-5">
             <th class="px-4 py-2 text-left font-medium">Movement</th>
             <th class="px-3 py-2 text-left font-medium">Type</th>
             <th class="px-3 py-2 text-left font-medium">From → to</th>

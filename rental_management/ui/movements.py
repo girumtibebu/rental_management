@@ -95,8 +95,9 @@ def get_venue(transaction_type, to_location):
 
 
 @frappe.whitelist()
-def create_movement(transaction_type, units=None, bulk=None, to_location=None, issued_to=None, received_by=None, note=None):
-    """Post a movement. Every unit is re-checked here, so the screen cannot bypass the rules."""
+def create_movement(transaction_type, units=None, bulk=None, to_location=None, issued_to=None, received_by=None, note=None, item_request=None):
+    """Post a movement. Every unit is re-checked here, so the screen cannot bypass the rules.
+    item_request: the accepted request it is for (check out and check in only)."""
     frappe.has_permission(STOCK_ENTRY, "submit", throw=True)
     if transaction_type not in UNIT_TYPES:
         frappe.throw(_("Unknown movement type {0}").format(transaction_type))
@@ -107,7 +108,8 @@ def create_movement(transaction_type, units=None, bulk=None, to_location=None, i
     if not codes and not bulk:
         frappe.throw(_("Add at least one unit or bulk item"))
     venue = get_venue(transaction_type, to_location)
-    return post_movement(
+    request = linked_request(item_request, transaction_type)
+    name = post_movement(
         transaction_type,
         serials=checked_serials(transaction_type, codes),
         bulk=[(row["item_code"], flt(row.get("qty"))) for row in bulk],
@@ -115,7 +117,27 @@ def create_movement(transaction_type, units=None, bulk=None, to_location=None, i
         issued_to=issued_to,
         received_by=received_by,
         remarks=note,
+        item_request=request and request.name,
     )
+    if request and transaction_type == "CHECK_OUT" and request.status == "Accepted":
+        request.status = "Checked out"  # returns can come back in parts: Returned stays the warehouse's call
+        request.save()
+    return name
+
+
+REQUEST_STATUSES = {"CHECK_OUT": ("Accepted", "Checked out"), "CHECK_IN": ("Checked out",)}
+
+
+def linked_request(name, transaction_type):
+    if not name:
+        return None
+    if transaction_type not in REQUEST_STATUSES:
+        frappe.throw(_("Only check-outs and check-ins can be linked to a request"))
+    request = frappe.get_doc("Item Request", name)
+    request.check_permission("write")
+    if request.status not in REQUEST_STATUSES[transaction_type]:
+        frappe.throw(_("Request {0} is {1}: it can't be linked to this movement").format(name, request.status))
+    return request
 
 
 def movement_filters(transaction_type):
@@ -132,6 +154,7 @@ MOVEMENT_FIELDS = [
     "rental_venue",
     "rental_issued_to as issued_to",
     "rental_received_by as received_by",
+    "rental_item_request as item_request",
     "remarks",
     "creation",
     "owner",

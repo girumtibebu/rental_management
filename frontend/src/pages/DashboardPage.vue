@@ -8,10 +8,10 @@
 
     <template v-else>
       <!-- Mobile Quick Actions & Hero Scanner Bar -->
-      <div class="flex flex-col gap-2 rounded-xl border border-outline-blue-4 bg-gradient-to-r from-surface-blue-2 to-surface-base p-3.5 sm:hidden shadow-xs">
+      <div class="flex flex-col gap-2 rounded-lg border border-outline-blue-4 bg-gradient-to-r from-surface-blue-2 to-surface-base p-3.5 sm:hidden">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
-            <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-blue-8 text-ink-base shadow-xs">
+            <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-blue-8 text-ink-base">
               <Icon name="scan" :size="18" />
             </span>
             <div>
@@ -21,7 +21,7 @@
           </div>
           <button
             v-if="!bulkFirst"
-            class="flex items-center gap-1.5 rounded-lg bg-surface-blue-8 px-3 py-1.5 text-xs-semibold text-ink-base shadow-xs active:scale-95"
+            class="flex items-center gap-1.5 rounded-lg bg-surface-blue-8 px-3 py-1.5 text-xs-semibold text-ink-base active:scale-95"
             @click="scanner?.openScanner"
           >
             <Icon name="camera" :size="13" /> Scan
@@ -31,19 +31,19 @@
         <div class="grid grid-cols-3 gap-1.5 pt-1 border-t border-outline-blue-3">
           <router-link
             :to="{ name: 'movement-new', query: { type: 'CHECK_OUT' } }"
-            class="flex items-center justify-center gap-1 rounded-lg border border-outline-gray-2 bg-surface-base py-2 text-[11px] font-semibold text-ink-gray-8 active:scale-95 shadow-2xs"
+            class="flex items-center justify-center gap-1 rounded-lg border border-outline-gray-2 bg-surface-base py-2 text-[11px] font-semibold text-ink-gray-8 active:scale-95"
           >
             <Icon name="out" :size="13" class="text-ink-blue-6" /> Check Out
           </router-link>
           <router-link
             :to="{ name: 'movement-new', query: { type: 'CHECK_IN' } }"
-            class="flex items-center justify-center gap-1 rounded-lg border border-outline-gray-2 bg-surface-base py-2 text-[11px] font-semibold text-ink-gray-8 active:scale-95 shadow-2xs"
+            class="flex items-center justify-center gap-1 rounded-lg border border-outline-gray-2 bg-surface-base py-2 text-[11px] font-semibold text-ink-gray-8 active:scale-95"
           >
             <Icon name="in" :size="13" class="text-ink-green-6" /> Check In
           </router-link>
           <router-link
             :to="{ name: 'maintenance', query: { flag: '1' } }"
-            class="flex items-center justify-center gap-1 rounded-lg border border-outline-gray-2 bg-surface-base py-2 text-[11px] font-semibold text-ink-amber-8 active:scale-95 shadow-2xs"
+            class="flex items-center justify-center gap-1 rounded-lg border border-outline-gray-2 bg-surface-base py-2 text-[11px] font-semibold text-ink-amber-8 active:scale-95"
           >
             <Icon name="alert" :size="13" class="text-ink-amber-6" /> Report
           </router-link>
@@ -56,16 +56,16 @@
           v-for="card in cards"
           :key="card.label"
           :to="bulkFirst ? { name: 'movements' } : { name: 'units', query: card.query }"
-          class="rounded-xl border bg-surface-base p-3 sm:p-4 hover:border-outline-gray-4 active:bg-surface-gray-1 transition-colors shadow-2xs"
+          class="rounded-lg border bg-surface-base p-3 sm:p-4 hover:border-outline-gray-4 active:bg-surface-gray-1 transition-colors"
           :class="card.alert && card.value ? 'border-outline-red-4 bg-surface-red-1/30' : 'border-outline-gray-2'"
         >
-          <div class="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-ink-gray-5 truncate">{{ card.label }}</div>
+          <div class="text-xs sm:text-[11px] font-semibold text-ink-gray-5 truncate">{{ card.label }}</div>
           <div class="mt-1 text-2xl-bold sm:text-3xl tabular" :class="card.alert && card.value ? 'text-ink-red-6' : 'text-ink-gray-9'">{{ number(card.value) }}</div>
           <div class="mt-0.5 truncate text-[11px] text-ink-gray-5">{{ card.note }}</div>
         </router-link>
       </div>
 
-      <section v-if="bulkFirst" class="rounded-xl border border-outline-gray-2 bg-surface-base shadow-xs overflow-hidden">
+      <section v-if="bulkFirst" class="rounded-lg border border-outline-gray-2 bg-surface-base overflow-hidden">
         <header class="flex items-center justify-between border-b border-outline-gray-1 px-4 py-2.5">
           <span class="text-sm-bold text-ink-gray-9">Stock by item</span>
           <span class="text-xs text-ink-gray-5">Pieces in each rental status</span>
@@ -73,7 +73,7 @@
         <div v-if="data.stock?.length" class="overflow-x-auto">
           <table class="w-full text-sm">
             <thead>
-              <tr class="border-b border-outline-gray-1 text-left text-xs uppercase tracking-wider text-ink-gray-5">
+              <tr class="border-b border-outline-gray-1 text-left text-xs text-ink-gray-5">
                 <th class="px-4 py-2 font-semibold">Item</th>
                 <th class="px-2 py-2 text-right font-semibold">In store</th>
                 <th class="px-2 py-2 text-right font-semibold">At event</th>
@@ -101,7 +101,7 @@
       </section>
 
       <div v-if="!bulkFirst" class="grid gap-4 lg:grid-cols-2">
-        <section class="rounded-xl border border-outline-gray-2 bg-surface-base shadow-xs overflow-hidden">
+        <section class="rounded-lg border border-outline-gray-2 bg-surface-base overflow-hidden">
           <header class="border-b border-outline-gray-1 px-4 py-2.5 text-sm-bold text-ink-gray-9">Where equipment is</header>
           <ul v-if="data.locations.length" class="divide-y divide-outline-gray-1">
             <li v-for="row in data.locations" :key="row.location + row.status">
@@ -116,7 +116,7 @@
           <div v-else class="p-6 text-center text-sm text-ink-gray-5">Everything is in the warehouse.</div>
         </section>
 
-        <section class="rounded-xl border border-outline-gray-2 bg-surface-base shadow-xs overflow-hidden">
+        <section class="rounded-lg border border-outline-gray-2 bg-surface-base overflow-hidden">
           <header class="border-b border-outline-gray-1 px-4 py-2.5 text-sm-bold text-ink-gray-9">Condition of equipment</header>
           <ul class="flex flex-col gap-3 p-4">
             <li v-for="item in data.conditions" :key="item.condition">
@@ -134,7 +134,7 @@
       </div>
 
       <div v-if="!bulkFirst" class="grid gap-4 lg:grid-cols-2">
-        <section class="rounded-xl border border-outline-gray-2 bg-surface-base shadow-xs overflow-hidden">
+        <section class="rounded-lg border border-outline-gray-2 bg-surface-base overflow-hidden">
           <header class="flex items-center justify-between border-b border-outline-gray-1 px-4 py-2.5">
             <span class="text-sm-bold text-ink-gray-9">Running low</span>
             <span class="text-xs text-ink-gray-5">Available now</span>
@@ -158,7 +158,7 @@
           <div v-else class="p-6 text-center text-sm text-ink-gray-5">No serialised equipment yet.</div>
         </section>
 
-        <section v-if="!bulkFirst" class="rounded-xl border border-outline-gray-2 bg-surface-base shadow-xs overflow-hidden">
+        <section v-if="!bulkFirst" class="rounded-lg border border-outline-gray-2 bg-surface-base overflow-hidden">
           <header class="flex items-center justify-between border-b border-outline-gray-1 px-4 py-2.5">
             <span class="text-sm-bold text-ink-gray-9">Open maintenance</span>
             <router-link :to="{ name: 'maintenance' }" class="text-xs-semibold text-ink-blue-6 hover:underline">Open board</router-link>
@@ -177,7 +177,7 @@
         </section>
       </div>
 
-      <section class="rounded-xl border border-outline-gray-2 bg-surface-base shadow-xs overflow-hidden">
+      <section class="rounded-lg border border-outline-gray-2 bg-surface-base overflow-hidden">
         <header class="flex items-center justify-between border-b border-outline-gray-1 px-4 py-2.5">
           <span class="text-sm-bold text-ink-gray-9">Recent movements</span>
           <router-link :to="{ name: 'movements' }" class="text-xs-semibold text-ink-blue-6 hover:underline">All movements</router-link>

@@ -27,12 +27,12 @@
           :disabled="item.kind === 'Bulk'"
           @click="filterUnits(stat.query)"
         >
-          <div class="text-[11px] font-medium uppercase tracking-wide text-ink-gray-5">{{ stat.label }}</div>
+          <div class="text-xs font-medium text-ink-gray-5">{{ stat.label }}</div>
           <div class="mt-1 text-3xl-semibold tabular text-ink-gray-9">{{ number(stat.value) }}</div>
         </button>
       </div>
 
-      <section v-if="item.kind !== 'Bulk'" class="overflow-hidden rounded-xl border border-outline-gray-2 bg-surface-base shadow-xs">
+      <section v-if="item.kind !== 'Bulk'" class="overflow-hidden rounded-lg border border-outline-gray-2 bg-surface-base">
         <header class="flex items-center justify-between border-b border-outline-gray-1 px-4 py-2.5">
           <span class="text-sm-semibold text-ink-gray-9">Units <span class="font-mono text-xs text-ink-gray-5">{{ item.serial_no_series }}</span></span>
           <router-link :to="{ name: 'units', query: { item_code: item.name } }" class="text-xs-semibold text-ink-blue-6 hover:underline">Open in Units</router-link>

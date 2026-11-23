@@ -29,6 +29,13 @@ export const api = {
   listMovements: (params) => call(P + 'movements.list_movements', params),
   getMovement: (name) => call(P + 'movements.get_movement', { name }),
 
+  listRequests: (params) => call(P + 'requests.list_requests', params),
+  getRequest: (name) => call(P + 'requests.get_request', { name }),
+  setRequestStatus: (name, status, note) => call(P + 'requests.set_status', { name, status, note }),
+  answerList: (name, section, status, reason) => call(P + 'requests.answer', { name, section, status, reason }),
+  acceptAll: (name) => call(P + 'requests.accept_all', { name }),
+  requestsForMovement: (transactionType) => call(P + 'requests.requests_for_movement', { transaction_type: transactionType }),
+
   board: () => call(P + 'maintenance.board'),
   createTicket: (values) => call(P + 'maintenance.create_ticket', values),
   getTicket: (name) => call(P + 'maintenance.get_ticket', { name }),

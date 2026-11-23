@@ -20,13 +20,17 @@
         <div><div class="text-xs text-ink-gray-5">To</div><div class="font-medium text-ink-gray-9">{{ move.to_location || '—' }}</div></div>
         <div><div class="text-xs text-ink-gray-5">Issued to</div><div class="font-medium text-ink-gray-9">{{ move.issued_to || '—' }}</div></div>
         <div><div class="text-xs text-ink-gray-5">Received by</div><div class="font-medium text-ink-gray-9">{{ move.received_by || '—' }}</div></div>
+        <div v-if="move.item_request" class="sm:col-span-2 lg:col-span-4">
+          <div class="text-xs text-ink-gray-5">For item request</div>
+          <RouterLink :to="{ name: 'request', params: { name: move.item_request } }" class="font-medium text-ink-gray-9 underline decoration-outline-gray-3 underline-offset-2">{{ move.item_request }}</RouterLink>
+        </div>
         <div v-if="data.note" class="sm:col-span-2 lg:col-span-4">
           <div class="text-xs text-ink-gray-5">Note</div>
           <div class="whitespace-pre-line text-ink-gray-8">{{ data.note }}</div>
         </div>
       </section>
 
-      <section class="overflow-hidden rounded-xl border border-outline-gray-2 bg-surface-base shadow-xs">
+      <section class="overflow-hidden rounded-lg border border-outline-gray-2 bg-surface-base">
         <header class="border-b border-outline-gray-1 px-4 py-2.5 text-sm-semibold text-ink-gray-9">Units ({{ data.units.length }})</header>
         <table class="w-full text-sm">
           <tbody>

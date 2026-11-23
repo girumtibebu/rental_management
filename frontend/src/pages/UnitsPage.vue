@@ -1,6 +1,6 @@
 <template>
   <PageFrame title="Units" :subtitle="`${number(total)} serial-numbered units${filtered ? ' match your filters' : ''}`">
-    <div class="flex flex-col overflow-hidden rounded-xl border border-outline-gray-2 bg-surface-base shadow-xs">
+    <div class="flex flex-col overflow-hidden rounded-lg border border-outline-gray-2 bg-surface-base">
       <!-- Filter Toolbar -->
       <div class="flex flex-col gap-2.5 border-b border-outline-gray-2 p-3 sm:p-3.5">
         <!-- Top Row: Search & Mobile Filter Toggle -->
@@ -27,8 +27,8 @@
           <button
             v-for="status in STATUS_FILTERS"
             :key="status.value"
-            class="shrink-0 rounded-lg px-3 py-1.5 text-xs-medium transition-colors"
-            :class="filters.status === status.value ? 'bg-surface-gray-9 text-ink-base font-semibold shadow-2xs' : 'bg-surface-gray-1 text-ink-gray-7 hover:bg-surface-gray-2 border border-outline-gray-2'"
+            class="shrink-0 rounded px-2.5 py-1 text-sm transition-colors"
+            :class="filters.status === status.value ? 'bg-surface-gray-3 text-ink-gray-9' : 'text-ink-gray-6 hover:bg-surface-gray-2'"
             @click="setStatus(status.value)"
           >
             {{ status.label }}
@@ -109,7 +109,7 @@
       <div class="hidden md:block overflow-x-auto">
         <table class="w-full text-sm">
           <thead>
-            <tr class="border-b border-outline-gray-1 bg-surface-gray-1 text-[11px] uppercase tracking-wide text-ink-gray-5">
+            <tr class="border-b border-outline-gray-1 bg-surface-gray-1 text-xs text-ink-gray-5">
               <th class="px-4 py-2 text-left font-medium">Serial</th>
               <th class="px-3 py-2 text-left font-medium">Equipment</th>
               <th class="px-3 py-2 text-left font-medium">Status</th>

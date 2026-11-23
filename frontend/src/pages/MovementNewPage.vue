@@ -5,8 +5,8 @@
       <button
         v-for="kind in SCAN_TYPES"
         :key="kind"
-        class="flex shrink-0 items-center gap-2.5 rounded-xl border px-3.5 py-2.5 text-left transition-all active:scale-98"
-        :class="type === kind ? 'border-outline-blue-5 bg-surface-blue-2 shadow-xs' : 'border-outline-gray-2 bg-surface-base hover:border-outline-gray-4'"
+        class="flex shrink-0 items-center gap-2.5 rounded-lg border px-3.5 py-2.5 text-left transition-all active:scale-98"
+        :class="type === kind ? 'border-outline-blue-5 bg-surface-blue-2' : 'border-outline-gray-2 bg-surface-base hover:border-outline-gray-4'"
         @click="setType(kind)"
       >
         <span
@@ -26,14 +26,14 @@
     <div class="flex rounded-lg border border-outline-gray-2 bg-surface-gray-2 p-1 lg:hidden">
       <button
         class="flex-1 rounded-md py-1.5 text-xs-semibold transition-all"
-        :class="mobileTab === 'scan' ? 'bg-surface-base text-ink-gray-9 shadow-xs' : 'text-ink-gray-6'"
+        :class="mobileTab === 'scan' ? 'bg-surface-base text-ink-gray-9' : 'text-ink-gray-6'"
         @click="mobileTab = 'scan'"
       >
         {{ qtyFirst ? 'Items' : 'Scanned Items' }} ({{ items.length + bulk.length }})
       </button>
       <button
         class="flex-1 rounded-md py-1.5 text-xs-semibold transition-all"
-        :class="mobileTab === 'details' ? 'bg-surface-base text-ink-gray-9 shadow-xs' : 'text-ink-gray-6'"
+        :class="mobileTab === 'details' ? 'bg-surface-base text-ink-gray-9' : 'text-ink-gray-6'"
         @click="mobileTab = 'details'"
       >
         Destination & Notes
@@ -44,12 +44,12 @@
     <div class="grid gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
       <!-- Left Column: Barcode Scanning & Items List -->
       <section
-        class="flex flex-col overflow-hidden rounded-xl border border-outline-gray-2 bg-surface-base shadow-xs"
+        class="flex flex-col overflow-hidden rounded-lg border border-outline-gray-2 bg-surface-base"
         :class="mobileTab === 'details' ? 'hidden lg:flex' : 'flex'"
       >
         <!-- Barcode Scan Input Bar -->
         <div class="border-b border-outline-gray-1 bg-surface-gray-1/40 p-3.5 sm:p-4" :class="qtyFirst ? 'order-2' : ''">
-          <div v-if="qtyFirst" class="mb-2 text-xs-semibold uppercase tracking-wider text-ink-gray-6">
+          <div v-if="qtyFirst" class="mb-2 text-xs-semibold text-ink-gray-6">
             Or scan units <span class="font-normal lowercase text-ink-gray-5">(optional)</span>
           </div>
           <div class="flex items-center gap-2">
@@ -80,7 +80,7 @@
 
             <!-- Enter / Add Button -->
             <button
-              class="h-10 rounded-lg bg-surface-gray-9 px-3.5 text-sm-medium text-ink-base shadow-xs disabled:opacity-40 active:scale-95"
+              class="h-10 rounded-lg bg-surface-gray-9 px-3.5 text-sm-medium text-ink-base disabled:opacity-40 active:scale-95"
               :disabled="!code.trim() || scanning"
               @click="scan"
             >
@@ -141,7 +141,7 @@
 
         <!-- Bulk Items Section -->
         <div v-if="canBulk" class="border-outline-gray-1 bg-surface-gray-1/30 p-3.5 sm:p-4" :class="qtyFirst ? 'order-1 border-b' : 'border-t'">
-          <div class="mb-2 text-xs-semibold uppercase tracking-wider text-ink-gray-6">
+          <div class="mb-2 text-xs-semibold text-ink-gray-6">
             {{ qtyFirst ? 'Items and quantities' : 'Bulk items' }}
             <span v-if="!qtyFirst" class="font-normal lowercase text-ink-gray-5">(counted, not serialized)</span>
           </div>
@@ -149,7 +149,7 @@
             <li
               v-for="(row, index) in bulk"
               :key="row.item_code"
-              class="flex items-center justify-between rounded-lg border border-outline-gray-2 bg-surface-base px-3 py-2 text-sm shadow-2xs"
+              class="flex items-center justify-between rounded-lg border border-outline-gray-2 bg-surface-base px-3 py-2 text-sm"
             >
               <span class="flex-1 truncate font-medium text-ink-gray-8">{{ row.item_code }}</span>
               <span class="tabular font-bold text-ink-gray-9 mr-3">× {{ row.qty }}</span>
@@ -170,7 +170,7 @@
 
       <!-- Right Column: Details & Submission -->
       <section
-        class="flex flex-col gap-3 rounded-xl border border-outline-gray-2 bg-surface-base p-4 shadow-xs"
+        class="flex flex-col gap-3 rounded-lg border border-outline-gray-2 bg-surface-base p-4"
         :class="mobileTab === 'scan' ? 'hidden lg:flex' : 'flex'"
       >
         <div class="flex items-center justify-between border-b border-outline-gray-1 pb-2.5">
@@ -191,6 +191,15 @@
 
         <FormControl v-if="goesOut" v-model="issuedTo" label="Issued to" placeholder="Person or crew receiving equipment" />
         <FormControl v-else-if="type !== 'LOST'" v-model="receivedBy" label="Received by" placeholder="Staff member checking equipment in" />
+
+        <FormControl
+          v-if="requestOptions.length > 1"
+          v-model="itemRequest"
+          type="select"
+          :options="requestOptions"
+          label="For item request (optional)"
+          :description="type === 'CHECK_OUT' ? 'Links the movement to the request; an accepted request becomes Checked out.' : 'Links the return to the request it went out for.'"
+        />
 
         <FormControl v-model="note" type="textarea" :rows="3" label="Operation note" placeholder="Condition notes, accessories included, etc." />
 
@@ -219,7 +228,7 @@
       <div class="flex items-center gap-2">
         <button
           v-if="mobileTab === 'scan'"
-          class="flex h-11 flex-1 items-center justify-between rounded-xl border border-outline-gray-3 bg-surface-gray-1 px-3 text-left active:bg-surface-gray-2"
+          class="flex h-11 flex-1 items-center justify-between rounded-lg border border-outline-gray-3 bg-surface-gray-1 px-3 text-left active:bg-surface-gray-2"
           @click="mobileTab = 'details'"
         >
           <div>
@@ -232,7 +241,7 @@
         </button>
 
         <button
-          class="flex h-11 items-center justify-center gap-2 rounded-xl bg-surface-blue-8 px-4 font-semibold text-ink-base shadow-md active:scale-95 disabled:opacity-50"
+          class="flex h-11 items-center justify-center gap-2 rounded-lg bg-surface-blue-8 px-4 font-semibold text-ink-base shadow-md active:scale-95 disabled:opacity-50"
           :class="mobileTab === 'details' ? 'w-full' : 'shrink-0'"
           :disabled="!canSubmit || busy"
           @click="submit"
@@ -250,7 +259,7 @@
 </template>
 
 <script setup>
-import { computed, inject, nextTick, onMounted, reactive, ref } from 'vue'
+import { computed, inject, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Button, FormControl, TextInput, toast } from 'frappe-ui'
 import Icon from '../components/Icon.vue'
@@ -294,6 +303,30 @@ const to = ref(type.value === 'MAINTENANCE_OUT' ? 'Repair Shop' : '')
 const issuedTo = ref('')
 const receivedBy = ref('')
 const note = ref('')
+
+// the request this movement is for: accepted ones go out, checked-out ones come back
+const itemRequest = ref(String(route.query.request || ''))
+const requests = ref([])
+const requestOptions = computed(() =>
+  requests.value.length ? [{ label: 'None', value: '' }, ...requests.value.map((r) => ({ label: `${r.title} · ${r.name}`, value: r.name }))] : [],
+)
+watch(
+  type,
+  async (t) => {
+    try {
+      requests.value = ['CHECK_OUT', 'CHECK_IN'].includes(t) ? await api.requestsForMovement(t) : []
+      if (!requests.value.some((r) => r.name === itemRequest.value)) itemRequest.value = ''
+    } catch (err) {
+      toast.error(readError(err))
+    }
+  },
+  { immediate: true },
+)
+// a check-out for a request goes to its venue unless someone typed another
+watch([itemRequest, requests], ([name]) => {
+  const venue = requests.value.find((r) => r.name === name)?.location
+  if (venue && goesOut.value && !to.value) to.value = venue
+})
 
 const mobileTab = ref('scan')
 const cameraOpen = ref(false)
@@ -392,6 +425,7 @@ async function submit() {
       issued_to: issuedTo.value || undefined,
       received_by: receivedBy.value || undefined,
       note: note.value || undefined,
+      item_request: itemRequest.value || undefined,
     })
     toast.success(`${MOVEMENT_TYPES[type.value].label} saved`)
     refreshSummary()

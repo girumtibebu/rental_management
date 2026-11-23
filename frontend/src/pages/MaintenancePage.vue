@@ -16,7 +16,7 @@
           v-for="state in board.states"
           :key="state"
           class="flex flex-1 items-center justify-center gap-1.5 rounded-md py-1.5 text-xs-semibold transition-all"
-          :class="activeMobileState === state ? 'bg-surface-base text-ink-gray-9 shadow-xs' : 'text-ink-gray-6'"
+          :class="activeMobileState === state ? 'bg-surface-base text-ink-gray-9' : 'text-ink-gray-6'"
           @click="activeMobileState = state"
         >
           <span class="h-1.5 w-1.5 rounded-full" :class="DOT[state]" />
@@ -32,7 +32,7 @@
         <section
           v-for="state in board.states"
           :key="state"
-          class="flex min-h-[260px] flex-col rounded-xl border border-outline-gray-2 bg-surface-gray-2/60 shadow-xs"
+          class="flex min-h-[260px] flex-col rounded-lg border border-outline-gray-2 bg-surface-gray-2/60"
           :class="activeMobileState === state ? 'flex' : 'hidden lg:flex'"
         >
           <header class="flex items-center gap-2 px-3.5 py-2.5">
@@ -43,7 +43,7 @@
           <ul class="flex flex-1 flex-col gap-2 overflow-y-auto px-2.5 pb-2.5">
             <li v-for="ticket in board.columns[state]" :key="ticket.name">
               <button
-                class="w-full rounded-xl border border-outline-gray-2 bg-surface-base p-3 text-left hover:border-outline-gray-4 active:bg-surface-gray-1 transition-colors shadow-2xs"
+                class="w-full rounded-lg border border-outline-gray-2 bg-surface-base p-3 text-left hover:border-outline-gray-4 active:bg-surface-gray-1 transition-colors"
                 @click="openTicket(ticket.name)"
               >
                 <div class="flex items-start justify-between gap-2">
@@ -60,7 +60,7 @@
                 </div>
               </button>
             </li>
-            <li v-if="!board.columns[state].length" class="rounded-xl border border-dashed border-outline-gray-3 px-3 py-8 text-center text-xs text-ink-gray-5 bg-surface-base/40">
+            <li v-if="!board.columns[state].length" class="rounded-lg border border-dashed border-outline-gray-3 px-3 py-8 text-center text-xs text-ink-gray-5 bg-surface-base/40">
               {{ EMPTY[state] }}
             </li>
           </ul>

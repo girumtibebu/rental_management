@@ -224,6 +224,7 @@ def post_movement(
     remarks=None,
     posting_datetime=None,
     sources=None,
+    item_request=None,
 ):
     """Submit one Stock Entry for a rental movement and return its name."""
     if movement_type not in MOVEMENT_TYPES:
@@ -245,6 +246,7 @@ def post_movement(
             "rental_venue": venue,
             "rental_issued_to": issued_to,
             "rental_received_by": received_by,
+            "rental_item_request": item_request,
             "remarks": remarks,
             "items": rows,
         }
